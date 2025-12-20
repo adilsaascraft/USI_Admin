@@ -29,11 +29,11 @@ import {
     SelectLabel,
     Button,
     SheetClose,
+    status,
 } from "@/lib/imports"
 import { CustomDatePicker, CustomTimePicker } from "@/lib/imports"
 import {
     registrationType,
-    currencyType,
     timezones,
 } from "@/lib/imports"
 import { mutate } from "swr"
@@ -90,6 +90,7 @@ export default function AddWebinarForm({
     registrationType: "",
     amount: 0,
     streamLink: "",
+    status: 'Active',
   },
 })
 
@@ -462,6 +463,32 @@ export default function AddWebinarForm({
                                 </FormItem>
                             )}
                         />
+
+                         {/* Status */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full p-3">
+                        <SelectValue placeholder="Select status type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {status.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
 
 
