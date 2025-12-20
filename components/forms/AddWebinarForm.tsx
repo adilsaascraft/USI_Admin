@@ -205,9 +205,7 @@ export default function AddEventForm({ onSuccess, eventToEdit }: AddEventFormPro
   const registrationTypeValue = form.watch("registrationType")
   const isPaidEvent = registrationTypeValue === "paid"
 
-  function setValue(name: string, value: boolean) {
-    form.setValue(name as keyof z.infer<typeof EventFormSchema>, value)
-  }
+  
 
   return (
     <div className="flex flex-col h-screen">
