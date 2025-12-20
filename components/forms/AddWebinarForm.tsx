@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import { useFormDraftStore } from "@/stores/useFormDraftStore";
-import { EventFormSchema, EventFormValues } from "@/validations/eventSchema"
+import { WebinarFormSchema, WebinarFormValues } from "@/validations/webinarSchema"
 import { generateShortName } from "@/utils/generateShortName"
 import {
   FaCalendarAlt,
@@ -72,9 +72,7 @@ export default function AddEventForm({
   onSuccess,
   eventToEdit,
 }: AddEventFormProps) {
-  const [venues, setVenues] = useState<any[]>([])
-  const [organizers, setOrganizers] = useState<any[]>([])
-  const [departments, setDepartments] = useState<any[]>([])
+
   const [loading, setLoading] = useState(false)
   const [isShortNameEdited, setIsShortNameEdited] = useState(false)
   const DRAFT_KEY = "add-event-form";
