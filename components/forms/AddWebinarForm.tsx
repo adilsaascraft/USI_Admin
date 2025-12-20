@@ -47,6 +47,12 @@ import {
 import { mutate } from "swr"
 import { fetchClient } from "@/lib/fetchClient"
 
+// New Custom Date Helper
+const toDate = (str: string) => {
+  const [d, m, y] = str.split("/").map(Number)
+  return new Date(y, m - 1, d)
+}
+
 /* ================= IMAGE CONSTANTS ================= */
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 const ALLOWED_TYPES = [
@@ -217,6 +223,32 @@ export default function AddEventForm({
     fetchData()
   }, [])
 
+      // New Custom date picker 
+  
+    const { watch, setValue } = form
+  
+    const startDate = watch("startDate")
+    const endDate = watch("endDate")
+  
+    // AUTO FIX END DATE
+    useEffect(() => {
+      if (!startDate || !endDate) return
+  
+      const s = toDate(startDate)
+      const e = toDate(endDate)
+  
+      if (e <= s) {
+        const newEnd = new Date(s)
+        newEnd.setDate(newEnd.getDate() + 1)
+  
+        const formatted = `${String(newEnd.getDate()).padStart(2, "0")}/${String(
+          newEnd.getMonth() + 1
+        ).padStart(2, "0")}/${newEnd.getFullYear()}`
+  
+        setValue("endDate", formatted)
+      }
+    }, [startDate])
+
   /* ================= SUBMIT ================= */
   async function onSubmit(data: EventFormValues) {
     try {
@@ -245,7 +277,7 @@ export default function AddEventForm({
         method = "PUT"
       }
 
-      const res = await fetchWithAuth(url, { method, body: formData })
+      const res = await fetchClient(url, { method, body: formData })
       const result = await res.json()
       if (!res.ok) throw new Error(result.message)
 
@@ -267,8 +299,6 @@ export default function AddEventForm({
 
   const registrationTypeValue = form.watch("registrationType")
   const isPaidEvent = registrationTypeValue === "paid"
-
-  function setValue(name: string, value: boolean) { form.setValue(name as keyof z.infer<typeof EventFormSchema>, value) }
 
   return (
     <div className="flex flex-col min-h-full">
@@ -696,8 +726,6 @@ export default function AddEventForm({
     )}
   />
 </div>
-
-     <LocationSelector form={form} />
 
           <div className="flex items-center space-x-2 pt-4">
             <Label htmlFor="event-app">Event App</Label>
