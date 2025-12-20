@@ -1,5 +1,5 @@
 'use client'
-import { EventType } from "@/types/event"
+import { EventType } from "@/types/webinar"
 import Image from 'next/image'
 import { JSX, useState } from 'react'
 import { fetchClient } from "@/lib/fetchClient"

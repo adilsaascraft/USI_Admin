@@ -8,34 +8,34 @@ import EventCard from "@/components/EventCard";
 import AddWebinarForm from "@/components/forms/AddWebinarForm";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { EventType } from "@/types/event";
+import { WebinarType } from "@/types/webinar";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // --- Tabs ---
 const tabs = ["Live","Upcomming", "Past", "All"];
 
-export default function EventsPageClient({
-  initialEvents,
+export default function WebinarPageClient({
+  initialWebinars,
 }: {
-  initialEvents: EventType[];
+  initialWebinars: WebinarType[];
 }) {
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/events`;
+  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/webinars`;
 
   const [open, setOpen] = useState(false);
-  const [eventToEdit, setEventToEdit] = useState<EventType | null>(null);
+  const [webinarToEdit, setWebinarToEdit] = useState<WebinarType | null>(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("Live");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // ✅ Fetch events with SWR
+  // ✅ Fetch webinars with SWR
   const { data, isLoading } = useSWR(API_URL, fetcher, {
-    fallbackData: initialEvents,
+    fallbackData: initialWebinars,
   });
 
-  // Ensure events is always an array
-  const events: EventType[] = Array.isArray(data?.data)
+  // Ensure webinars is always an array
+  const webinars: WebinarType[] = Array.isArray(data?.data)
     ? data.data
     : Array.isArray(data)
     ? data
@@ -44,11 +44,11 @@ export default function EventsPageClient({
   // --- Filtering ---
   const filteredByTab =
     activeTab === "All"
-      ? events
-      : events.filter((event) => event.dynamicStatus === activeTab);
+      ? webinars
+      : webinars.filter((event) => event.dynamicStatus === activeTab);
 
   const filteredEvents = filteredByTab.filter((event) =>
-    (event.eventName ?? "").toLowerCase().includes(search.toLowerCase())
+    (event.webinarName ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   // --- Pagination ---
@@ -60,19 +60,19 @@ export default function EventsPageClient({
 
   // --- Handlers ---
   function handleAddEvent() {
-    setEventToEdit(null); // Add mode
+    setWebinarToEdit(null); // Add mode
     setOpen(true);
   }
 
-  function handleEditEvent(event: EventType) {
-    setEventToEdit(event); // Edit mode
+  function handleEditEvent(event: WebinarType) {
+    setWebinarToEdit(event); // Edit mode
     setOpen(true);
   }
 
   async function handleSuccess() {
     await mutate(API_URL);
     setOpen(false);
-    setEventToEdit(null);
+    setWebinarToEdit(null);
   }
 
   return (
@@ -91,7 +91,7 @@ export default function EventsPageClient({
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-[500px] sm:w-[600px]">
-            <AddWebinarForm onSuccess={handleSuccess} eventToEdit={eventToEdit} />
+            <AddWebinarForm onSuccess={handleSuccess} webinarToEdit={webinarToEdit} />
           </SheetContent>
         </Sheet>
       </div>

@@ -11,7 +11,7 @@ export const WebinarFormSchema = z
       .any()
       .refine(
         (file) => file?.length === 1,
-        "Please upload a webinar image."
+        "Please upload a webinar image in 300 * 250 px"
       )
       .refine(
         (file) => file?.[0]?.type?.startsWith("image/"),

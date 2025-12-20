@@ -5,7 +5,7 @@ export const timezones = [
     items: [
       { value: "Europe/Moscow", label: "(UTC+03:00) Moscow" },
       { value: "Asia/Karachi", label: "(UTC+05:00) Islamabad" },
-      { value: "Asia/Kolkata", label: "(UTC+05:30) New Delhi" },
+      { value: "Asia/Kolkata", label: "(UTC+05:30) New Delhi, Kolkata" },
       { value: "Asia/Dhaka", label: "(UTC+06:00) Dhaka" },
       { value: "Asia/Yangon", label: "(UTC+06:30) Yangon" },
       { value: "Asia/Shanghai", label: "(UTC+08:00) Beijing" },

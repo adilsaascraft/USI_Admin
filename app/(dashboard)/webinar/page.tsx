@@ -1,14 +1,14 @@
-// app/(dashboard)/events/page.tsx
+// app/(dashboard)/webinar/page.tsx
 "use client"
 
 import useSWR from "swr"
-import EventsPageClient from "@/components/clients/EventsPageClient"
 import { fetcher } from "@/lib/fetcher"
-import { EventType } from "@/types/event"
+import { WebinarType } from "@/types/webinar"
+import WebinarPageClient from "@/components/clients/WebinarPageClient"
 
-export default function EventsPage() {
-  const { data} = useSWR<{ success: boolean; data: EventType[] }>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/events`,
+export default function WebinarPage() {
+  const { data} = useSWR<{ success: boolean; data: WebinarType[] }>(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars`,
     fetcher,
     {
       revalidateOnFocus: true,   // refetch on tab focus
@@ -16,7 +16,7 @@ export default function EventsPage() {
     }
   )
 
-  const events = data?.success ? data.data : []
+  const webinars = data?.success ? data.data : []
 
-  return<EventsPageClient  initialEvents={events} />
+  return<WebinarPageClient  initialWebinars={webinars} />
 }
