@@ -78,21 +78,21 @@ export default function AddWebinarForm({
 
     /* ================= FORM ================= */
     const form = useForm<WebinarFormValues>({
-        resolver: zodResolver(WebinarFormSchema),
-        defaultValues: webinarToEdit || eventDraft || {
-            webinarName: webinarToEdit?.webinarName || "",
-            shortName: webinarToEdit?.shortName || "",
-            webinarImage: webinarToEdit?.webinarImage || "",
-            venueName: webinarToEdit?.venueName?._id || "",
-            timeZone: webinarToEdit?.timeZone || "",
-            startDate: webinarToEdit?.startDate || "",
-            endDate: webinarToEdit?.endDate || "",
-            startTime: webinarToEdit?.startTime || "",
-            endTime: webinarToEdit?.endTime || "",
-            registrationType: webinarToEdit?.registrationType || "",
-            amount: webinarToEdit?.amount || "",
-        },
-    })
+  resolver: zodResolver(WebinarFormSchema),
+  defaultValues: webinarToEdit || eventDraft || {
+    webinarName: "",
+    webinarImage: "",
+    timeZone: "",
+    startDate: "",
+    endDate: "",
+    startTime: "",
+    endTime: "",
+    registrationType: "",
+    amount: 0,
+    streamLink: "",
+  },
+})
+
 
     // Persist draft to zustand store
     useEffect(() => {
@@ -266,7 +266,7 @@ export default function AddWebinarForm({
 
             <div className="flex-1 overflow-y-auto custom-scroll pb-20">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-3">
+                    <form id="webinar-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-3">
 
                         {/* Webinar NAME */}
                         <FormField
@@ -477,7 +477,8 @@ export default function AddWebinarForm({
                     </Button>
                 </SheetClose>
                 <Button
-                    type="button"
+                    type="submit"
+                    form="webinar-form"
                     onClick={form.handleSubmit(onSubmit)}
                     disabled={loading}
                     className="bg-orange-600 text-white hover:bg-orange-700"
