@@ -3,8 +3,10 @@
 export type WebinarType = {
   _id: string
 
-  webinarName: string
-  webinarImage: string
+  name: string
+  image: string
+  description: string
+  webinarType: string
 
   startDate: string      // DD/MM/YYYY
   endDate: string        // DD/MM/YYYY
@@ -19,7 +21,7 @@ export type WebinarType = {
 
   streamLink: string
 
-  dynamicStatus: "Live" | "Running" | "Past"
+  dynamicStatus: "Live" | "Upcomming" | "Past"
 
   createdAt: string
   updatedAt: string

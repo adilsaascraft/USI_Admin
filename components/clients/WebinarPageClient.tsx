@@ -4,11 +4,11 @@ import { useState } from "react";
 import { FaSearch } from "react-icons/fa";
 import useSWR, { mutate } from "swr";
 import EventCardSkeleton from "@/components/EventCardSkeleton";
-import EventCard from "@/components/EventCard";
 import AddWebinarForm from "@/components/forms/AddWebinarForm";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { WebinarType } from "@/types/webinar";
+import WebinarCard from "@/components/WebinarCard";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -48,7 +48,7 @@ export default function WebinarPageClient({
       : webinars.filter((event) => event.dynamicStatus === activeTab);
 
   const filteredEvents = filteredByTab.filter((event) =>
-    (event.webinarName ?? "").toLowerCase().includes(search.toLowerCase())
+    (event.name ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   // --- Pagination ---
@@ -138,7 +138,7 @@ export default function WebinarPageClient({
       ) : filteredEvents.length > 0 ? (
         <div className="flex flex-col gap-4">
           {paginatedEvents.map((event) => (
-            <EventCard
+            <WebinarCard
               key={event._id}
               event={event}
               onEdit={() => handleEditEvent(event)}

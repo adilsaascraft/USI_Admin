@@ -1,23 +1,17 @@
 'use client'
-import { EventType } from "@/types/webinar"
+import { WebinarType } from "@/types/webinar"
 import Image from 'next/image'
 import { JSX, useState } from 'react'
 import { fetchClient } from "@/lib/fetchClient"
 import { getIndianFormattedDate } from "@/lib/formatIndianDate"
 import {
   Calendar,
-  MapPin,
-  Map as MapIcon,
   Pencil,
   Trash2,
   Clock3,
-  Ban,
   History,
   FileText,
-  Users,
-  Building2,
   Tag,
-  Layers,
   Check,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -41,12 +35,12 @@ import {
 } from '@/components/ui/alert-dialog'
 import { mutate } from 'swr'
 
-type EventCardProps = {
-  event: EventType
-  onEdit: (event: EventType) => void
+type WebinarCardProps = {
+  event: WebinarType
+  onEdit: (event: WebinarType) => void
 }
 
-export default function EventCard({ event, onEdit }: EventCardProps) {
+export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -56,22 +50,14 @@ export default function EventCard({ event, onEdit }: EventCardProps) {
       color: "bg-green-100 text-green-700",
       icon: <Check className="h-5 w-5 mr-1" />,
     },
-    Running: {
+    Upcomming: {
       color: 'bg-blue-100 text-blue-700',
       icon: <Clock3 className="h-5 w-5 mr-1" />,
-    },
-    Cancelled: {
-      color: 'bg-red-100 text-red-700',
-      icon: <Ban className="h-5 w-5 mr-1" />,
     },
     Past: {
       color: 'bg-orange-100 text-orange-700',
       icon: <History className="h-5 w-5 mr-1" />,
       label: 'Completed', // display "Completed" instead of Past
-    },
-    Draft: {
-      color: 'bg-orange-100 text-orange-700',
-      icon: <FileText className="h-5 w-5 mr-1" />,
     },
   }
 
@@ -86,19 +72,19 @@ export default function EventCard({ event, onEdit }: EventCardProps) {
     setLoading(true)
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/events/${event._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinars/${event._id}`,
         { method: 'DELETE' }
       )
       const data = await res.json()
 
       if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to delete event')
+        throw new Error(data.message || 'Failed to delete webinar')
       }
 
-      toast("Event has been deleted", {
+      toast("Webinar has been deleted", {
         description: getIndianFormattedDate(),
       })
-      mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/events`)
+      mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/webinars`)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {
@@ -112,13 +98,13 @@ export default function EventCard({ event, onEdit }: EventCardProps) {
 
   return (
     <Card className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4 relative shadow-sm">
-      {/* Event Image */}
-      <div className="w-[150px] h-[200px] relative">
+      {/* Webinar Image */}
+      <div className="w-[300px] h-[250px] relative">
         <Image
-          src={event.eventImage}
-          alt={event.eventName}
+          src={event.image}
+          alt={event.image}
           fill
-          sizes="(max-width: 150px) 100vw, 200px"
+          sizes="(max-width: 300px) 100vw, 250px"
           className="object-cover rounded-md"
         />
       </div>
@@ -126,28 +112,36 @@ export default function EventCard({ event, onEdit }: EventCardProps) {
       {/* Content */}
       <CardContent className="flex-1 w-full p-0 space-y-2 text-sm text-foreground">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-bold text-sky-800 dark:text-foreground">{event.eventName}</h2>
-          <span className={clsx("inline-flex items-center text-xs font-semibold px-2 py-1 rounded", currentStatus.color)}>
+          <h2 className="text-lg font-bold text-sky-800 dark:text-foreground">
+            {event.name}
+          </h2>
+          <span
+            className={clsx(
+              'inline-flex items-center text-xs font-semibold px-2 py-1 rounded',
+              currentStatus.color
+            )}
+          >
             {currentStatus.icon}
             {displayStatus}
           </span>
-        </div>
-
-        {/* Venue */}
-        <div className="flex items-center gap-2">
-          <MapIcon size={16} />
-          <span>{event.venueName?.venueName}</span>
         </div>
 
         {/* Type + Category */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
             <Tag size={16} />
-            <span>{event.eventType}</span>
+            <span>
+              <span>Registration Type: {event.registrationType}</span>
+            </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
-            <Layers size={16} />
-            <span>{event.eventCategory}</span>
+            <Tag size={16} />
+            <span>
+              <span>Webinar Type: {event.webinarType}</span>
+            </span>
           </div>
         </div>
 
@@ -155,28 +149,13 @@ export default function EventCard({ event, onEdit }: EventCardProps) {
         <div className="flex items-center gap-2">
           <Calendar size={16} />
           <span>
-            {event.startDate} {event.startTime} - {event.endDate} {event.endTime}
+            {event.startDate} {event.startTime} - {event.endDate}{' '}
+            {event.endTime}
           </span>
         </div>
-
-        {/* Organizer + Department */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1">
-            <Users size={16} />
-            <span>{event.organizer?.organizerName}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Building2 size={16} />
-            <span>{event.department?.departmentName}</span>
-          </div>
-        </div>
-
-        {/* Location */}
         <div className="flex items-center gap-2">
-          <MapPin size={16} />
-          <span>
-            {[event.city, event.state, event.country].filter(Boolean).join(", ")}
-          </span>
+          <Clock3 size={16} />
+          <span>Time Zone: {event.timeZone}</span>
         </div>
       </CardContent>
 
@@ -184,7 +163,7 @@ export default function EventCard({ event, onEdit }: EventCardProps) {
       <div className="absolute top-4 right-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="bg-sky-800 hover:bg-sky-900 text-white px-4 py-2 rounded-lg">
+            <Button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg">
               Manage
             </Button>
           </DropdownMenuTrigger>
@@ -225,12 +204,12 @@ export default function EventCard({ event, onEdit }: EventCardProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Are you sure you want to delete this event?
+              Are you sure you want to delete this webinar?
             </AlertDialogTitle>
           </AlertDialogHeader>
           <p className="text-sm text-gray-600">
-            This action cannot be undone. The event{' '}
-            <span className="font-semibold">{event.eventName}</span> will be
+            This action cannot be undone. The webinar{' '}
+            <span className="font-semibold">{event.name}</span> will be
             permanently removed.
           </p>
           <AlertDialogFooter>
