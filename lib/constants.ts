@@ -14,5 +14,20 @@ export const status = [
   { value: "Inactive", label: "Inactive" },
 ] as const;
 
+export const prefix = [
+  { value: 'Mr', label: 'Mr' },
+  { value: 'Ms', label: 'Ms' },
+  { value: 'Mrs', label: 'Mrs' },
+  { value: 'Dr', label: 'Dr' },
+  { value: 'Prof', label: 'Prof' },
+] as const
+
+
+export const speakerType = [
+  { value: 'Convenor', label: 'Convenor' },
+  { value: 'Co-Convenor', label: 'Co-Convenor' },
+  { value: 'Faculty', label: 'Faculty' },
+] as const
+
 
 

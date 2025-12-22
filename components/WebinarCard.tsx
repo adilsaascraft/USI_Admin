@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { WebinarType } from "@/types/webinar"
 import Image from 'next/image'
 import { JSX, useState } from 'react'
@@ -41,6 +42,7 @@ type WebinarCardProps = {
 }
 
 export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
+  const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -66,6 +68,10 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
     icon: <FileText className="h-5 w-5 mr-1" />,
     label: event.dynamicStatus,
   }
+
+    const handleManage = () => {
+      router.push(`/webinar/${event._id}/faculty`)
+    }
 
   // ✅ Delete API call
   async function handleDelete() {
@@ -170,25 +176,14 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
           <DropdownMenuContent align="end" className="w-40">
             {!isPast && (
               <>
+                <DropdownMenuItem onClick={handleManage}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Manage
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(event)}>
                   <Pencil className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Cancel
-                </DropdownMenuItem> */}
-                {/* <DropdownMenuItem asChild>
-                  <a
-                    href={'#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Registration Link
-                  </a>
-                </DropdownMenuItem> */}
               </>
             )}
             <DropdownMenuItem onClick={() => setDeleteOpen(true)}>

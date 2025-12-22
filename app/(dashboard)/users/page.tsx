@@ -1,3 +1,11 @@
-export default function HomePage() {
-  return <h1>Welcome to users</h1>
+'use client'
+
+import UserClient from '@/components/clients/UserClient'
+
+export default function UsersPage() {
+  return (
+    <div className="p-4">
+      <UserClient />
+    </div>
+  )
 }

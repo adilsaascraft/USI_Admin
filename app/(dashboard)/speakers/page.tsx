@@ -1,3 +1,11 @@
-export default function HomePage() {
-  return <h1>Welcome to speakers</h1>
+'use client'
+
+import SpeakerClient from '@/components/clients/SpeakerClient'
+
+export default function SpeakersPage() {
+  return (
+    <div className="p-4">
+      <SpeakerClient />
+    </div>
+  )
 }
