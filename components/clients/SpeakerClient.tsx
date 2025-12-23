@@ -147,7 +147,7 @@ export default function SpeakerClient() {
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" className="bg-sky-800 hover:bg-sky-900">
+              <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
                 Delete
               </Button>
             </AlertDialogTrigger>
@@ -197,7 +197,7 @@ export default function SpeakerClient() {
         <h1 className="text-2xl font-bold">Speakers</h1>
         <Button
           onClick={handleAdd}
-          className="bg-sky-800 text-white hover:bg-sky-900"
+          className="bg-orange-600 text-white hover:bg-orange-700"
         >
           + Add Speaker
         </Button>
@@ -211,8 +211,8 @@ export default function SpeakerClient() {
             onClick={() => setActiveTab(tab)}
             className={`pb-2 border-b-2 ${
               tab === activeTab
-                ? 'border-[#035D8A] text-[#035D8A] font-semibold'
-                : 'border-transparent hover:text-black'
+                ? 'border-orange-600 text-orange-600 font-semibold'
+                : 'border-transparent hover:text-foreground'
             }`}
           >
             {tab}

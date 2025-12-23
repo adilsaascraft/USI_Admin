@@ -186,8 +186,12 @@ export default function UsersClient() {
             <AlertDialogTrigger asChild>
               <Button
                 size="sm"
-                variant={isApproved ? 'destructive' : 'default'}
                 disabled={isLoading}
+                className={
+                  isApproved
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : 'bg-green-500 hover:bg-green-600 text-white'
+                }
               >
                 {isLoading ? 'Updating...' : isApproved ? 'Suspend' : 'Approve'}
               </Button>
@@ -247,8 +251,8 @@ export default function UsersClient() {
             onClick={() => setActiveTab(tab)}
             className={`pb-2 border-b-2 flex items-center gap-2 ${
               tab === activeTab
-                ? 'border-[#035D8A] text-[#035D8A] font-semibold'
-                : 'border-transparent hover:text-black'
+                ? 'border-orange-600 text-orange-600 font-semibold'
+                : 'border-transparent hover:text-foreground'
             }`}
           >
             {tab}

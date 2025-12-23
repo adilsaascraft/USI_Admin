@@ -58,7 +58,7 @@ function SidebarComponent() {
     <motion.div
       animate={{ width: collapsed ? 60 : 240 }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
-      className="min-h-screen bg-orange-50 p-2 flex flex-col relative dark:bg-background dark:text-foreground border-r overflow-hidden"
+      className="min-h-full bg-gray-50 p-2 flex flex-col relative dark:bg-background dark:text-foreground border-r overflow-hidden"
     >
       {!isMobile && (
         <div className="relative mb-4">
