@@ -16,12 +16,17 @@ export const CourseFormSchema = z
 
     /* ================= IMAGE ================= */
 
-    // create → FileList
-    // edit   → string URL
+    /**
+     * Create → FileList (1 file required)
+     * Edit   → Existing image URL (string)
+     */
     courseImage: z.union([
       z
         .any()
-        .refine((file) => file?.length === 1, 'Please upload a course image'),
+        .refine(
+          (file) => file?.length === 1,
+          'Please upload a course image (300 × 250 px)'
+        ),
       z.string().url(),
     ]),
 
@@ -43,39 +48,44 @@ export const CourseFormSchema = z
       })
     ),
 
-    amount: z.number().min(0).optional(),
-
-    /* ================= STATUS ================= */
-
-    status: z.enum(['Active', 'Inactive']).optional(),
+    /**
+     * Optional in schema
+     * Required conditionally via superRefine
+     */
+    amount: z.number().optional(),
 
     /* ================= STREAM ================= */
 
     streamLink: z
       .string()
-      .url('Please enter a valid stream URL.')
-      .min(1, 'Stream link is required.'),
+      .min(1, 'Stream link is required.')
+      .url('Please enter a valid stream URL.'),
+
+    status: z.enum(['Active', 'Inactive']).refine((val) => val, {
+      message: 'Status is required.',
+    }),
   })
   .superRefine((data, ctx) => {
-    // Paid → amount required
-    if (
-      data.registrationType === 'paid' &&
-      (!data.amount || data.amount <= 0)
-    ) {
-      ctx.addIssue({
-        path: ['amount'],
-        message: 'Amount is required for paid courses.',
-        code: z.ZodIssueCode.custom,
-      })
+    /* Paid → amount required (> 0) */
+    if (data.registrationType === 'paid') {
+      if (typeof data.amount !== 'number' || data.amount <= 0) {
+        ctx.addIssue({
+          path: ['amount'],
+          message: 'Amount is required for paid courses.',
+          code: z.ZodIssueCode.custom,
+        })
+      }
     }
 
-    // Free → force amount = 0 (frontend safety)
-    if (data.registrationType === 'free' && data.amount !== 0) {
-      ctx.addIssue({
-        path: ['amount'],
-        message: 'Amount must be 0 for free courses.',
-        code: z.ZodIssueCode.custom,
-      })
+    /* Free → amount must be 0 or undefined */
+    if (data.registrationType === 'free') {
+      if (data.amount && data.amount !== 0) {
+        ctx.addIssue({
+          path: ['amount'],
+          message: 'Amount must be 0 for free courses.',
+          code: z.ZodIssueCode.custom,
+        })
+      }
     }
   })
 

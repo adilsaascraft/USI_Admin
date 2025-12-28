@@ -1,17 +1,17 @@
-// Faculty Page
+
 "use client";
 
 import { useParams } from "next/navigation";
-import FacultyClient from "@/components/clients/webinar/FacultyClient";
+import FAQClient from "@/components/clients/webinar/FAQClient";
 
-export default function FacultyPage() {
+export default function FAQPage() {
   const { webinarId } = useParams();
   if (!webinarId || Array.isArray(webinarId)) return null;
 
   return (
     <div className="p-4">
-      <FacultyClient webinarId={webinarId} />
+      <FAQClient webinarId={webinarId} />
     </div>
-  );
+  )
 }
 

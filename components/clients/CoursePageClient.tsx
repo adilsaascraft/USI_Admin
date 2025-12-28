@@ -3,47 +3,26 @@
 import { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import useSWR, { mutate } from 'swr'
-
+import { CourseType } from '@/types/course'
 import EventCardSkeleton from '@/components/EventCardSkeleton'
 import AddCourseForm from '@/components/forms/AddCourseForm'
 import CourseCard from '@/components/CourseCard'
 
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select'
 
-/* ================= TYPES ================= */
-export interface CourseType {
-  _id: string
-  courseName: string
-  courseImage: string
-  startDate: string
-  endDate: string
-  startTime: string
-  endTime: string
-  timeZone: string
-  registrationType: 'paid' | 'free'
-  amount: number
-  status: 'Active' | 'Inactive'
-  createdAt: string
-}
+
 
 /* ================= CONSTANTS ================= */
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
-const statusTabs = ['All', 'Active', 'Inactive'] as const
+const statusTabs = ['Active', 'Inactive', 'All'] as const
 
 export default function CoursePageClient({
   initialCourses,
 }: {
   initialCourses: CourseType[]
 }) {
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/courses`
+  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/courses`
 
   const [open, setOpen] = useState(false)
   const [courseToEdit, setCourseToEdit] = useState<CourseType | null>(null)
@@ -114,7 +93,7 @@ export default function CoursePageClient({
 
           <SheetContent side="right" className="w-[500px] sm:w-[600px]">
             <AddCourseForm
-              courseId={courseToEdit?._id || null}
+              courseToEdit={courseToEdit?._id || null}
               onSuccess={handleSuccess}
             />
           </SheetContent>
@@ -166,7 +145,7 @@ export default function CoursePageClient({
           ))}
         </div>
       ) : filteredCourses.length > 0 ? (
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {paginatedCourses.map((course) => (
             <CourseCard
               key={course._id}

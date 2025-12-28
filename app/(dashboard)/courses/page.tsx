@@ -20,3 +20,4 @@ export default function CoursePage() {
 
   return <CoursePageClient initialCourses={courses} />
 }
+

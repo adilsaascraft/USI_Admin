@@ -190,7 +190,7 @@ export default function UsersClient() {
                 className={
                   isApproved
                     ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-green-800 hover:bg-green-900 text-white'
                 }
               >
                 {isLoading ? 'Updating...' : isApproved ? 'Suspend' : 'Approve'}
@@ -214,12 +214,12 @@ export default function UsersClient() {
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  className={isApproved ? 'bg-red-600 hover:bg-red-700' : ''}
+                  className={isApproved ? 'bg-red-600 hover:bg-red-700' : 'bg-green-800 hover:bg-green-900'}
                   disabled={isLoading}
                   onClick={() =>
                     updateStatus(
                       row.original._id,
-                      isApproved ? 'Pending' : 'Approved'
+                       isApproved ? 'Pending' : 'Approved'
                     )
                   }
                 >

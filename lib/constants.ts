@@ -23,7 +23,7 @@ export const prefix = [
 ] as const
 
 
-export const speakerType = [
+export const facultyType = [
   { value: 'Convenor', label: 'Convenor' },
   { value: 'Co-Convenor', label: 'Co-Convenor' },
   { value: 'Faculty', label: 'Faculty' },

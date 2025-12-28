@@ -61,7 +61,7 @@ export default function AddWebinarForm({
   const [loading, setLoading] = useState(false)
   const DRAFT_KEY = 'add-webinar-form'
   const { drafts, setDraft, clearDraft } = useFormDraftStore()
-  const eventDraft = drafts[DRAFT_KEY]
+  const webinarDraft = drafts[DRAFT_KEY]
 
   // ================= IMAGE STATE =================
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -74,7 +74,7 @@ export default function AddWebinarForm({
     resolver: zodResolver(WebinarFormSchema),
     defaultValues:
       webinarToEdit ||
-      eventDraft || {
+      webinarDraft || {
         name: '',
         image: '',
         description: '',

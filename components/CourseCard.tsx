@@ -111,34 +111,35 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
 
   /* ================= UI ================= */
   return (
-    <Card className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4 relative shadow-sm">
+    <Card className="p-0 group relative flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       {/* Course Image */}
-      <div className="w-[300px] h-[250px] relative">
+      <div className="relative h-[250px] w-full overflow-hidden">
         <Image
           src={course.courseImage}
           alt={course.courseName}
           fill
-          sizes="(max-width: 300px) 100vw, 300px"
-          className="object-cover rounded-md"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="object-fit transition-transform duration-300 group-hover:scale-105"
         />
       </div>
 
+      {/* Status Badge */}
+      <span
+        className={clsx(
+          'absolute top-65 left-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur',
+          currentStatus.color
+        )}
+      >
+        {currentStatus.icon}
+        {currentStatus.label}
+      </span>
+
       {/* Content */}
-      <CardContent className="flex-1 w-full p-0 space-y-2 text-sm">
+      <CardContent className="flex flex-col gap-3 p-4 text-sm">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-bold text-sky-800 dark:text-foreground">
+          <h2 className="line-clamp-2 text-lg font-semibold text-sky-800">
             {course.courseName}
           </h2>
-
-          <span
-            className={clsx(
-              'inline-flex items-center text-xs font-semibold px-2 py-1 rounded',
-              currentStatus.color
-            )}
-          >
-            {currentStatus.icon}
-            {currentStatus.label}
-          </span>
         </div>
 
         {/* Registration Type */}
@@ -167,7 +168,7 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
       </CardContent>
 
       {/* Manage Menu */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute right-3 top-65">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="bg-orange-600 hover:bg-orange-700 text-white">
