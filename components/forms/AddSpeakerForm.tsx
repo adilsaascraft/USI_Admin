@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   SpeakerFormSchema,
   SpeakerFormValues,
@@ -13,6 +12,7 @@ import {
   FaMapMarkerAlt,
 } from 'react-icons/fa'
 import InputWithIcon from '@/components/InputWithIcon'
+
 import {
   zodResolver,
   useForm,
@@ -22,21 +22,26 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-  Select,
   Input,
 } from '@/lib/imports'
+
 import { Button, SheetClose, toast, status, prefix } from '@/lib/imports'
 import { fetchClient } from '@/lib/fetchClient'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 
+/* ================= PROPS ================= */
+
 type AddSpeakerFormProps = {
   defaultValues?: SpeakerFormValues & { _id?: string }
-  onSave: (formData: SpeakerFormValues & { _id?: string }) => Promise<void>
+  onSave: (data: any) => Promise<void>
 }
+
+/* ================= COMPONENT ================= */
 
 export default function AddSpeakerForm({
   defaultValues,
@@ -44,52 +49,43 @@ export default function AddSpeakerForm({
 }: AddSpeakerFormProps) {
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState<string | null>(
-    defaultValues?.speakerProfilePicture || null
+    (defaultValues?.speakerProfilePicture as string) || null
   )
-
-  const DRAFT_KEY = 'add-speaker-form'
-  const { drafts, setDraft, clearDraft } = useFormDraftStore()
-  const speakerDraft = drafts[DRAFT_KEY]
 
   const form = useForm<SpeakerFormValues>({
     resolver: zodResolver(SpeakerFormSchema),
-    defaultValues: defaultValues ||
-      speakerDraft || {
-        prefix: '',
-        speakerName: '',
-        degree: '',
-        specialization: '',
-        experience: '',
-        affiliation: '',
-        country: '',
-        state: '',
-        city: '',
-        speakerProfilePicture: '',
-      },
+    defaultValues: {
+      prefix: defaultValues?.prefix || '',
+      speakerName: defaultValues?.speakerName || '',
+      degree: defaultValues?.degree || '',
+      specialization: defaultValues?.specialization || '',
+      experience: defaultValues?.experience || '',
+      affiliation: defaultValues?.affiliation || '',
+      country: defaultValues?.country || '',
+      state: defaultValues?.state || '',
+      city: defaultValues?.city || '',
+      status: defaultValues?.status || 'Active',
+      speakerProfilePicture: defaultValues?.speakerProfilePicture,
+    },
   })
 
-  // ✅ Save draft only in Add mode
-  useEffect(() => {
-    if (defaultValues?._id) return
-    const subscription = form.watch((values) => {
-      setDraft(DRAFT_KEY, values)
-    })
-    return () => subscription.unsubscribe()
-  }, [form.watch, defaultValues?._id])
+  /* ================= IMAGE HANDLER ================= */
 
-  // Handle image change
   const handleImageChange = (file?: File) => {
     if (!file) return
     setPreview(URL.createObjectURL(file))
-    form.setValue('speakerProfilePicture', file as any)
+    form.setValue('speakerProfilePicture', file)
   }
 
-  async function onSubmit(data: SpeakerFormValues & { _id?: string }) {
+  /* ================= SUBMIT ================= */
+
+  const onSubmit = async (data: SpeakerFormValues) => {
     try {
       setLoading(true)
 
       const formData = new FormData()
 
+      // Append text fields
       formData.append('prefix', data.prefix)
       formData.append('speakerName', data.speakerName)
       formData.append('degree', data.degree)
@@ -101,11 +97,8 @@ export default function AddSpeakerForm({
       formData.append('city', data.city)
       formData.append('status', data.status || 'Active')
 
-      // ✅ Image logic
-      if ((data.speakerProfilePicture as any) instanceof File) {
-        formData.append('speakerProfilePicture', data.speakerProfilePicture)
-      } else if (typeof data.speakerProfilePicture === 'string') {
-        // re-send existing image in update mode
+      // Append image ONLY if user selected a new one
+      if (data.speakerProfilePicture instanceof File) {
         formData.append('speakerProfilePicture', data.speakerProfilePicture)
       }
 
@@ -120,19 +113,19 @@ export default function AddSpeakerForm({
         body: formData,
       })
 
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.message || 'Failed to save speaker')
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.message || 'Failed to save speaker')
 
       toast.success(
-        defaultValues?._id
+        defaultValues
           ? 'Speaker updated successfully!'
           : 'Speaker created successfully!',
         { description: getIndianFormattedDate() }
       )
 
-      onSave?.(result.data)
+      await onSave(json.data)
       form.reset()
-      clearDraft(DRAFT_KEY)
+      setPreview(null)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong ❌')
     } finally {
@@ -140,43 +133,42 @@ export default function AddSpeakerForm({
     }
   }
 
+  /* ================= UI ================= */
+
   return (
     <div className="flex flex-col min-h-full">
-      <div className="flex-1 overflow-y-auto custom-scroll pb-20">
+      <div className="flex-1 overflow-y-auto custom-scroll mb-20">
         <Form {...form}>
           <form
             id="add-speaker-form"
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 px-3"
+            className="space-y-4 px-3 pb-20"
           >
             {/* Prefix */}
-                       <FormField
-                         control={form.control}
-                         name="prefix"
-                         render={({ field }) => (
-                           <FormItem className="w-full">
-                             <FormLabel>Prefix *</FormLabel>
-                             <Select
-                               onValueChange={field.onChange}
-                               defaultValue={field.value}
-                             >
-                               <FormControl>
-                                 <SelectTrigger className="w-full p-3">
-                                   <SelectValue placeholder="Select prefix" />
-                                 </SelectTrigger>
-                               </FormControl>
-                               <SelectContent>
-                                 {prefix.map((s) => (
-                                   <SelectItem key={s.value} value={s.value}>
-                                     {s.label}
-                                   </SelectItem>
-                                 ))}
-                               </SelectContent>
-                             </Select>
-                             <FormMessage />
-                           </FormItem>
-                         )}
-                       />
+            <FormField
+              control={form.control}
+              name="prefix"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Prefix *</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="w-full p-3">
+                        <SelectValue placeholder="Select prefix" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {prefix.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Speaker Name */}
             <FormField
@@ -186,12 +178,35 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>Speaker Name *</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} icon={<FaUser />} />
+                    <InputWithIcon
+                      {...field}
+                      icon={<FaUser />}
+                      placeholder="Enter speaker name"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Profile Picture (MOVED HERE) */}
+            <FormItem>
+              <FormLabel>Profile Picture</FormLabel>
+              <FormControl>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e.target.files?.[0])}
+                />
+              </FormControl>
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="mt-2 h-24 w-24 rounded border object-cover"
+                />
+              )}
+            </FormItem>
 
             {/* Degree */}
             <FormField
@@ -201,7 +216,11 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>Degree *</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} icon={<FaGraduationCap />} />
+                    <InputWithIcon
+                      {...field}
+                      icon={<FaGraduationCap />}
+                      placeholder="e.g. MBBS, MD"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -216,7 +235,7 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>Specialization</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} />
+                    <InputWithIcon {...field} placeholder="e.g. Urology" />
                   </FormControl>
                 </FormItem>
               )}
@@ -230,31 +249,11 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>Experience</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} />
+                    <InputWithIcon {...field} placeholder="e.g. 10+ Years" />
                   </FormControl>
                 </FormItem>
               )}
             />
-
-            {/* Profile Picture */}
-            <FormItem>
-              <FormLabel>Profile Picture *</FormLabel>
-              <FormControl>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageChange(e.target.files?.[0])}
-                />
-              </FormControl>
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="mt-2 h-24 w-24 rounded object-cover border"
-                />
-              )}
-              <FormMessage />
-            </FormItem>
 
             {/* Affiliation */}
             <FormField
@@ -264,7 +263,10 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>Affiliation *</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} />
+                    <InputWithIcon
+                      {...field}
+                      placeholder="e.g. Apollo Hospitals"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -279,7 +281,11 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>Country *</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} icon={<FaGlobe />} />
+                    <InputWithIcon
+                      {...field}
+                      icon={<FaGlobe />}
+                      placeholder="e.g. India"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -294,7 +300,11 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>State *</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} icon={<FaMapMarkerAlt />} />
+                    <InputWithIcon
+                      {...field}
+                      icon={<FaMapMarkerAlt />}
+                      placeholder="e.g. Telangana"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -309,7 +319,11 @@ export default function AddSpeakerForm({
                 <FormItem>
                   <FormLabel>City *</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} icon={<FaMapMarkerAlt />} />
+                    <InputWithIcon
+                      {...field}
+                      icon={<FaMapMarkerAlt />}
+                      placeholder="e.g. Hyderabad"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -317,37 +331,32 @@ export default function AddSpeakerForm({
             />
 
             {/* Status */}
-                        <FormField
-                          control={form.control}
-                          name="status"
-                          render={({ field }) => (
-                            <FormItem className="w-full">
-                              <FormLabel>Status</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="w-full p-3">
-                                    <SelectValue placeholder="Select status type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {status.map((s) => (
-                                    <SelectItem key={s.value} value={s.value}>
-                                      {s.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="w-full p-3">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {status.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
           </form>
         </Form>
       </div>
-
       {/* Footer */}
       <div className="bg-background sticky bottom-0 border-t px-6 py-4 flex justify-between">
         <SheetClose asChild>
@@ -360,7 +369,7 @@ export default function AddSpeakerForm({
           type="submit"
           form="add-speaker-form"
           disabled={loading}
-          className="bg-sky-800 text-white hover:bg-sky-900"
+          className="bg-orange-600 text-white hover:bg-orange-700"
         >
           {loading
             ? defaultValues

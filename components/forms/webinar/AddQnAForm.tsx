@@ -182,7 +182,7 @@ export default function AddQnAForm({
         <Button
           onClick={form.handleSubmit(onSubmit)}
           disabled={loading}
-          className="bg-sky-800 text-white hover:bg-sky-900"
+          className="bg-orange-600 text-white hover:bg-orange-700"
         >
           {loading
             ? defaultValues

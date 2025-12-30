@@ -111,12 +111,12 @@ export default function AddFeedbackForm({
   /* ================= UI ================= */
 
   return (
-    <div className='overflow-auto'>
+    <div className="flex flex-col min-h-full">
       <FormProvider {...form}>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 px-4"
+            className="flex-1 overflow-y-auto space-y-6 px-4 pb-24"
           >
             {fields.map((field, index) => (
               <div key={field.id} className="border rounded-xl p-4 space-y-4">
@@ -200,20 +200,31 @@ export default function AddFeedbackForm({
             >
               + Add More
             </Button>
-
-            {/* FOOTER */}
-            <div className="sticky bottom-0 bg-background border-t py-4 flex justify-between">
-              <SheetClose asChild>
-                <Button variant="outline">Close</Button>
-              </SheetClose>
-
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : defaultValues ? 'Update' : 'Create'}
-              </Button>
-            </div>
           </form>
         </Form>
       </FormProvider>
+      {/* FOOTER */}
+      <div className="sticky bottom-0 border-t bg-background px-6 py-4 flex justify-between">
+        <SheetClose asChild>
+          <Button variant="outline" disabled={loading}>
+            Close
+          </Button>
+        </SheetClose>
+
+        <Button
+          onClick={form.handleSubmit(onSubmit)}
+          disabled={loading}
+          className="bg-orange-600 text-white hover:bg-orange-700"
+        >
+          {loading
+            ? defaultValues
+              ? 'Updating...'
+              : 'Creating...'
+            : defaultValues
+            ? 'Update'
+            : 'Create'}
+        </Button>
+      </div>
     </div>
   )
 }

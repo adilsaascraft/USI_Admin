@@ -186,13 +186,13 @@ export default function FacultyClient({ webinarId }: { webinarId: string }) {
     <div className="bg-background text-foreground">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">All Assigned Speakers</h1>
+        <h1 className="text-2xl font-bold">All Assigned Faculty</h1>
 
         <Button
           onClick={handleAdd}
           className="bg-orange-600 text-white hover:bg-orange-700"
         >
-          + Assign Speaker
+          + Assign Faculty
         </Button>
       </div>
 
@@ -203,7 +203,7 @@ export default function FacultyClient({ webinarId }: { webinarId: string }) {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="w-[500px] sm:w-[600px]">
           <div className="p-4 border-b">
-            <h2 className="text-xl font-semibold">Assign Speaker</h2>
+            <h2 className="text-xl font-semibold">Assign Faculty</h2>
           </div>
 
           <AddFacultyForm webinarId={webinarId} onSave={handleSave} />

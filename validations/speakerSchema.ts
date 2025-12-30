@@ -28,10 +28,8 @@ export const SpeakerFormSchema = z.object({
     .max(100, 'Experience cannot exceed 100 characters.')
     .optional(),
 
-  speakerProfilePicture: z
-    .string()
-    .min(1, 'Speaker image is required.')
-    .url('Speaker image must be a valid URL.'),
+  // ✅ FILE FIX
+  speakerProfilePicture: z.any().optional(),
 
   affiliation: z
     .string()

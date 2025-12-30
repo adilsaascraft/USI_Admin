@@ -114,12 +114,12 @@ export default function AddQuizForm({
   /* ================= UI ================= */
 
   return (
-    <div className="overflow-auto">
+    <div className="flex flex-col min-h-full">
       <FormProvider {...form}>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 px-4"
+            className="flex-1 overflow-y-auto space-y-6 px-4 pb-24"
           >
             {/* ================= QUESTIONS ================= */}
 
@@ -193,7 +193,7 @@ export default function AddQuizForm({
                         onValueChange={field.onChange}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className='w-full p-3'>
                             <SelectValue placeholder="Select correct answer" />
                           </SelectTrigger>
                         </FormControl>
@@ -248,34 +248,46 @@ export default function AddQuizForm({
               name="quizduration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quiz Duration (seconds) *</FormLabel>
+                  <FormLabel>Total Quiz Duration (seconds) *</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="number"
                       min={1}
-                      placeholder="e.g. 45"
+                      placeholder="e.g. 600"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {/* ================= FOOTER ================= */}
-
-            <div className="sticky bottom-0 bg-background border-t py-4 flex justify-between">
-              <SheetClose asChild>
-                <Button variant="outline">Close</Button>
-              </SheetClose>
-
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : defaultValues ? 'Update' : 'Create'}
-              </Button>
-            </div>
           </form>
         </Form>
       </FormProvider>
+
+      {/* FOOTER */}
+            <div className="sticky bottom-0 border-t bg-background px-6 py-4 flex justify-between">
+              <SheetClose asChild>
+                <Button variant="outline" disabled={loading}>
+                  Close
+                </Button>
+              </SheetClose>
+      
+              <Button
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={loading}
+                className="bg-orange-600 text-white hover:bg-orange-700"
+              >
+                {loading
+                  ? defaultValues
+                    ? 'Updating...'
+                    : 'Creating...'
+                  : defaultValues
+                  ? 'Update'
+                  : 'Create'}
+              </Button>
+            </div>
+      
     </div>
   )
 }
