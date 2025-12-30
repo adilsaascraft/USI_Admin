@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import useSWR, { mutate } from 'swr'
-
-import EventCardSkeleton from '@/components/EventCardSkeleton'
+import { WebinarType } from '@/types/webinar'
+import EventCardSkeleton from '@/components/CardSkeleton'
 import AddWebinarForm from '@/components/forms/AddWebinarForm'
 import WebinarCard from '@/components/WebinarCard'
 
@@ -17,8 +17,6 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select'
-
-import { WebinarType } from '@/types/webinar'
 import { webinarType } from '@/lib/constants'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())

@@ -7,7 +7,10 @@ export const CourseFormSchema = z
       .min(1, 'Course name is required.')
       .max(100, 'Course name cannot exceed 100 characters.'),
 
-    description: z.string().optional(),
+    description: z
+      .string()
+      .min(1, 'Description is required.')
+      .max(100000, 'Description cannot exceed 100000 characters.'),
 
     courseImage: z.union([
       z
@@ -27,16 +30,22 @@ export const CourseFormSchema = z
 
     timeZone: z.string().min(1, 'Time zone is required.'),
 
-    registrationType: z.enum(['paid', 'free']),
+    registrationType: z.enum(['paid', 'free']).pipe(
+      z.enum(['paid', 'free']).refine((val) => val, {
+        message: 'Registration type is required.',
+      })
+    ),
 
-    amount: z.number().optional(),
+    amount: z.number().min(0).optional(),
 
     streamLink: z
       .string()
       .url('Please enter a valid stream URL.')
       .min(1, 'Stream link is required.'),
 
-    status: z.enum(['Active', 'Inactive']),
+    status: z.enum(['Active', 'Inactive']).refine((val) => val, {
+      message: 'Status is required.',
+    }),
   })
   .superRefine((data, ctx) => {
     if (data.registrationType === 'paid') {

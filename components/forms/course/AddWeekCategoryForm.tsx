@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { WeekCategorySchema, WeekCategoryValues } from '@/validations/weekcategory'
 import { FaCalendarWeek } from 'react-icons/fa'
 import InputWithIcon from '@/components/InputWithIcon'
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   useForm,
   zodResolver,
@@ -43,15 +44,29 @@ export default function AddWeekCategoryForm({
   onSave,
 }: Props) {
   const [loading, setLoading] = useState(false)
-
+  const DRAFT_KEY = 'add-week-form'
+  const { drafts, setDraft, clearDraft } = useFormDraftStore()
+  const courseDraft = drafts[DRAFT_KEY]
   const form = useForm<WeekCategoryValues>({
     resolver: zodResolver(WeekCategorySchema),
-    defaultValues: {
-      weekCategoryName: '',
-      status: 'Active',
-      courseId,
-    },
+    defaultValues: defaultValues ||
+      courseDraft || {
+        weekCategoryName: '',
+        status: 'Active',
+        courseId,
+      },
   })
+
+  // ================= DRAFT PERSIST =================
+  useEffect(() => {
+    if (defaultValues?._id) return
+
+    const subscription = form.watch((values) => {
+      setDraft(DRAFT_KEY, values)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form.watch, defaultValues?._id])
 
   useEffect(() => {
     if (defaultValues) {
@@ -78,17 +93,14 @@ export default function AddWeekCategoryForm({
 
       const method = isEdit ? 'PUT' : 'POST'
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`,
-        {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(data),
-        }
-      )
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      })
 
       const json = await res.json()
       if (!res.ok) throw new Error(json.message)
@@ -100,6 +112,7 @@ export default function AddWeekCategoryForm({
 
       onSave()
       form.reset()
+       clearDraft(DRAFT_KEY)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {
@@ -140,7 +153,7 @@ export default function AddWeekCategoryForm({
                 <FormLabel>Status</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
-                    <SelectTrigger className='w-full p-3'>
+                    <SelectTrigger className="w-full p-3">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                   </FormControl>

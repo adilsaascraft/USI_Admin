@@ -1,8 +1,8 @@
 'use client'
+import { JSX, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { WebinarType } from "@/types/webinar"
 import Image from 'next/image'
-import { JSX, useState } from 'react'
 import { fetchClient } from "@/lib/fetchClient"
 import { getIndianFormattedDate } from "@/lib/formatIndianDate"
 import {
@@ -47,9 +47,12 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
   const [loading, setLoading] = useState(false)
 
   // Map status to color & icon
-  const statusMap: Record<string, { color: string; icon: JSX.Element; label?: string }> = {
+  const statusMap: Record<
+    string,
+    { color: string; icon: JSX.Element; label?: string }
+  > = {
     Live: {
-      color: "bg-green-100 text-green-700",
+      color: 'bg-green-100 text-green-700',
       icon: <Check className="h-5 w-5 mr-1" />,
     },
     Upcoming: {
@@ -68,10 +71,10 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
     icon: <FileText className="h-5 w-5 mr-1" />,
     label: event.dynamicStatus,
   }
-
-    const handleManage = () => {
-      router.push(`/webinar/${event._id}/faculty`)
-    }
+  /* ================= HANDLERS ================= */
+  const handleManage = () => {
+    router.push(`/webinar/${event._id}/faculty`)
+  }
 
   // ✅ Delete API call
   async function handleDelete() {
@@ -87,7 +90,7 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
         throw new Error(data.message || 'Failed to delete webinar')
       }
 
-      toast("Webinar has been deleted", {
+      toast('Webinar has been deleted', {
         description: getIndianFormattedDate(),
       })
       mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/webinars`)

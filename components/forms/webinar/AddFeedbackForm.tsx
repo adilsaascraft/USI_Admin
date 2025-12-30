@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useFieldArray, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import { z } from 'zod'
 
 import {
@@ -39,22 +40,36 @@ export default function AddFeedbackForm({
   onSave,
 }: {
   webinarId: string
-  defaultValues?: FeedbackFormValues
+  defaultValues?: FeedbackFormValues & { _id: string }
   onSave?: () => void
 }) {
   const [loading, setLoading] = useState(false)
-
+  const DRAFT_KEY = 'add-feedback-form'
+  const { drafts, setDraft, clearDraft } = useFormDraftStore()
+  const courseDraft = drafts[DRAFT_KEY]
   const form = useForm<FeedbackFormValues>({
     resolver: zodResolver(FeedbackFormSchema),
-    defaultValues: defaultValues ?? {
-      feedbacks: [
-        {
-          feedbackName: '',
-          options: [''], // 🔴 REQUIRED
-        },
-      ],
-    },
+    defaultValues: defaultValues ||
+      courseDraft || {
+        feedbacks: [
+          {
+            feedbackName: '',
+            options: [''],
+          },
+        ],
+      },
   })
+
+  // ================= DRAFT PERSIST =================
+  useEffect(() => {
+    if (defaultValues?._id) return
+
+    const subscription = form.watch((values) => {
+      setDraft(DRAFT_KEY, values)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form.watch, defaultValues?._id])
 
   const { control, watch, setValue } = form
 
@@ -101,6 +116,8 @@ export default function AddFeedbackForm({
 
       toast.success(defaultValues ? 'Feedback updated' : 'Feedback created')
       onSave?.()
+      form.reset()
+      clearDraft(DRAFT_KEY)
     } catch (e: any) {
       toast.error(e.message)
     } finally {
@@ -197,6 +214,7 @@ export default function AddFeedbackForm({
               type="button"
               variant="outline"
               onClick={() => append({ feedbackName: '', options: [''] })}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
             >
               + Add More
             </Button>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Textarea } from '@/components/ui/textarea'
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   Form,
   FormField,
@@ -27,27 +28,42 @@ export default function AddCourseModule({
   onSave,
 }) {
   const [loading, setLoading] = useState(false)
+  const DRAFT_KEY = 'add-module-form'
+  const { drafts, setDraft, clearDraft } = useFormDraftStore()
+  const courseDraft = drafts[DRAFT_KEY]
   const [weekCategories, setWeekCategories] = useState([])
 
   /* ================= FORM ================= */
 
   const form = useForm({
-    defaultValues: {
-      weekCategoryId:
-        defaultValues?.weekCategoryId?._id ||
-        defaultValues?.weekCategoryId ||
-        '',
-      contentType: defaultValues?.contentType || 'video',
-      topicName: defaultValues?.topicName || '',
-      aboutTopic: defaultValues?.aboutTopic || '',
-      contentUrl: defaultValues?.contentUrl || '',
-      videoDuration: defaultValues?.videoDuration || '',
-      additionalQuestions:
-        defaultValues?.additionalQuestions?.map((q) => ({ value: q })) || [],
-      additionalResources:
-        defaultValues?.additionalResources?.map((r) => ({ value: r })) || [],
-    },
+    defaultValues: defaultValues ||
+      courseDraft || {
+        weekCategoryId:
+          defaultValues?.weekCategoryId?._id ||
+          defaultValues?.weekCategoryId ||
+          '',
+        contentType: defaultValues?.contentType || 'video',
+        topicName: defaultValues?.topicName || '',
+        aboutTopic: defaultValues?.aboutTopic || '',
+        contentUrl: defaultValues?.contentUrl || '',
+        videoDuration: defaultValues?.videoDuration || '',
+        additionalQuestions:
+          defaultValues?.additionalQuestions?.map((q) => ({ value: q })) || [],
+        additionalResources:
+          defaultValues?.additionalResources?.map((r) => ({ value: r })) || [],
+      },
   })
+
+    // ================= DRAFT PERSIST =================
+    useEffect(() => {
+      if (defaultValues?._id) return
+  
+      const subscription = form.watch((values) => {
+        setDraft(DRAFT_KEY, values)
+      })
+  
+      return () => subscription.unsubscribe()
+    }, [form.watch, defaultValues?._id])
 
   const {
     control,
@@ -131,7 +147,8 @@ export default function AddCourseModule({
       }
 
       onSave?.()
-      reset()
+      form.reset()
+      clearDraft(DRAFT_KEY)
     } catch (err) {
       toast.error(err.message || 'Something went wrong')
     } finally {

@@ -46,13 +46,13 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="flex h-screen flex-col">
+      <body className="flex flex-col">
         {/* ✅ Always visible */}
         <DashboardNavbar />
 
         {/* ✅ Exactly ONE navbar renders */}
         {ActiveNavbar && (
-          <div className="top-[56px] z-50">{ActiveNavbar}</div>
+          <div>{ActiveNavbar}</div>
         )}
 
         {/* ✅ Main Content */}

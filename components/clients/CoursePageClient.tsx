@@ -4,14 +4,11 @@ import { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import useSWR, { mutate } from 'swr'
 import { CourseType } from '@/types/course'
-import EventCardSkeleton from '@/components/EventCardSkeleton'
+import EventCardSkeleton from '@/components/CardSkeleton'
 import AddCourseForm from '@/components/forms/AddCourseForm'
 import CourseCard from '@/components/CourseCard'
-
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-
-
 
 /* ================= CONSTANTS ================= */
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -38,7 +35,11 @@ export default function CoursePageClient({
     fallbackData: { data: initialCourses },
   })
 
-  const courses: CourseType[] = Array.isArray(data?.data) ? data.data : []
+  const courses: CourseType[] = Array.isArray(data?.data)
+    ? data.data
+    : Array.isArray(data)
+    ? data
+    : []
 
   /* ================= FILTERS ================= */
   const filteredByStatus =

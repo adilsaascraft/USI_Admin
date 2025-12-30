@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   WebinarFormSchema,
@@ -32,9 +32,10 @@ import {
   SheetClose,
   status,
   webinarType,
+  registrationType,
+  timezones,
 } from '@/lib/imports'
 import { CustomDatePicker, CustomTimePicker } from '@/lib/imports'
-import { registrationType, timezones } from '@/lib/imports'
 import { mutate } from 'swr'
 import { fetchClient } from '@/lib/fetchClient'
 
@@ -263,8 +264,6 @@ export default function AddWebinarForm({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 p-3"
           >
-            {/* 🔽 EVERYTHING BELOW IS YOUR ORIGINAL JSX (UNCHANGED) */}
-
             {/* Webinar NAME */}
             <FormField
               control={form.control}
@@ -478,7 +477,7 @@ export default function AddWebinarForm({
                   <FormControl>
                     <InputWithIcon
                       {...field}
-                      placeholder="eg. https://zoom.com/webinar"
+                      placeholder="eg. https://youtube.com/webinar"
                       icon={<FaCalendarDay />}
                     />
                   </FormControl>

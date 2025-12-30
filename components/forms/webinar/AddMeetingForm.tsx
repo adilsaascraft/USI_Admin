@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { MeetingSchema, MeetingValues } from '@/validations/meetingSchema'
 import { FaVideo } from 'react-icons/fa'
 import InputWithIcon from '@/components/InputWithIcon'
-
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   useForm,
   zodResolver,
@@ -41,15 +41,29 @@ export default function AddMeetingForm({
   onSave,
 }: Props) {
   const [loading, setLoading] = useState(false)
-
+  const DRAFT_KEY = 'add-meeting-form'
+  const { drafts, setDraft, clearDraft } = useFormDraftStore()
+  const courseDraft = drafts[DRAFT_KEY]
   const form = useForm<MeetingValues>({
     resolver: zodResolver(MeetingSchema),
-    defaultValues: {
-      webinarId,
-      meetingName: '',
-      meetingLink: '',
-    },
+    defaultValues: defaultValues ||
+      courseDraft || {
+        webinarId,
+        meetingName: '',
+        meetingLink: '',
+      },
   })
+
+  // ================= DRAFT PERSIST =================
+  useEffect(() => {
+    if (defaultValues?._id) return
+
+    const subscription = form.watch((values) => {
+      setDraft(DRAFT_KEY, values)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form.watch, defaultValues?._id])
 
   /* ---------- Edit Mode Prefill ---------- */
   useEffect(() => {
@@ -100,6 +114,7 @@ export default function AddMeetingForm({
 
       onSave()
       form.reset({ webinarId, meetingName: '', meetingLink: '' })
+      clearDraft(DRAFT_KEY)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {

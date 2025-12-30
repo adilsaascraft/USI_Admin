@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   SpeakerFormSchema,
   SpeakerFormValues,
@@ -12,7 +12,7 @@ import {
   FaMapMarkerAlt,
 } from 'react-icons/fa'
 import InputWithIcon from '@/components/InputWithIcon'
-
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   zodResolver,
   useForm,
@@ -48,26 +48,41 @@ export default function AddSpeakerForm({
   onSave,
 }: AddSpeakerFormProps) {
   const [loading, setLoading] = useState(false)
+  const DRAFT_KEY = 'add-speaker-form'
+    const { drafts, setDraft, clearDraft } = useFormDraftStore()
+    const courseDraft = drafts[DRAFT_KEY]
   const [preview, setPreview] = useState<string | null>(
     (defaultValues?.speakerProfilePicture as string) || null
   )
 
   const form = useForm<SpeakerFormValues>({
     resolver: zodResolver(SpeakerFormSchema),
-    defaultValues: {
-      prefix: defaultValues?.prefix || '',
-      speakerName: defaultValues?.speakerName || '',
-      degree: defaultValues?.degree || '',
-      specialization: defaultValues?.specialization || '',
-      experience: defaultValues?.experience || '',
-      affiliation: defaultValues?.affiliation || '',
-      country: defaultValues?.country || '',
-      state: defaultValues?.state || '',
-      city: defaultValues?.city || '',
-      status: defaultValues?.status || 'Active',
-      speakerProfilePicture: defaultValues?.speakerProfilePicture,
-    },
+    defaultValues: 
+      courseDraft || {
+        prefix: defaultValues?.prefix || '',
+        speakerName: defaultValues?.speakerName || '',
+        degree: defaultValues?.degree || '',
+        specialization: defaultValues?.specialization || '',
+        experience: defaultValues?.experience || '',
+        affiliation: defaultValues?.affiliation || '',
+        country: defaultValues?.country || '',
+        state: defaultValues?.state || '',
+        city: defaultValues?.city || '',
+        status: defaultValues?.status || 'Active',
+        speakerProfilePicture: defaultValues?.speakerProfilePicture,
+      },
   })
+
+  // ================= DRAFT PERSIST =================
+      useEffect(() => {
+        if (defaultValues?._id) return
+  
+        const subscription = form.watch((values) => {
+          setDraft(DRAFT_KEY, values)
+        })
+  
+        return () => subscription.unsubscribe()
+      }, [form.watch, defaultValues?._id])
 
   /* ================= IMAGE HANDLER ================= */
 
@@ -125,6 +140,7 @@ export default function AddSpeakerForm({
 
       await onSave(json.data)
       form.reset()
+      clearDraft(DRAFT_KEY)
       setPreview(null)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong ❌')

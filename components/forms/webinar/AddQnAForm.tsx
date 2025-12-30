@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, useFieldArray, FormProvider } from 'react-hook-form'
 import { z } from 'zod'
@@ -20,7 +21,6 @@ import {
 
 import {
   QuestionAnswerSchema,
-  QuestionAnswerValues,
 } from '@/validations/askedQASchema'
 
 /* ================= FORM SCHEMA ================= */
@@ -37,7 +37,7 @@ type QnAFormValues = z.infer<typeof QnAFormSchema>
 
 type AddQnAFormProps = {
   webinarId: string
-  defaultValues?: QnAFormValues
+  defaultValues?: QnAFormValues & { _id: string }
   onSave?: (data: any) => void
 }
 
@@ -49,13 +49,27 @@ export default function AddQnAForm({
   onSave,
 }: AddQnAFormProps) {
   const [loading, setLoading] = useState(false)
-
+  const DRAFT_KEY = 'add-qna-form'
+  const { drafts, setDraft, clearDraft } = useFormDraftStore()
+  const courseDraft = drafts[DRAFT_KEY]
   const form = useForm<QnAFormValues>({
     resolver: zodResolver(QnAFormSchema),
-    defaultValues: defaultValues || {
-      questionsAndAnswers: [{ question: '', answer: '' }],
-    },
+    defaultValues: defaultValues ||
+      courseDraft || {
+        questionsAndAnswers: [{ question: '', answer: '' }],
+      },
   })
+
+  // ================= DRAFT PERSIST =================
+  useEffect(() => {
+    if (defaultValues?._id) return
+
+    const subscription = form.watch((values) => {
+      setDraft(DRAFT_KEY, values)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form.watch, defaultValues?._id])
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -91,6 +105,7 @@ export default function AddQnAForm({
 
       onSave?.(result.data)
       form.reset(values)
+      clearDraft(DRAFT_KEY)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong ❌')
     } finally {
@@ -164,6 +179,7 @@ export default function AddQnAForm({
               type="button"
               variant="outline"
               onClick={() => append({ question: '', answer: '' })}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
             >
               + Add More
             </Button>

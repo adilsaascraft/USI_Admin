@@ -1,8 +1,8 @@
 'use client'
-
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { CourseType } from '@/types/course'
+import Image from 'next/image'
 import { fetchClient } from '@/lib/fetchClient'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 import {
@@ -36,20 +36,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { mutate } from 'swr'
 
-/* ================= TYPES ================= */
-export type CourseType = {
-  _id: string
-  courseName: string
-  courseImage: string
-  startDate: string
-  endDate: string
-  startTime: string
-  endTime: string
-  timeZone: string
-  registrationType: 'paid' | 'free'
-  amount: number
-  status: 'Active' | 'Inactive'
-}
+
 
 /* ================= PROPS ================= */
 type CourseCardProps = {
@@ -82,7 +69,7 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
   const handleManage = () => {
     router.push(`/courses/${course._id}/weekcategory`)
   }
-
+  // ✅ Delete API call
   async function handleDelete() {
     setLoading(true)
     try {

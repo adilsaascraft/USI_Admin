@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { apiRequest } from '@/lib/apiRequest'
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   AssignFacultySchema,
   AssignFacultyValues,
@@ -66,16 +67,30 @@ export default function AddFacultyForm({
   const [dropdownLoading, setDropdownLoading] = useState(true)
   const [speakers, setSpeakers] = useState<SpeakerType[]>([])
   const [open, setOpen] = useState(false)
+    const DRAFT_KEY = 'add-faculty-form'
+    const { drafts, setDraft, clearDraft } = useFormDraftStore()
+    const courseDraft = drafts[DRAFT_KEY]
 
   const form = useForm<AssignFacultyValues>({
     resolver: zodResolver(AssignFacultySchema),
-    defaultValues: {
-      webinarId,
-      speakerId: '',
-      facultyType: '',
-      ...defaultValues,
-    },
+    defaultValues: defaultValues ||
+      courseDraft || {
+        webinarId,
+        speakerId: '',
+        facultyType: '',
+      },
   })
+
+  // ================= DRAFT PERSIST =================
+  useEffect(() => {
+    if (defaultValues?._id) return
+
+    const subscription = form.watch((values) => {
+      setDraft(DRAFT_KEY, values)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form.watch, defaultValues?._id])
 
   // ==========================
   // Fetch active speakers
@@ -124,6 +139,7 @@ export default function AddFacultyForm({
             speakerId: '',
             facultyType: '',
           })
+          clearDraft(DRAFT_KEY)
         },
       })
     } catch (err: any) {

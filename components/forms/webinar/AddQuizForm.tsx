@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useFieldArray, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   Form,
   FormField,
@@ -36,20 +36,35 @@ export default function AddQuizForm({
   onSave?: () => void
 }) {
   const [loading, setLoading] = useState(false)
-
+const DRAFT_KEY = 'add-quiz-form'
+const { drafts, setDraft, clearDraft } = useFormDraftStore()
+const courseDraft = drafts[DRAFT_KEY]
   const form = useForm<QuizFormValues>({
     resolver: zodResolver(QuizFormSchema),
-    defaultValues: defaultValues ?? {
-      quizduration: '',
-      quizQuestions: [
-        {
-          questionName: '',
-          options: [''],
-          correctAnswer: '',
-        },
-      ],
-    },
+    defaultValues: defaultValues ||
+      courseDraft || {
+        quizduration: '',
+        quizQuestions: [
+          {
+            questionName: '',
+            options: [''],
+            correctAnswer: '',
+          },
+        ],
+      },
   })
+
+  
+    // ================= DRAFT PERSIST =================
+    useEffect(() => {
+      if (defaultValues?._id) return
+  
+      const subscription = form.watch((values) => {
+        setDraft(DRAFT_KEY, values)
+      })
+  
+      return () => subscription.unsubscribe()
+    }, [form.watch, defaultValues?._id])
 
   const { control, watch, setValue } = form
 
@@ -104,6 +119,8 @@ export default function AddQuizForm({
 
       toast.success(defaultValues ? 'Quiz updated' : 'Quiz created')
       onSave?.()
+      form.reset()
+      clearDraft(DRAFT_KEY)
     } catch (e: any) {
       toast.error(e.message)
     } finally {
@@ -193,7 +210,7 @@ export default function AddQuizForm({
                         onValueChange={field.onChange}
                       >
                         <FormControl>
-                          <SelectTrigger className='w-full p-3'>
+                          <SelectTrigger className="w-full p-3">
                             <SelectValue placeholder="Select correct answer" />
                           </SelectTrigger>
                         </FormControl>
@@ -237,6 +254,7 @@ export default function AddQuizForm({
                   correctAnswer: '',
                 })
               }
+              className="bg-orange-500 hover:bg-orange-600 text-white"
             >
               + Add Question
             </Button>
@@ -266,28 +284,27 @@ export default function AddQuizForm({
       </FormProvider>
 
       {/* FOOTER */}
-            <div className="sticky bottom-0 border-t bg-background px-6 py-4 flex justify-between">
-              <SheetClose asChild>
-                <Button variant="outline" disabled={loading}>
-                  Close
-                </Button>
-              </SheetClose>
-      
-              <Button
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={loading}
-                className="bg-orange-600 text-white hover:bg-orange-700"
-              >
-                {loading
-                  ? defaultValues
-                    ? 'Updating...'
-                    : 'Creating...'
-                  : defaultValues
-                  ? 'Update'
-                  : 'Create'}
-              </Button>
-            </div>
-      
+      <div className="sticky bottom-0 border-t bg-background px-6 py-4 flex justify-between">
+        <SheetClose asChild>
+          <Button variant="outline" disabled={loading}>
+            Close
+          </Button>
+        </SheetClose>
+
+        <Button
+          onClick={form.handleSubmit(onSubmit)}
+          disabled={loading}
+          className="bg-orange-600 text-white hover:bg-orange-700"
+        >
+          {loading
+            ? defaultValues
+              ? 'Updating...'
+              : 'Creating...'
+            : defaultValues
+            ? 'Update'
+            : 'Create'}
+        </Button>
+      </div>
     </div>
   )
 }
