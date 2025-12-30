@@ -80,7 +80,7 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
 
   /* ================= HANDLERS ================= */
   const handleManage = () => {
-    router.push(`/courses/${course._id}`)
+    router.push(`/courses/${course._id}/weekcategory`)
   }
 
   async function handleDelete() {
@@ -179,17 +179,17 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={handleManage}>
               <FileText className="mr-2 h-4 w-4" />
-              View
+              Manage Course
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => onEdit(course)}>
               <Pencil className="mr-2 h-4 w-4" />
-              Edit
+              Edit Course
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              Delete Course
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

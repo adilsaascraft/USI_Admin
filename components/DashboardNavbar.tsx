@@ -175,7 +175,7 @@ export default function DashboardNavbar() {
                 onOpenChange={setLogoutDialogOpen}
               >
                 <AlertDialogTrigger asChild>
-                  <button className="border border-white px-4 py-1 rounded-lg font-semibold hover:bg-white hover:text-sky-800 transition">
+                  <button className="border border-white px-4 py-1 rounded-lg font-semibold hover:bg-white hover:text-orange-700 transition">
                     Logout
                   </button>
                 </AlertDialogTrigger>

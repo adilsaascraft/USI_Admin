@@ -181,19 +181,19 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
               <>
                 <DropdownMenuItem onClick={handleManage}>
                   <FileText className="mr-2 h-4 w-4" />
-                  Manage
+                  Manage Webinar
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => onEdit(event)}>
                   <Pencil className="mr-2 h-4 w-4" />
-                  Edit
+                  Edit Webinar
                 </DropdownMenuItem>
               </>
             )}
 
             <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              Delete Webinar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

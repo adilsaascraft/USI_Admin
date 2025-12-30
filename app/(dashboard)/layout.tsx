@@ -23,9 +23,9 @@ export default function RootLayout({
     pathname.startsWith('/webinar/') && pathname.split('/').length > 2
 
   // Course
-  const isCourseRoot = pathname === '/course'
+  const isCourseRoot = pathname === '/courses'
   const isInsideCourse =
-    pathname.startsWith('/course/') && pathname.split('/').length > 2
+    pathname.startsWith('/courses/') && pathname.split('/').length > 2
 
   // Generic top-level routes
   const isTopLevelRoute = !isInsideWebinar && !isInsideCourse
