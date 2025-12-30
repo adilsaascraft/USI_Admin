@@ -37,9 +37,11 @@ type QnAFormValues = z.infer<typeof QnAFormSchema>
 
 type AddQnAFormProps = {
   webinarId: string
-  defaultValues?: QnAFormValues & { _id: string }
+  defaultValues?: Partial<QnAFormValues & { _id: string }>
+  qnaId?: string // 👈 separate metadata
   onSave?: (data: any) => void
 }
+
 
 /* ================= COMPONENT ================= */
 
@@ -57,6 +59,7 @@ export default function AddQnAForm({
     defaultValues: defaultValues ||
       courseDraft || {
         questionsAndAnswers: [{ question: '', answer: '' }],
+        
       },
   })
 
