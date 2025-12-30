@@ -40,7 +40,8 @@ export default function AddFeedbackForm({
   onSave,
 }: {
   webinarId: string
-  defaultValues?: FeedbackFormValues & { _id: string }
+  defaultValues?: Partial<FeedbackFormValues & { _id: string }>
+  qnaId?: string
   onSave?: () => void
 }) {
   const [loading, setLoading] = useState(false)
