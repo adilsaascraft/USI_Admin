@@ -61,13 +61,11 @@ export default function AddSpeakerForm({
       courseDraft || {
         prefix: defaultValues?.prefix || '',
         speakerName: defaultValues?.speakerName || '',
-        degree: defaultValues?.degree || '',
         specialization: defaultValues?.specialization || '',
-        experience: defaultValues?.experience || '',
         affiliation: defaultValues?.affiliation || '',
         country: defaultValues?.country || '',
-        state: defaultValues?.state || '',
-        city: defaultValues?.city || '',
+        state: '',
+        city: '',
         status: defaultValues?.status || 'Active',
         speakerProfilePicture: defaultValues?.speakerProfilePicture,
       },
@@ -103,13 +101,12 @@ export default function AddSpeakerForm({
       // Append text fields
       formData.append('prefix', data.prefix)
       formData.append('speakerName', data.speakerName)
-      formData.append('degree', data.degree)
       formData.append('specialization', data.specialization || '')
-      formData.append('experience', data.experience || '')
       formData.append('affiliation', data.affiliation)
       formData.append('country', data.country)
-      formData.append('state', data.state)
-      formData.append('city', data.city)
+      formData.append('state', data.state ?? '')
+      formData.append('city', data.city ?? '')
+
       formData.append('status', data.status || 'Active')
 
       // Append image ONLY if user selected a new one
@@ -224,24 +221,7 @@ export default function AddSpeakerForm({
               )}
             </FormItem>
 
-            {/* Degree */}
-            <FormField
-              control={form.control}
-              name="degree"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Degree *</FormLabel>
-                  <FormControl>
-                    <InputWithIcon
-                      {...field}
-                      icon={<FaGraduationCap />}
-                      placeholder="e.g. MBBS, MD"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
 
             {/* Specialization */}
             <FormField
@@ -257,19 +237,7 @@ export default function AddSpeakerForm({
               )}
             />
 
-            {/* Experience */}
-            <FormField
-              control={form.control}
-              name="experience"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Experience</FormLabel>
-                  <FormControl>
-                    <InputWithIcon {...field} placeholder="e.g. 10+ Years" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+           
 
             {/* Affiliation */}
             <FormField

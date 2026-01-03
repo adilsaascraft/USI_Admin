@@ -101,18 +101,12 @@ export default function SpeakerClient() {
         </span>
       ),
     },
-    {
-      accessorKey: 'degree',
-      header: sortableHeader('Degree'),
-    },
+    
     {
       accessorKey: 'specialization',
       header: sortableHeader('Specialization'),
     },
-    {
-      accessorKey: 'experience',
-      header: sortableHeader('Experience'),
-    },
+    
     {
       accessorKey: 'affiliation',
       header: sortableHeader('Affiliation'),

@@ -34,7 +34,7 @@ export default function WebinarPageClient({
   const [open, setOpen] = useState(false)
   const [webinarToEdit, setWebinarToEdit] = useState<WebinarType | null>(null)
   const [search, setSearch] = useState('')
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Live')
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('All')
   const [selectedType, setSelectedType] = useState<string>('All')
   const [currentPage, setCurrentPage] = useState(1)
 
