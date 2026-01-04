@@ -139,8 +139,10 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
           <Tag size={16} />
           <span>
             <span className="font-medium">Registration:</span>{' '}
-            {event.registrationType}
+            {event.registrationType.charAt(0).toUpperCase() +
+              event.registrationType.slice(1)}
           </span>
+
         </div>
 
         {/* Webinar Type */}
@@ -180,24 +182,24 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-40">
-            {!isPast && (
-              <>
-                <DropdownMenuItem onClick={handleManage}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Manage Webinar
-                </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={() => onEdit(event)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit Webinar
-                </DropdownMenuItem>
-              </>
-            )}
+            <>
+              <DropdownMenuItem onClick={handleManage}>
+                <FileText className="mr-2 h-4 w-4" />
+                Manage Webinar
+              </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Webinar
-            </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(event)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Webinar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Webinar
+              </DropdownMenuItem>
+            </>
+
+
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
