@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { LoginForm } from '@/components/forms/LoginForm'
+import { Card, CardContent } from '@/components/ui/card'
 
 export default function LoginPage() {
   return (
@@ -33,22 +34,16 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Bottom Right (Desktop only) */}
-      <div className="pointer-events-none absolute bottom-6 right-6 hidden text-right md:block">
-        <p className="text-sm font-medium text-gray-900">
-          Education Grant By
-        </p>
+      
 
-        <div className="mt-2 flex justify-end">
-          <Image
-            src="/sun.png"
-            alt="Education Grant Logo"
-            width={100}
-            height={50}
-            className="object-contain"
-          />
-        </div>
-      </div>
+      {/* ================= FOOTER ================= */}
+      <Card className="rounded-none border-t bg-white/20 backdrop-blur-xl">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-center text-center px-4 text-xs sm:text-sm text-gray-600">
+            © Urological Society of India. All Rights Reserved. Learning Management System by SaaScraft Studio (India) Pvt. Ltd.
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -6,12 +6,16 @@ import { usePathname, useParams, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 import {
-  FaUserGraduate, // Faculty
-  FaQuestionCircle, // FAQ
-  FaCommentDots, // Feedback
-  FaClipboardCheck, // Quiz
+  FaUserGraduate,
+  FaCommentDots,
+  FaClipboardCheck,
   FaHandshake,
-  FaArrowLeft, // Meeting
+  FaArrowLeft,
+  FaQuestionCircle,
+  FaComments,
+  FaCog,
+  FaRuler,
+  FaExternalLinkAlt,
 } from 'react-icons/fa'
 
 /* ✅ MENU CONFIG */
@@ -33,13 +37,33 @@ const menuItems = [
   },
   {
     name: 'Quiz',
-    slug: 'quize',
+    slug: 'quiz',
     icon: <FaClipboardCheck size={20} />,
   },
   {
     name: 'Meeting',
     slug: 'meeting',
     icon: <FaHandshake size={20} />,
+  },
+  {
+    name: 'Ask Question',
+    slug: 'question',
+    icon: <FaQuestionCircle size={20} />,
+  },
+  {
+    name: 'Communication',
+    slug: 'communication',
+    icon: <FaComments size={20} />,
+  },
+  {
+    name: 'Public Url',
+    slug: 'question-and-answer',
+    icon: <FaExternalLinkAlt size={20} />,
+  },
+  {
+    name: 'Setting',
+    slug: 'setting',
+    icon: <FaCog size={20} />,
   },
 ]
 

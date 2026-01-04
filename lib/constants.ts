@@ -30,4 +30,35 @@ export const facultyType = [
 ] as const
 
 
-
+export const settingsList = [
+  {
+    key: "faculty",
+    title: "Allow Faculty Access",
+    desc: "Enable or disable faculty access to the platform features.",
+  },
+  {
+    key: "faq",
+    title: "Allow FAQs",
+    desc: "Allow users to view frequently asked questions on the platform.",
+  },
+  {
+    key: "feedback",
+    title: "Allow Feedback",
+    desc: "Enable or disable users from submitting feedback.",
+  },
+  {
+    key: "quiz",
+    title: "Allow Quiz",
+    desc: "Allow users to participate in quizzes and assessments.",
+  },
+  {
+    key: "meeting",
+    title: "Allow Meetings",
+    desc: "Enable or disable access to meetings and virtual sessions.",
+  },
+  {
+    key: "question",
+    title: "Allow Questions",
+    desc: "Allow users to submit questions through the platform.",
+  },
+] as const;

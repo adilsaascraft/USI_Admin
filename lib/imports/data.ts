@@ -5,4 +5,5 @@ export {
   registrationType,
   prefix,
   facultyType,
+  settingsList,
 } from '@/lib/constants'

@@ -97,7 +97,7 @@ const onSubmit = async (data: LoginFormData) => {
           <form onSubmit={handleSubmit(onSubmit)} className="p-6 md:p-8">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold text-[#1F5C9E]">Admin Login</h1>
+                <h1 className="text-2xl text-bold text-orange-700 hover:text-orange-800">Admin Login</h1>
                 <p className="text-muted-foreground text-balance">
                   Welcome back! Login to continue.
                 </p>
@@ -173,8 +173,26 @@ const onSubmit = async (data: LoginFormData) => {
               >
                 {isLoading ? 'Authenticating...' : 'Login'}
               </Button>
+
+              {/* ✅ LOGO BELOW LOGIN BUTTON */}
+<div className="mt-4 flex flex-col items-center justify-center gap-2 text-center">
+  <span className="text-sm text-gray-600">
+    Educational Grant By
+  </span>
+
+  <Image
+    src="/logo.png"
+    alt="USI Logo"
+    width={220}
+    height={60}
+    className="w-full max-w-[220px] object-contain"
+    priority
+  />
+</div>
             </div>
           </form>
+
+          
 
           <div className="bg-muted relative hidden md:block">
             <Image
