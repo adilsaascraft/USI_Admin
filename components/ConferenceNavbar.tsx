@@ -6,66 +6,37 @@ import { usePathname, useParams, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 import {
-  FaUserGraduate,
-  FaCommentDots,
-  FaClipboardCheck,
-  FaHandshake,
-  FaArrowLeft,
-  FaQuestionCircle,
-  FaComments,
-  FaCog,
-  FaRuler,
-  FaExternalLinkAlt,
+  FaUniversity,      // Hall
+  FaLayerGroup,      // Track
+  FaChalkboardTeacher, // Session
+  FaBookOpen,
+  FaArrowLeft,        // Topic
 } from 'react-icons/fa'
 
 /* ✅ MENU CONFIG */
 const menuItems = [
   {
-    name: 'Faculty',
-    slug: 'faculty',
-    icon: <FaUserGraduate size={20} />,
+    name: 'Hall',
+    slug: 'hall',
+    icon: <FaUniversity size={20} />,
   },
   {
-    name: 'FAQ',
-    slug: 'faq',
-    icon: <FaQuestionCircle size={20} />,
+    name: 'Track',
+    slug: 'track',
+    icon: <FaLayerGroup size={20} />,
   },
   {
-    name: 'Feedback',
-    slug: 'feedback',
-    icon: <FaCommentDots size={20} />,
+    name: 'Session',
+    slug: 'session',
+    icon: <FaChalkboardTeacher size={20} />,
   },
   {
-    name: 'Quiz',
-    slug: 'quiz',
-    icon: <FaClipboardCheck size={20} />,
-  },
-  {
-    name: 'Meeting',
-    slug: 'meeting',
-    icon: <FaHandshake size={20} />,
-  },
-  {
-    name: 'Questions',
-    slug: 'question',
-    icon: <FaQuestionCircle size={20} />,
-  },
-  {
-    name: 'Communication',
-    slug: 'communication',
-    icon: <FaComments size={20} />,
-  },
-  {
-    name: 'Public Url',
-    slug: 'question-and-answer',
-    icon: <FaExternalLinkAlt size={20} />,
-  },
-  {
-    name: 'Setting',
-    slug: 'setting',
-    icon: <FaCog size={20} />,
+    name: 'Topic',
+    slug: 'topic',
+    icon: <FaBookOpen size={20} />,
   },
 ]
+
 
 
 export default function WebinarNavbar() {
@@ -73,7 +44,7 @@ export default function WebinarNavbar() {
   const params = useParams()
   const router = useRouter()
 
-  const webinarId = params?.webinarId as string
+  const conferenceId = params?.conferenceId as string
 
   const navItems = useMemo(() => menuItems, [])
 
@@ -82,7 +53,7 @@ export default function WebinarNavbar() {
       <div className="flex items-center gap-4 px-4 py-3">
         {/* 🔙 Back Button */}
         <button
-          onClick={() => router.push('/webinar')}
+          onClick={() => router.push('/conference')}
           className="flex items-center justify-center rounded-full border border-orange-200 bg-orange-100 p-2 text-orange-600 transition hover:bg-orange-600 hover:text-white"
         >
           <FaArrowLeft size={16} />
@@ -91,7 +62,7 @@ export default function WebinarNavbar() {
         {/* Navigation Items */}
         <div className="flex flex-1 justify-center gap-6 overflow-x-auto no-scrollbar">
           {navItems.map((item) => {
-            const href = `/webinar/${webinarId}/${item.slug}`
+            const href = `/conference/${conferenceId}/${item.slug}`
 
             const isActive =
               pathname === href || pathname.startsWith(`${href}/`)

@@ -5,6 +5,7 @@ import DashboardNavbar from '@/components/DashboardNavbar'
 import Navbar from '@/components/Navbar'
 import WebinarNavbar from '@/components/WebinarNavbar'
 import CourseNavbar from '@/components/CourseNavbar'
+import ConferenceNavbar from '@/components/ConferenceNavbar'
 
 export default function RootLayout({
   children,
@@ -26,9 +27,13 @@ export default function RootLayout({
   const isCourseRoot = pathname === '/courses'
   const isInsideCourse =
     pathname.startsWith('/courses/') && pathname.split('/').length > 2
+// Conference
+    const isConferenceRoot = pathname === '/conference'
+    const isInsideConference =
+    pathname.startsWith('/conference/') && pathname.split('/').length > 2
 
   // Generic top-level routes
-  const isTopLevelRoute = !isInsideWebinar && !isInsideCourse
+  const isTopLevelRoute = !isInsideWebinar && !isInsideCourse && !isInsideConference
 
   // =============================
   // 🧭 NAVBAR SELECTION
@@ -40,13 +45,18 @@ export default function RootLayout({
     ActiveNavbar = <WebinarNavbar />
   } else if (isInsideCourse) {
     ActiveNavbar = <CourseNavbar />
-  } else if (isTopLevelRoute) {
+  } else if (isInsideConference) {
+    ActiveNavbar = <ConferenceNavbar />
+    
+  }
+  
+  else if (isTopLevelRoute) {
     ActiveNavbar = <Navbar />
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="flex flex-col">
+   
+      <>
         {/* ✅ Always visible */}
         <DashboardNavbar />
 
@@ -57,7 +67,7 @@ export default function RootLayout({
 
         {/* ✅ Main Content */}
         <main className="flex-1 overflow-y-auto">{children}</main>
-      </body>
-    </html>
+      </>
+    
   )
 }

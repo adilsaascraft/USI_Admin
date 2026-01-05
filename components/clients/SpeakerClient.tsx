@@ -92,20 +92,45 @@ export default function SpeakerClient() {
   // Columns
   const columns: ColumnDef<SpeakerFormValues & { _id: string }>[] = [
     {
-      accessorFn: (row) => `${row.prefix} ${row.speakerName}`,
-      id: 'speakerName',
-      header: sortableHeader('Speaker Name'),
-      cell: ({ row }) => (
-        <span className="font-medium">
-          {row.original.prefix} {row.original.speakerName}
-        </span>
-      ),
-    },
+  accessorFn: (row) => `${row.prefix} ${row.speakerName}`,
+  id: 'speaker',
+  header: sortableHeader('Speaker'),
+  cell: ({ row }) => {
+    const speaker = row.original
+    const initials = `${speaker.prefix ?? ''} ${speaker.speakerName}`
+      .trim()
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+
+    return (
+      <div className="flex items-center gap-3">
+        {/* Profile Picture */}
+        {speaker.speakerProfilePicture ? (
+          <img
+            src={speaker.speakerProfilePicture}
+            alt={speaker.speakerName}
+            className="h-10 w-10 rounded-full object-cover border"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
+            {initials}
+          </div>
+        )}
+
+        {/* Name */}
+        <div className="flex flex-col">
+          <span className="font-medium">
+            {speaker.prefix} {speaker.speakerName}
+          </span>
+        </div>
+      </div>
+    )
+  },
+},
+
     
-    {
-      accessorKey: 'specialization',
-      header: sortableHeader('Specialization'),
-    },
     
     {
       accessorKey: 'affiliation',
@@ -116,7 +141,7 @@ export default function SpeakerClient() {
       header: 'Location',
       cell: ({ row }) => (
         <span>
-          {[row.original.country, row.original.state, row.original.city]
+          {[row.original.country, row.original.state,]
             .filter(Boolean)
             .join(', ')}
         </span>

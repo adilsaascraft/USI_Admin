@@ -13,14 +13,6 @@ export const SpeakerFormSchema = z.object({
     .min(1, 'Speaker name is required.')
     .max(150, 'Speaker name cannot exceed 150 characters.'),
 
-
-  specialization: z
-    .string()
-    .max(200, 'Specialization cannot exceed 200 characters.')
-    .optional(),
-
-
-
   // ✅ FILE FIX
   speakerProfilePicture: z.any().optional(),
 
@@ -34,15 +26,12 @@ export const SpeakerFormSchema = z.object({
     .min(1, 'Country is required.')
     .max(100, 'Country cannot exceed 100 characters.'),
 
+  // ✅ OPTIONAL FIELDS
   state: z
     .string()
-    .min(1, 'State is required.')
-    .max(100, 'State cannot exceed 100 characters.').optional(),
-
-  city: z
-    .string()
-    .min(1, 'City is required.')
-    .max(100, 'City cannot exceed 100 characters.').optional(),
+    .max(100, 'State cannot exceed 100 characters.')
+    .optional()
+    .or(z.literal('')),
 
   status: z.enum(['Active', 'Inactive']).optional(), // backend default: Active
 })

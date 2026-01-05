@@ -6,4 +6,5 @@ export {
   prefix,
   facultyType,
   settingsList,
+  conferenceType
 } from '@/lib/constants'

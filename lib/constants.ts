@@ -4,6 +4,11 @@ export const webinarType = [
   { value: "Live Operative Workshops", label: "Live Operative Workshops" },
 ] as const;
 
+export const conferenceType = [
+  { value: "Virtual", label: "Virtual" },
+  { value: "Physical", label: "Physical" },
+] as const;
+
 export const registrationType = [
   { value: "paid", label: "Paid" },
   { value: "free", label: "Free" },

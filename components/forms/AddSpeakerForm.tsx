@@ -7,7 +7,6 @@ import {
 } from '@/validations/speakerSchema'
 import {
   FaUser,
-  FaGraduationCap,
   FaGlobe,
   FaMapMarkerAlt,
 } from 'react-icons/fa'
@@ -61,11 +60,9 @@ export default function AddSpeakerForm({
       courseDraft || {
         prefix: defaultValues?.prefix || '',
         speakerName: defaultValues?.speakerName || '',
-        specialization: defaultValues?.specialization || '',
         affiliation: defaultValues?.affiliation || '',
         country: defaultValues?.country || '',
-        state: '',
-        city: '',
+        state: defaultValues?.state || '',
         status: defaultValues?.status || 'Active',
         speakerProfilePicture: defaultValues?.speakerProfilePicture,
       },
@@ -101,11 +98,9 @@ export default function AddSpeakerForm({
       // Append text fields
       formData.append('prefix', data.prefix)
       formData.append('speakerName', data.speakerName)
-      formData.append('specialization', data.specialization || '')
       formData.append('affiliation', data.affiliation)
       formData.append('country', data.country)
       formData.append('state', data.state ?? '')
-      formData.append('city', data.city ?? '')
 
       formData.append('status', data.status || 'Active')
 
@@ -221,21 +216,6 @@ export default function AddSpeakerForm({
               )}
             </FormItem>
 
-            
-
-            {/* Specialization */}
-            <FormField
-              control={form.control}
-              name="specialization"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Specialization</FormLabel>
-                  <FormControl>
-                    <InputWithIcon {...field} placeholder="e.g. Urology" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
 
            
 
@@ -288,25 +268,6 @@ export default function AddSpeakerForm({
                       {...field}
                       icon={<FaMapMarkerAlt />}
                       placeholder="e.g. Telangana"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* City */}
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>City *</FormLabel>
-                  <FormControl>
-                    <InputWithIcon
-                      {...field}
-                      icon={<FaMapMarkerAlt />}
-                      placeholder="e.g. Hyderabad"
                     />
                   </FormControl>
                   <FormMessage />
