@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'aig-academics.s3.ap-southeast-1.amazonaws.com',
+        hostname: 'usilmsin.s3.ap-northeast-1.amazonaws.com',
         pathname: '/**',
       },
     ],
