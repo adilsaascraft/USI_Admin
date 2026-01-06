@@ -32,6 +32,8 @@ export const facultyType = [
   { value: 'Convenor', label: 'Convenor' },
   { value: 'Co-Convenor', label: 'Co-Convenor' },
   { value: 'Faculty', label: 'Faculty' },
+  { value: 'Moderator', label: 'Moderator' },
+  { value: 'Panelist', label: 'Panelist' },
 ] as const
 
 

@@ -143,15 +143,14 @@ export default function UsersClient() {
       header: sortableHeader('Affiliation'),
     },
     {
-      id: 'contact',
-      header: 'Contact',
-      cell: ({ row }) => (
-        <div className="text-sm">
-          <div>{row.original.email}</div>
-          <div className="text-muted-foreground">{row.original.mobile}</div>
-        </div>
-      ),
+      accessorKey: 'email',
+      header: sortableHeader('Email'),
     },
+    {
+      accessorKey: 'mobile',
+      header: sortableHeader('Mobile'),
+    },
+    
     {
       id: 'location',
       header: 'Location',
