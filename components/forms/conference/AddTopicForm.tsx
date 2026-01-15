@@ -63,6 +63,10 @@ export default function AddTopicForm({
   const [speakers, setSpeakers] = useState<any[]>([])
   const [sessionOpen, setSessionOpen] = useState(false)
   const [speakerOpen, setSpeakerOpen] = useState(false)
+  const [moderatorOpen, setModeratorOpen] = useState(false)
+  const [panelistOpen, setPanelistOpen] = useState(false)
+  const [quizMasterOpen, setQuizMasterOpen] = useState(false)
+  const [teamMemberOpen, setTeamMemberOpen] = useState(false)
 
   const DRAFT_KEY = 'add-topic-form'
   const { drafts, setDraft, clearDraft } = useFormDraftStore()
@@ -93,21 +97,21 @@ export default function AddTopicForm({
 
   useEffect(() => {
     if (topicType === 'Presentation' || topicType === 'Debate') {
-      form.setValue('moderator', undefined)
+      form.setValue('moderator', '')
       form.setValue('panelist', [])
-      form.setValue('quizMaster', undefined)
+      form.setValue('quizMaster', '')
       form.setValue('teamMember', [])
     }
 
     if (topicType === 'Panel Discussion') {
       form.setValue('speakerId', [])
-      form.setValue('quizMaster', undefined)
+      form.setValue('quizMaster', '')
       form.setValue('teamMember', [])
     }
 
     if (topicType === 'Quiz') {
       form.setValue('speakerId', [])
-      form.setValue('moderator', undefined)
+      form.setValue('moderator', '')
       form.setValue('panelist', [])
     }
   }, [topicType, form])
@@ -127,9 +131,9 @@ export default function AddTopicForm({
       videoLink: defaultValues.videoLink,
       description: defaultValues.description || '',
       speakerId: defaultValues.speakerId?.map((s: any) => s._id) || [],
-      moderator: defaultValues.moderator?._id,
+      moderator: defaultValues.moderator?._id || '',
       panelist: defaultValues.panelist?.map((p: any) => p._id) || [],
-      quizMaster: defaultValues.quizMaster?._id,
+      quizMaster: defaultValues.quizMaster?._id || '',
       teamMember: defaultValues.teamMember?.map((t: any) => t._id) || [],
     })
   }, [defaultValues, conferenceId, form])
@@ -164,16 +168,117 @@ export default function AddTopicForm({
     })
   }, [conferenceId])
 
+  /* ================= RENDER SPEAKER POPOVER ================= */
+
+  const renderSpeakerPopover = (
+    field: any,
+    open: boolean,
+    setOpen: (open: boolean) => void,
+    label: string,
+    placeholder: string,
+    isMulti = false,
+    selectedValues: string[] = []
+  ) => {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            type="button"
+          >
+            {isMulti
+              ? selectedValues.length > 0
+                ? `${selectedValues.length} selected`
+                : placeholder
+              : field.value
+                ? speakers.find((s) => s._id === field.value)?.speakerName
+                : placeholder}
+            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-full" align="start">
+          <Command>
+            <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
+            <CommandList>
+              <CommandGroup>
+                {speakers.map((speaker) => {
+                  const isSelected = isMulti
+                    ? selectedValues.includes(speaker._id)
+                    : field.value === speaker._id
+                  return (
+                    <CommandItem
+                      key={speaker._id}
+                      onSelect={() => {
+                        if (isMulti) {
+                          const newValues = isSelected
+                            ? selectedValues.filter((id) => id !== speaker._id)
+                            : [...selectedValues, speaker._id]
+                          field.onChange(newValues)
+                        } else {
+                          field.onChange(speaker._id)
+                          setOpen(false)
+                        }
+                      }}
+                    >
+                      {speaker.prefix} {speaker.speakerName}
+                      {isSelected && (
+                        <Check className="ml-auto h-4 w-4" />
+                      )}
+                    </CommandItem>
+                  )
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    )
+  }
+
+  /* ================= RENDER SELECTED CHIPS ================= */
+
+  const renderSelectedChips = (field: any, fieldName: string, isMulti: boolean) => {
+    if (!isMulti || !Array.isArray(field.value) || field.value.length === 0) {
+      return null
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2 mt-2">
+        {field.value.map((id: string) => {
+          const speaker = speakers.find((s) => s._id === id)
+          if (!speaker) return null
+          return (
+            <div
+              key={id}
+              className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
+            >
+              {speaker.prefix} {speaker.speakerName}
+              <X
+                className="h-3 w-3 cursor-pointer hover:text-red-600"
+                onClick={() => {
+                  const newValues = field.value.filter((v: string) => v !== id)
+                  field.onChange(newValues)
+                }}
+              />
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   /* ================= SUBMIT ================= */
 
   async function onSubmit(data: TopicFormValues) {
     try {
       setLoading(true)
 
+      // Filter out empty string values for single select fields
       const payload = {
         ...data,
-        panelist: data.panelist,
-        teamMember: data.teamMember,
+        moderator: data.moderator || undefined,
+        quizMaster: data.quizMaster || undefined,
       }
 
       const token = localStorage.getItem('token')
@@ -316,94 +421,142 @@ export default function AddTopicForm({
               )}
             />
 
-            {/* Speaker (Presentation / Debate) */}
-            {(topicType === 'Presentation' || topicType === 'Debate') && (
+            {/* Speaker (Presentation) */}
+            {topicType === 'Presentation' && (
               <FormField
                 control={form.control}
                 name="speakerId"
-                render={({ field }) => {
-                  const value = Array.isArray(field.value) ? field.value : []
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Speaker *</FormLabel>
+                    {renderSpeakerPopover(
+                      field,
+                      speakerOpen,
+                      setSpeakerOpen,
+                      'speaker',
+                      'Select speaker',
+                      true,
+                      field.value || []
+                    )}
+                    {renderSelectedChips(field, 'speakerId', true)}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-                  return (
+            {/* Debate Team Members */}
+            {topicType === 'Debate' && (
+              <FormField
+                control={form.control}
+                name="teamMember"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Debate Team Members *</FormLabel>
+                    {renderSpeakerPopover(
+                      field,
+                      teamMemberOpen,
+                      setTeamMemberOpen,
+                      'team members',
+                      'Select team members',
+                      true,
+                      field.value || []
+                    )}
+                    {renderSelectedChips(field, 'teamMember', true)}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Panel Discussion Fields */}
+            {topicType === 'Panel Discussion' && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="moderator"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Speaker *</FormLabel>
-                      <Popover open={speakerOpen} onOpenChange={setSpeakerOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-between"
-                          >
-                            {topicType === 'Presentation' && value.length === 1
-                              ? speakers.find((s) => s._id === value[0])
-                                  ?.speakerName
-                              : 'Select speaker'}
-                            <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-
-                        <PopoverContent className="p-0 w-full">
-                          <Command>
-                            <CommandInput placeholder="Search speaker..." />
-                            <CommandList>
-                              <CommandGroup>
-                                {speakers.map((s) => {
-                                  const selected = value.includes(s._id)
-                                  return (
-                                    <CommandItem
-                                      key={s._id}
-                                      onSelect={() => {
-                                        if (topicType === 'Presentation') {
-                                          field.onChange([s._id])
-                                          setSpeakerOpen(false)
-                                        } else {
-                                          field.onChange(
-                                            selected
-                                              ? value.filter((id) => id !== s._id)
-                                              : [...value, s._id]
-                                          )
-                                        }
-                                      }}
-                                    >
-                                      {s.prefix} {s.speakerName}
-                                      {selected && (
-                                        <Check className="ml-auto h-4 w-4" />
-                                      )}
-                                    </CommandItem>
-                                  )
-                                })}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-
-                      {topicType === 'Debate' && value.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {value.map((id) => {
-                            const sp = speakers.find((s) => s._id === id)
-                            return (
-                              <span
-                                key={id}
-                                className="flex items-center gap-1 bg-blue-200 px-2 py-1 rounded-xl"
-                              >
-                                {sp?.speakerName}
-                                <X
-                                  className="h-3 w-3 cursor-pointer"
-                                  onClick={() =>
-                                    field.onChange(value.filter((v) => v !== id))
-                                  }
-                                />
-                              </span>
-                            )
-                          })}
-                        </div>
+                      <FormLabel>Moderator *</FormLabel>
+                      {renderSpeakerPopover(
+                        field,
+                        moderatorOpen,
+                        setModeratorOpen,
+                        'moderator',
+                        'Select moderator',
+                        false
                       )}
-
                       <FormMessage />
                     </FormItem>
-                  )
-                }}
-              />
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="panelist"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Panelists</FormLabel>
+                      {renderSpeakerPopover(
+                        field,
+                        panelistOpen,
+                        setPanelistOpen,
+                        'panelists',
+                        'Select panelists',
+                        true,
+                        field.value || []
+                      )}
+                      {renderSelectedChips(field, 'panelist', true)}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {/* Quiz Fields */}
+            {topicType === 'Quiz' && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="quizMaster"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quiz Master *</FormLabel>
+                      {renderSpeakerPopover(
+                        field,
+                        quizMasterOpen,
+                        setQuizMasterOpen,
+                        'quiz master',
+                        'Select quiz master',
+                        false
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="teamMember"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Team Members</FormLabel>
+                      {renderSpeakerPopover(
+                        field,
+                        teamMemberOpen,
+                        setTeamMemberOpen,
+                        'team members',
+                        'Select team members',
+                        true,
+                        field.value || []
+                      )}
+                      {renderSelectedChips(field, 'teamMember', true)}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
 
             {/* Time + Video */}
