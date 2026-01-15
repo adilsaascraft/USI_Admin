@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import useSWR, { mutate } from 'swr'
 import { CourseType } from '@/types/course'
-import EventCardSkeleton from '@/components/CardSkeleton'
+import CardSkeleton from '@/components/CardSkeleton'
 import AddCourseForm from '@/components/forms/AddCourseForm'
 import CourseCard from '@/components/CourseCard'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -140,11 +140,11 @@ export default function CoursePageClient({
 
       {/* Course List */}
       {isLoading ? (
-        <div className="flex flex-col gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <EventCardSkeleton key={i} />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <CardSkeleton key={i} />
+                  ))}
+                </div>
       ) : filteredCourses.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {paginatedCourses.map((course) => (

@@ -35,7 +35,7 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
 
   // Fetch Halls
   const { data, isLoading, error, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/events/${conferenceId}/agenda-session-halls`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/halls`,
     fetcher
   )
 
@@ -59,20 +59,20 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/event-admin/agenda-session-halls/${id}`,
-        { method: "DELETE" }
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/halls/${id}`,
+        { method: 'DELETE' }
       )
 
       const result = await res.json()
-      if (!res.ok) throw new Error(result.message || "Delete failed")
+      if (!res.ok) throw new Error(result.message || 'Delete failed')
 
-      toast.warning("Session Hall has deleted successfully!", {
+      toast.warning('Hall deleted successfully!', {
         description: getIndianFormattedDate(),
       })
 
       mutate() // refresh list
     } catch (err: any) {
-      toast.error(err.message || "Something went wrong ❌")
+      toast.error(err.message || 'Something went wrong ❌')
     }
   }
 
@@ -86,7 +86,7 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
   // ✅ Table columns
   const columns: ColumnDef<SessionHallValues & { _id: string }>[] = [
     {
-      id: "select",
+      id: 'select',
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
@@ -104,45 +104,52 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
       enableSorting: false,
       enableHiding: false,
     },
-      {
-      accessorKey: "hallName",
-      header: sortableHeader("Session Hall Name"),
-      cell:({row}) => {
-        return(
-          <span className="text-extrabold font-medium">{row.original.hallName}</span>
+    {
+      accessorKey: 'hallName',
+      header: sortableHeader('Session Hall Name'),
+      cell: ({ row }) => {
+        return (
+          <span className="text-extrabold font-medium">
+            {row.original.hallName}
+          </span>
         )
-      }
+      },
     },
     {
-  accessorKey: "status",
-  header: sortableHeader("Status"),
-  cell: ({ row }) => {
-    const type = row.original.status;
-    const isActive = type === "Active";
-    return (
-      <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${
-          isActive ? "text-green-800 hover:text-green-900 bg-green-100 hover:bg-green-200"
-           : "text-red-800 hover:text-red-900 bg-red-100 hover:bg-red-200"
-        }`}
-      >
-        {isActive ? "Active" : "Inactive"}
-      </span>
-    );
-  },
-},
+      accessorKey: 'status',
+      header: sortableHeader('Status'),
+      cell: ({ row }) => {
+        const type = row.original.status
+        const isActive = type === 'Active'
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              isActive
+                ? 'text-green-800 hover:text-green-900 bg-green-100 hover:bg-green-200'
+                : 'text-red-800 hover:text-red-900 bg-red-100 hover:bg-red-200'
+            }`}
+          >
+            {isActive ? 'Active' : 'Inactive'}
+          </span>
+        )
+      },
+    },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleEdit(row.original)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleEdit(row.original)}
+          >
             Edit
           </Button>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="bg-sky-800 hover:bg-sky-900" size="sm">
+              <Button className="bg-orange-600 hover:bg-orange-700" size="sm">
                 Delete
               </Button>
             </AlertDialogTrigger>
@@ -150,8 +157,9 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. It will permanently delete{" "}
-                  <span className="font-semibold">{row.original.hallName}</span>.
+                  This action cannot be undone. It will permanently delete{' '}
+                  <span className="font-semibold">{row.original.hallName}</span>
+                  .
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -178,7 +186,10 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Session Hall Name</h1>
-        <Button onClick={handleAdd} className="bg-orange-600 text-white hover:bg-orange-700">
+        <Button
+          onClick={handleAdd}
+          className="bg-orange-600 text-white hover:bg-orange-700"
+        >
           + Add Session Hall
         </Button>
       </div>
@@ -191,7 +202,7 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
         <SheetContent side="right" className="w-[500px] sm:w-[600px]">
           <div className="p-4 border-b">
             <h2 className="text-xl font-semibold">
-              {editingHall ? "Edit Session Hall" : "Add Session Hall"}
+              {editingHall ? 'Edit Session Hall' : 'Add Session Hall'}
             </h2>
           </div>
 

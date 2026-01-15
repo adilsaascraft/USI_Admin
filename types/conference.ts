@@ -4,19 +4,20 @@ export type ConferenceType = {
   _id: string
 
   name: string
+  venueName?: string
   image: string
   description: string
   conferenceType: string
 
-  startDate: string      // DD/MM/YYYY
-  endDate: string        // DD/MM/YYYY
+  startDate: string // DD/MM/YYYY
+  endDate: string // DD/MM/YYYY
 
-  timeZone: string       // e.g. Asia/Kolkata
+  timeZone: string // e.g. Asia/Kolkata
 
-  registrationType: "paid" | "free"
+  registrationType: 'paid' | 'free'
   amount: number
 
-  status: "Active" | "Inactive"
+  status: 'Active' | 'Inactive'
 
   createdAt: string
   updatedAt: string

@@ -6,6 +6,8 @@ export const ConferenceFormSchema = z
       .string()
       .min(1, 'Conference name is required.')
       .max(100, 'Conference name cannot exceed 100 characters.'),
+    venueName: z
+      .string().optional(),
 
     description: z
       .string()
@@ -29,13 +31,12 @@ export const ConferenceFormSchema = z
     timeZone: z.string().min(1, 'Time zone is required.'),
 
     registrationType: z.enum(['paid', 'free']).pipe(
-      z.enum(['paid', 'free']).refine(val => val, {
+      z.enum(['paid', 'free']).refine((val) => val, {
         message: 'Registration type is required.',
       })
     ),
 
     amount: z.number().min(0).optional(),
-
   })
 
   .superRefine((data, ctx) => {

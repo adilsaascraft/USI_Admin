@@ -125,7 +125,12 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
       <CardContent className="flex flex-col gap-3 p-4 text-sm">
         <div className="flex items-center gap-3">
           <h2 className="line-clamp-2 text-lg font-semibold text-sky-800">
-            {course.courseName}
+            <button
+              className="text-sky-800 hover:underline cursor-pointer"
+              onClick={handleManage}
+            >
+              {course.courseName}
+            </button>
           </h2>
         </div>
 

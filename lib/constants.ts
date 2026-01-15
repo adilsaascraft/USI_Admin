@@ -69,3 +69,11 @@ export const settingsList = [
     desc: "Allow users to submit questions through the platform.",
   },
 ] as const;
+
+
+export const topicType = [
+  { value: 'Presentation', label: 'Presentation' },
+  { value: 'Panel Discussion', label: 'Panel Discussion' },
+  { value: 'Quiz', label: 'Quiz' },
+  { value: 'Debate', label: 'Debate' },
+] as const

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import useSWR, { mutate } from 'swr'
 import { WebinarType } from '@/types/webinar'
-import EventCardSkeleton from '@/components/CardSkeleton'
+import CardSkeleton from '@/components/CardSkeleton'
 import AddWebinarForm from '@/components/forms/AddWebinarForm'
 import WebinarCard from '@/components/WebinarCard'
 
@@ -179,11 +179,11 @@ export default function WebinarPageClient({
 
       {/* Events */}
       {isLoading ? (
-        <div className="flex flex-col gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <EventCardSkeleton key={i} />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <CardSkeleton key={i} />
+                  ))}
+                </div>
       ) : filteredEvents.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {paginatedEvents.map((event) => (

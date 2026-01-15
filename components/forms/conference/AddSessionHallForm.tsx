@@ -65,13 +65,13 @@ export default function AddSessionHallForm({ conferenceId, defaultValues, onSave
       let body = JSON.stringify(data)
 
       if (defaultValues?._id) {
-        // Edit Mode
-        url = `${process.env.NEXT_PUBLIC_API_URL}/api/event-admin/agenda-session-halls/${defaultValues._id}`
-        method = "PUT"
+        // Edit Mode 
+        url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/halls/${defaultValues._id}`
+        method = 'PUT'
       } else {
         // Add Mode
-        url = `${process.env.NEXT_PUBLIC_API_URL}/api/event-admin/events/${conferenceId}/agenda-session-halls`
-        method = "POST"
+        url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/halls`
+        method = 'POST'
         body = JSON.stringify({ ...data })
       }
 

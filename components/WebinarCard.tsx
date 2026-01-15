@@ -131,7 +131,12 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
       {/* Content */}
       <CardContent className="flex flex-col gap-3 p-4 text-sm">
         <h2 className="line-clamp-2 text-lg font-semibold text-sky-800">
-          {event.name}
+          <button
+            className="text-sky-800 hover:underline cursor-pointer"
+            onClick={handleManage}
+          >
+            {event.name}
+          </button>
         </h2>
 
         {/* Registration Type */}
@@ -142,7 +147,6 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
             {event.registrationType.charAt(0).toUpperCase() +
               event.registrationType.slice(1)}
           </span>
-
         </div>
 
         {/* Webinar Type */}
@@ -182,7 +186,6 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-40">
-
             <>
               <DropdownMenuItem onClick={handleManage}>
                 <FileText className="mr-2 h-4 w-4" />
@@ -198,8 +201,6 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
                 Delete Webinar
               </DropdownMenuItem>
             </>
-
-
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

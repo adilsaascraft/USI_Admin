@@ -5,7 +5,13 @@ import useSWR from 'swr'
 import Image from 'next/image'
 import { MoreVertical, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { fetcher } from '@/lib/fetcher'
 import { fetchClient } from '@/lib/fetchClient'
 import { useAuthStore } from '@/stores/authStore'
@@ -44,6 +50,8 @@ type Question = {
   }
 }
 
+type SortOrder = 'newest' | 'oldest'
+
 /* ================= UTILS ================= */
 
 const formatDateTime = (date: string) => {
@@ -68,6 +76,7 @@ export default function QuestionClient({ webinarId }: { webinarId: string }) {
 
   const { user } = useAuthStore()
   const [search, setSearch] = useState('')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   /* ================= FETCH ================= */
@@ -79,35 +88,47 @@ export default function QuestionClient({ webinarId }: { webinarId: string }) {
     fetcher
   )
 
-  /* ================= SEARCH ================= */
 
-  const filteredQuestions = useMemo(() => {
-  const list = data?.data ?? []
-  if (!search.trim()) return list
-
-  const q = search.toLowerCase()
-
-  return list.filter((item) => {
-    return (
-      item.questionName.toLowerCase().includes(q) ||
-      item.userId?.name?.toLowerCase().includes(q) ||
-      item.userId?.email?.toLowerCase().includes(q) ||
-      item.userId?.mobile?.toLowerCase().includes(q)
+  /* ================= SEARCH + SORT ================= */
+  
+    const filteredAndSortedQuestions = useMemo(() => {
+      let list = data?.data ?? []
+  
+      // Search
+      if (search.trim()) {
+        const q = search.toLowerCase()
+        list = list.filter((item) => {
+          return (
+            item.questionName.toLowerCase().includes(q) ||
+            item.userId?.name?.toLowerCase().includes(q) ||
+            item.userId?.email?.toLowerCase().includes(q) ||
+            item.userId?.mobile?.toLowerCase().includes(q)
+          )
+        })
+      }
+  
+      // Sort
+      return [...list].sort((a, b) => {
+        const timeA = new Date(a.createdAt).getTime()
+        const timeB = new Date(b.createdAt).getTime()
+  
+        return sortOrder === 'newest' ? timeB - timeA : timeA - timeB
+      })
+    }, [data, search, sortOrder])
+  
+    const totalPages = Math.ceil(
+      filteredAndSortedQuestions.length / ITEMS_PER_PAGE
     )
-  })
-}, [data, search])
-
-const totalPages = Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE)
-
-const paginatedQuestions = useMemo(() => {
-  const start = (page - 1) * ITEMS_PER_PAGE
-  const end = start + ITEMS_PER_PAGE
-  return filteredQuestions.slice(start, end)
-}, [filteredQuestions, page])
-
-useEffect(() => {
-  setPage(1)
-}, [search])
+  
+    const paginatedQuestions = useMemo(() => {
+      const start = (page - 1) * ITEMS_PER_PAGE
+      const end = start + ITEMS_PER_PAGE
+      return filteredAndSortedQuestions.slice(start, end)
+    }, [filteredAndSortedQuestions, page])
+  
+    useEffect(() => {
+      setPage(1)
+    }, [search, sortOrder])
 
 
 
@@ -115,7 +136,6 @@ useEffect(() => {
 
   const handleDelete = async () => {
     if (!deleteId) return
-
     try {
       const res = await fetchClient(
         `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/questions/${deleteId}`,
@@ -156,18 +176,37 @@ useEffect(() => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">
-          All Questions Asked By Users
-        </h2>
-
-        <Input
-          placeholder="Search by name, email, mobile or question..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-md"
-        />
-      </div>
+            <div className="flex flex-col gap-3">
+              <h2 className="text-xl font-semibold">All Questions Asked By Users</h2>
+      
+              {/* Search + Filter */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <Input
+                  placeholder="Search by name, email, mobile or question..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="max-w-md"
+                />
+      
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-muted-foreground">Filter</label>
+      
+                  <Select
+                    value={sortOrder}
+                    onValueChange={(value) => setSortOrder(value as SortOrder)}
+                  >
+                    <SelectTrigger className="w-full p-3">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+      
+                    <SelectContent>
+                      <SelectItem value="newest">Newest first</SelectItem>
+                      <SelectItem value="oldest">Oldest first</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
 
       {/* Cards */}
       {paginatedQuestions.length === 0 ? (

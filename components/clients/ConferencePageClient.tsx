@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { FaSearch } from 'react-icons/fa'
 import useSWR, { mutate } from 'swr'
 import { ConferenceType } from '@/types/conference'
-import EventCardSkeleton from '@/components/CardSkeleton'
+import CardSkeleton from '@/components/CardSkeleton'
 import AddConferenceForm from '@/components/forms/AddConferenceForm'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -158,9 +158,9 @@ export default function ConferencePageClient({
 
       {/* Conference Cards */}
       {isLoading ? (
-        <div className="flex flex-col gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <EventCardSkeleton key={i} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <CardSkeleton key={i} />
           ))}
         </div>
       ) : filteredEvents.length > 0 ? (
@@ -176,12 +176,8 @@ export default function ConferencePageClient({
       ) : (
         <div className="flex items-center justify-center min-h-[30vh] border rounded">
           <div className="text-center">
-            <h3 className="text-xl font-semibold mb-2">
-              No Results Found
-            </h3>
-            <p className="text-gray-600">
-              No conferences match your criteria.
-            </p>
+            <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
+            <p className="text-gray-600">No conferences match your criteria.</p>
           </div>
         </div>
       )}

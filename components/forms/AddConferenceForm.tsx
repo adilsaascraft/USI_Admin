@@ -6,7 +6,7 @@ import {
   ConferenceFormSchema,
   ConferenceFormValues,
 } from '@/validations/conferenceSchema'
-import { FaCalendarAlt} from 'react-icons/fa'
+import { FaCalendarAlt, FaHotel} from 'react-icons/fa'
 import InputWithIcon from '@/components/InputWithIcon'
 import RichTextEditor from '@/components/RichTextEditor'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
@@ -76,6 +76,7 @@ export default function AddConferenceForm({
       conferenceToEdit ||
       conferenceDraft || {
         name: '',
+        venueName: '',
         image: '',
         description: '',
         conferenceType: '',
@@ -382,11 +383,9 @@ export default function AddConferenceForm({
               )}
             />
 
-              <CustomDatePicker name="startDate" label="Start Date *" />
-    
-              <CustomDatePicker name="endDate" label="End Date *" />
+            <CustomDatePicker name="startDate" label="Start Date *" />
 
-        
+            <CustomDatePicker name="endDate" label="End Date *" />
 
             {/* Registration Type + Amount */}
             <div className="flex flex-col sm:flex-row gap-4 w-full mt-4">
@@ -445,6 +444,25 @@ export default function AddConferenceForm({
                 )}
               />
             </div>
+
+            {/* Venue NAME */}
+            <FormField
+              control={form.control}
+              name="venueName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Venue Name </FormLabel>
+                  <FormControl>
+                    <InputWithIcon
+                      {...field}
+                      icon={<FaHotel />}
+                      placeholder="type venue name..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Description (Rich Text Editor) */}
             <FormField

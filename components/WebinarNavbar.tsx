@@ -57,7 +57,7 @@ const menuItems = [
   },
   {
     name: 'Public Url',
-    slug: 'question-and-answer',
+    slug: 'public-share-questiuon-by-users',
     icon: <FaExternalLinkAlt size={20} />,
   },
   {

@@ -1,5 +1,5 @@
 'use client'
-import { JSX, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ConferenceType } from "@/types/conference"
 import Image from 'next/image'
@@ -10,10 +10,11 @@ import {
   Pencil,
   Trash2,
   Clock3,
-  History,
   FileText,
   Tag,
-  Check,
+  Hotel,
+  AlertCircle,
+  TypeIcon,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -93,8 +94,22 @@ export default function ConferenceCard({ event, onEdit }: ConferenceCardProps) {
       {/* Content */}
       <CardContent className="flex flex-col gap-3 p-4 text-sm">
         <h2 className="line-clamp-2 text-lg font-semibold text-sky-800">
-          {event.name}
+          <button
+            className="text-sky-800 hover:underline cursor-pointer"
+            onClick={handleManage}
+          >
+            {event.name}
+          </button>
         </h2>
+
+        {/* venue name */}
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Hotel size={16} />
+          <span>
+            <span className="font-medium">Venue Name :</span>{' '}
+            {event.venueName || 'N/A'}
+          </span>
+        </div>
 
         {/* Registration Type */}
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -104,12 +119,11 @@ export default function ConferenceCard({ event, onEdit }: ConferenceCardProps) {
             {event.registrationType.charAt(0).toUpperCase() +
               event.registrationType.slice(1)}
           </span>
-
         </div>
 
-        {/* Webinar Type */}
+        {/* Conference Type */}
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Tag size={16} />
+          <TypeIcon size={16} />
           <span>
             <span className="font-medium">Type:</span> {event.conferenceType}
           </span>
@@ -143,7 +157,6 @@ export default function ConferenceCard({ event, onEdit }: ConferenceCardProps) {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-40">
-
             <>
               <DropdownMenuItem onClick={handleManage}>
                 <FileText className="mr-2 h-4 w-4" />
@@ -159,8 +172,6 @@ export default function ConferenceCard({ event, onEdit }: ConferenceCardProps) {
                 Delete Conference
               </DropdownMenuItem>
             </>
-
-
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

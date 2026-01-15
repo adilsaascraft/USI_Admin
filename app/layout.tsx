@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning className="flex h-screen flex-col">
+      <body suppressHydrationWarning className="flex flex-col">
         {children}
         <Toaster />
       </body>
