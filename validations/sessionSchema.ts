@@ -9,6 +9,8 @@ export const SessionSchema = z.object({
     .string()
     .min(1, 'Session Name is required')
     .max(100, 'Session Name cannot exceed 100 characters'),
+  
+  chairperson: z.array(z.string()),
 
   sessionDate: z.string().min(1, 'Session Date is required'),
 
@@ -29,8 +31,6 @@ export const SessionSchema = z.object({
       /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/,
       'End Time must be in hh:mm AM/PM format'
     ),
-
-  description: z.string().optional(),
 })
 
 export type SessionValues = z.infer<typeof SessionSchema>

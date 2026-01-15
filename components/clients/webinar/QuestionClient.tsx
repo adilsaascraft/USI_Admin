@@ -272,7 +272,7 @@ export default function QuestionClient({ webinarId }: { webinarId: string }) {
 
               {/* Time */}
               <div className="mt-2 text-sm text-muted-foreground">
-                Time: {formatDateTime(q.createdAt)}
+                {formatDateTime(q.createdAt)}
               </div>
             </div>
           ))}

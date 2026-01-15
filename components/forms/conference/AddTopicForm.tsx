@@ -2,14 +2,16 @@
 
 import React, { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
+
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
   Button,
   Select,
   SelectContent,
@@ -28,9 +30,14 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
 import InputWithIcon from '@/components/InputWithIcon'
+import RichTextEditor from '@/components/RichTextEditor'
 import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { FaTextHeight, FaVideo } from 'react-icons/fa'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
@@ -63,7 +70,7 @@ export default function AddTopicForm({
 
   const form = useForm<TopicFormValues>({
     resolver: zodResolver(TopicSchema),
-    defaultValues: {
+    defaultValues: defaultValues || topicDraft || {
       conferenceId,
       sessionId: '',
       topicType: 'Presentation',
@@ -71,6 +78,7 @@ export default function AddTopicForm({
       startTime: '',
       endTime: '',
       videoLink: '',
+      description: '',
       speakerId: [],
       panelist: [],
       teamMember: [],
@@ -79,7 +87,32 @@ export default function AddTopicForm({
     },
   })
 
-  /* ================= PREFILL (EDIT MODE FIX) ================= */
+  const topicType = form.watch('topicType')
+
+  /* ================= RESET DEPENDENT FIELDS ================= */
+
+  useEffect(() => {
+    if (topicType === 'Presentation' || topicType === 'Debate') {
+      form.setValue('moderator', undefined)
+      form.setValue('panelist', [])
+      form.setValue('quizMaster', undefined)
+      form.setValue('teamMember', [])
+    }
+
+    if (topicType === 'Panel Discussion') {
+      form.setValue('speakerId', [])
+      form.setValue('quizMaster', undefined)
+      form.setValue('teamMember', [])
+    }
+
+    if (topicType === 'Quiz') {
+      form.setValue('speakerId', [])
+      form.setValue('moderator', undefined)
+      form.setValue('panelist', [])
+    }
+  }, [topicType, form])
+
+  /* ================= PREFILL EDIT MODE ================= */
 
   useEffect(() => {
     if (!defaultValues?._id) return
@@ -91,14 +124,13 @@ export default function AddTopicForm({
       title: defaultValues.title,
       startTime: defaultValues.startTime,
       endTime: defaultValues.endTime,
-      videoLink: defaultValues.videoLink || '',
+      videoLink: defaultValues.videoLink,
+      description: defaultValues.description || '',
       speakerId: defaultValues.speakerId?.map((s: any) => s._id) || [],
-      moderator: defaultValues.moderator || '',
-      quizMaster: defaultValues.quizMaster || '',
-      panelist:
-        defaultValues.panelist?.map((p: string) => ({ value: p })) || [],
-      teamMember:
-        defaultValues.teamMember?.map((t: string) => ({ value: t })) || [],
+      moderator: defaultValues.moderator?._id,
+      panelist: defaultValues.panelist?.map((p: any) => p._id) || [],
+      quizMaster: defaultValues.quizMaster?._id,
+      teamMember: defaultValues.teamMember?.map((t: any) => t._id) || [],
     })
   }, [defaultValues, conferenceId, form])
 
@@ -106,23 +138,9 @@ export default function AddTopicForm({
 
   useEffect(() => {
     if (defaultValues?._id) return
-    const sub = form.watch((values) => setDraft(DRAFT_KEY, values))
+    const sub = form.watch((v) => setDraft(DRAFT_KEY, v))
     return () => sub.unsubscribe()
   }, [defaultValues?._id])
-
-  /* ================= FIELD ARRAYS ================= */
-
-  const panelistArray = useFieldArray({
-    control: form.control,
-    name: 'panelist',
-  })
-
-  const teamArray = useFieldArray({
-    control: form.control,
-    name: 'teamMember',
-  })
-
-  const topicType = form.watch('topicType')
 
   /* ================= FETCH ================= */
 
@@ -137,12 +155,13 @@ export default function AddTopicForm({
         `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/sessions`,
         { headers }
       ),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`, { headers }),
-    ])
-      .then(async ([s, sp]) => {
-        setSessions((await s.json()).data || [])
-        setSpeakers((await sp.json()).data || [])
-      })
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`, {
+        headers,
+      }),
+    ]).then(async ([s, sp]) => {
+      setSessions((await s.json()).data || [])
+      setSpeakers((await sp.json()).data || [])
+    })
   }, [conferenceId])
 
   /* ================= SUBMIT ================= */
@@ -153,8 +172,8 @@ export default function AddTopicForm({
 
       const payload = {
         ...data,
-        panelist: data.panelist.map((p) => p.value),
-        teamMember: data.teamMember.map((t) => t.value),
+        panelist: data.panelist,
+        teamMember: data.teamMember,
       }
 
       const token = localStorage.getItem('token')
@@ -181,32 +200,14 @@ export default function AddTopicForm({
       })
 
       onSave(result.data)
-
-      // ✅ CLEAR FORM PROPERLY
-      form.reset({
-        conferenceId,
-        sessionId: '',
-        topicType: 'Presentation',
-        title: '',
-        startTime: '',
-        endTime: '',
-        videoLink: '',
-        speakerId: [],
-        panelist: [],
-        teamMember: [],
-        moderator: '',
-        quizMaster: '',
-      })
-
       clearDraft(DRAFT_KEY)
+      form.reset()
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {
       setLoading(false)
     }
   }
-
-  
 
   /* ================= UI ================= */
 
@@ -217,7 +218,8 @@ export default function AddTopicForm({
           {defaultValues ? 'Edit Topic' : 'Add Topic'}
         </h2>
       </div>
-      <div className="flex-1 overflow-y-auto custom-scroll pb-2">
+
+      <div className="flex-1 overflow-y-auto custom-scroll pb-20">
         <Form {...form}>
           <form
             id="topic-form"
@@ -233,10 +235,7 @@ export default function AddTopicForm({
                   <FormLabel>Session *</FormLabel>
                   <Popover open={sessionOpen} onOpenChange={setSessionOpen}>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                      >
+                      <Button variant="outline" className="w-full justify-between">
                         {field.value
                           ? sessions.find((s) => s._id === field.value)
                               ?.sessionName
@@ -268,6 +267,7 @@ export default function AddTopicForm({
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -279,25 +279,18 @@ export default function AddTopicForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Topic Type *</FormLabel>
-                  <Select
-                    key={field.value} // 🔥 FORCE REMOUNT
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger className="w-full p-3">
-                      <SelectValue placeholder="Select topic type" />
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[
-                        'Presentation',
-                        'Panel Discussion',
-                        'Quiz',
-                        'Debate',
-                      ].map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
+                      {['Presentation', 'Panel Discussion', 'Quiz', 'Debate'].map(
+                        (t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                 </FormItem>
@@ -315,9 +308,10 @@ export default function AddTopicForm({
                     <InputWithIcon
                       {...field}
                       icon={<FaTextHeight />}
-                      placeholder="type session name"
+                      placeholder="Topic title"
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -327,206 +321,89 @@ export default function AddTopicForm({
               <FormField
                 control={form.control}
                 name="speakerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Speaker *</FormLabel>
-                    <Popover open={speakerOpen} onOpenChange={setSpeakerOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-between"
-                        >
-                          {topicType === 'Presentation' &&
-                          field.value.length === 1
-                            ? speakers.find((s) => s._id === field.value[0])
-                                ?.speakerName
-                            : 'Select speaker'}
-                          <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
+                render={({ field }) => {
+                  const value = Array.isArray(field.value) ? field.value : []
 
-                      <PopoverContent className="p-0 w-full">
-                        <Command>
-                          <CommandInput placeholder="Search speaker..." />
-                          <CommandList>
-                            <CommandGroup>
-                              {speakers.map((s) => {
-                                const selected = field.value.includes(s._id)
-                                return (
-                                  <CommandItem
-                                    key={s._id}
-                                    onSelect={() => {
-                                      if (topicType === 'Presentation') {
-                                        field.onChange([s._id])
-                                        setSpeakerOpen(false)
-                                      } else {
-                                        field.onChange(
-                                          selected
-                                            ? field.value.filter(
-                                                (id) => id !== s._id
-                                              )
-                                            : [...field.value, s._id]
-                                        )
-                                      }
-                                    }}
-                                  >
-                                    {s.prefix} {s.speakerName}
-                                    {selected && (
-                                      <Check className="ml-auto h-4 w-4" />
-                                    )}
-                                  </CommandItem>
-                                )
-                              })}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                  return (
+                    <FormItem>
+                      <FormLabel>Speaker *</FormLabel>
+                      <Popover open={speakerOpen} onOpenChange={setSpeakerOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            {topicType === 'Presentation' && value.length === 1
+                              ? speakers.find((s) => s._id === value[0])
+                                  ?.speakerName
+                              : 'Select speaker'}
+                            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
 
-                    {topicType === 'Debate' && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {field.value.map((id) => {
-                          const sp = speakers.find((s) => s._id === id)
-                          return (
-                            <span
-                              key={id}
-                              className="flex items-center gap-1 bg-blue-200 px-2 py-1 rounded-xl"
-                            >
-                              {sp?.speakerName}
-                              <X
-                                className="h-3 w-3 cursor-pointer"
-                                onClick={() =>
-                                  field.onChange(
-                                    field.value.filter((v) => v !== id)
+                        <PopoverContent className="p-0 w-full">
+                          <Command>
+                            <CommandInput placeholder="Search speaker..." />
+                            <CommandList>
+                              <CommandGroup>
+                                {speakers.map((s) => {
+                                  const selected = value.includes(s._id)
+                                  return (
+                                    <CommandItem
+                                      key={s._id}
+                                      onSelect={() => {
+                                        if (topicType === 'Presentation') {
+                                          field.onChange([s._id])
+                                          setSpeakerOpen(false)
+                                        } else {
+                                          field.onChange(
+                                            selected
+                                              ? value.filter((id) => id !== s._id)
+                                              : [...value, s._id]
+                                          )
+                                        }
+                                      }}
+                                    >
+                                      {s.prefix} {s.speakerName}
+                                      {selected && (
+                                        <Check className="ml-auto h-4 w-4" />
+                                      )}
+                                    </CommandItem>
                                   )
-                                }
-                              />
-                            </span>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </FormItem>
-                )}
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+
+                      {topicType === 'Debate' && value.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {value.map((id) => {
+                            const sp = speakers.find((s) => s._id === id)
+                            return (
+                              <span
+                                key={id}
+                                className="flex items-center gap-1 bg-blue-200 px-2 py-1 rounded-xl"
+                              >
+                                {sp?.speakerName}
+                                <X
+                                  className="h-3 w-3 cursor-pointer"
+                                  onClick={() =>
+                                    field.onChange(value.filter((v) => v !== id))
+                                  }
+                                />
+                              </span>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
-            )}
-
-            {/* Moderator */}
-            {topicType === 'Panel Discussion' && (
-              <FormField
-                control={form.control}
-                name="moderator"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Moderator *</FormLabel>
-                    <FormControl>
-                      <InputWithIcon
-                        {...field}
-                        placeholder="type moderator name"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Panelists */}
-            {topicType === 'Panel Discussion' &&
-              panelistArray.fields.map((f, i) => (
-                <div key={f.id} className="flex gap-2 items-end">
-                  <FormField
-                    control={form.control}
-                    name={`panelist.${i}.value`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Panelist</FormLabel>
-                        <FormControl>
-                          <InputWithIcon
-                            {...field}
-                            placeholder="type penalist name"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => panelistArray.remove(i)}
-                  >
-                    <X />
-                  </Button>
-                </div>
-              ))}
-
-            {topicType === 'Panel Discussion' && (
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-orange-600 hover:bg-orange-700 text-white"
-                onClick={() => panelistArray.append({ value: '' })}
-              >
-                + Add Panelist
-              </Button>
-            )}
-
-            {/* Quiz Master */}
-            {topicType === 'Quiz' && (
-              <FormField
-                control={form.control}
-                name="quizMaster"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Quiz Master *</FormLabel>
-                    <FormControl>
-                      <InputWithIcon
-                        {...field}
-                        placeholder="type quiz master name"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Team Members */}
-            {topicType === 'Quiz' &&
-              teamArray.fields.map((f, i) => (
-                <div key={f.id} className="flex gap-2 items-end">
-                  <FormField
-                    control={form.control}
-                    name={`teamMember.${i}.value`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Team Member</FormLabel>
-                        <FormControl>
-                          <InputWithIcon
-                            {...field}
-                            placeholder="type team meamber name"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => teamArray.remove(i)}
-                  >
-                    <X />
-                  </Button>
-                </div>
-              ))}
-
-            {topicType === 'Quiz' && (
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-orange-600 hover:bg-orange-700 text-white"
-                onClick={() => teamArray.append({ value: '' })}
-              >
-                + Add Team Member
-              </Button>
             )}
 
             {/* Time + Video */}
@@ -543,7 +420,24 @@ export default function AddTopicForm({
                     <InputWithIcon
                       {...field}
                       icon={<FaVideo />}
-                      placeholder="topic video link"
+                      placeholder="Video URL"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>About Topic</FormLabel>
+                  <FormControl>
+                    <RichTextEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                 </FormItem>
@@ -553,25 +447,18 @@ export default function AddTopicForm({
         </Form>
       </div>
 
-      {/* ---- Footer ---- */}
-      <div className="sticky bottom-0 left-0 right-0 border-t px-6 py-4 flex justify-between bg-background">
+      {/* FOOTER */}
+      <div className="sticky bottom-0 border-t px-6 py-4 flex justify-between bg-background">
         <SheetClose asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className="border border-gray-400"
-          >
-            Close
-          </Button>
+          <Button variant="outline">Close</Button>
         </SheetClose>
         <Button
           type="submit"
           form="topic-form"
-          onClick={form.handleSubmit(onSubmit)}
           disabled={loading}
-          className="bg-orange-600 text-white hover:bg-orange-700"
+          className="bg-orange-600 text-white"
         >
-          {loading ? 'Saving ...' : defaultValues?._id ? 'Update' : 'Create'}
+          {loading ? 'Saving...' : defaultValues?._id ? 'Update' : 'Create'}
         </Button>
       </div>
     </div>

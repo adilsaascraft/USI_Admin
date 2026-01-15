@@ -57,6 +57,8 @@ export default function CommunicationClient({
     'attended' | 'not-attended' | 'responses'
   >('attended')
 
+  
+
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR<ApiResponse>(
@@ -102,25 +104,27 @@ export default function CommunicationClient({
     await mutate()
   }
 
+
   /* ================= INDIVIDUAL RESEND ================= */
 
-  const resendIndividual = async (
-    type: 'attended' | 'not-attended',
-    userId: string
-  ) => {
-    const endpoint =
-      type === 'attended'
-        ? `/api/admin/webinar/${webinarId}/email/attended-user`
-        : `/api/admin/webinar/${webinarId}/email/not-attended-user`
+const resendIndividual = async (
+  type: 'attended' | 'not-attended',
+  userId: string
+) => {
+  const endpoint =
+    type === 'attended'
+      ? `/api/admin/webinar/${webinarId}/email/attended/${userId}`
+      : `/api/admin/webinar/${webinarId}/email/not-attended/${userId}`
 
-    await apiRequest({
-      endpoint,
-      method: 'POST',
-      body: type === 'attended' ? { userId, surveyLink } : { userId },
-      showToast: true,
-      successMessage: 'Email resent successfully',
-    })
-  }
+  await apiRequest({
+    endpoint,
+    method: 'POST',
+    body: type === 'attended' ? { surveyLink } : undefined,
+    showToast: true,
+    successMessage: 'Email resent successfully',
+  })
+}
+
 
   /* ================= TABLE COLUMNS ================= */
 
@@ -193,6 +197,7 @@ export default function CommunicationClient({
             <Button
               size="sm"
               variant="outline"
+              className='bg-orange-600 hover:bg-orange-700 text-white'
               onClick={() =>
                 resendIndividual(
                   isAttended ? 'attended' : 'not-attended',

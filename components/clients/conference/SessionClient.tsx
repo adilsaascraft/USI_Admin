@@ -39,8 +39,15 @@ type SessionApiRow = {
   trackId: { _id: string; trackName: string }
   startTime: string
   endTime: string
-  description?: string
+
+  // ✅ NEW
+  chairperson: {
+    _id: string
+    prefix: string
+    speakerName: string
+  }[]
 }
+
 
 /* ================= COMPONENT ================= */
 
@@ -71,20 +78,23 @@ export default function SessionClient({
   }
 
   const handleEdit = (session: SessionApiRow) => {
-    // 🔥 NORMALIZATION FIX
-    setEditingSession({
-      _id: session._id,
-      conferenceId: session.conferenceId._id,
-      sessionName: session.sessionName,
-      sessionDate: session.sessionDate,
-      hallId: session.hallId._id,
-      trackId: session.trackId._id,
-      startTime: session.startTime,
-      endTime: session.endTime,
-      description: session.description || '',
-    })
-    setSheetOpen(true)
-  }
+  setEditingSession({
+    _id: session._id,
+    conferenceId: session.conferenceId._id,
+    sessionName: session.sessionName,
+    sessionDate: session.sessionDate,
+    hallId: session.hallId._id,
+    trackId: session.trackId._id,
+    startTime: session.startTime,
+    endTime: session.endTime,
+
+    // ✅ IMPORTANT FIX
+    chairperson: session.chairperson?.map((c) => c._id) ?? [],
+  })
+
+  setSheetOpen(true)
+}
+
 
   const handleDelete = async (id: string) => {
     try {
@@ -135,6 +145,31 @@ export default function SessionClient({
       accessorKey: 'sessionName',
       header: sortableHeader('Session Name'),
     },
+    {
+  id: 'chairperson',
+  header: sortableHeader('Chairperson'),
+  cell: ({ row }) => {
+    const chairpersons = row.original.chairperson || []
+
+    if (!chairpersons.length) {
+      return <span className="text-muted-foreground">—</span>
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {chairpersons.map((c) => (
+          <span
+            key={c._id}
+            className="px-2 py-0.5 rounded bg-gray-100 text-xs font-medium"
+          >
+            {c.prefix} {c.speakerName}
+          </span>
+        ))}
+      </div>
+    )
+  },
+},
+
     {
       id: 'hall',
       header: sortableHeader('Hall'),
