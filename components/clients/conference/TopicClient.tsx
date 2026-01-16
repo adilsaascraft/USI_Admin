@@ -140,7 +140,7 @@ export default function TopicClient({
         <div>
           <p className="font-medium">{row.original.title}</p>
           <p className="text-sm text-muted-foreground">
-            {row.original.sessionId.sessionName}
+            {row.original.sessionId?.sessionName || ''}
           </p>
         </div>
       ),

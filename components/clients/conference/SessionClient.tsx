@@ -146,39 +146,41 @@ export default function SessionClient({
       header: sortableHeader('Session Name'),
     },
     {
-  id: 'chairperson',
-  header: sortableHeader('Chairperson'),
-  cell: ({ row }) => {
-    const chairpersons = row.original.chairperson || []
+      id: 'chairperson',
+      header: sortableHeader('Chairperson'),
+      cell: ({ row }) => {
+        const chairpersons = row.original.chairperson || []
 
-    if (!chairpersons.length) {
-      return <span className="text-muted-foreground">—</span>
-    }
+        if (!chairpersons.length) {
+          return <span className="text-muted-foreground">—</span>
+        }
 
-    return (
-      <div className="flex flex-wrap gap-1">
-        {chairpersons.map((c) => (
-          <span
-            key={c._id}
-            className="px-2 py-0.5 rounded bg-gray-100 text-xs font-medium"
-          >
-            {c.prefix} {c.speakerName}
-          </span>
-        ))}
-      </div>
-    )
-  },
-},
+        return (
+          <div className="flex flex-wrap gap-1">
+            {chairpersons.map((c) => (
+              <span
+                key={c._id}
+                className="px-2 py-0.5 rounded bg-gray-100 text-xs font-medium"
+              >
+                {c.prefix} {c.speakerName}
+              </span>
+            ))}
+          </div>
+        )
+      },
+    },
 
     {
       id: 'hall',
       header: sortableHeader('Hall'),
-      cell: ({ row }) => row.original.hallId.hallName,
+      cell: ({ row }) =>
+        row.original.hallId?.hallName || row.original.hallId || '—',
     },
+
     {
       id: 'track',
       header: sortableHeader('Track'),
-      cell: ({ row }) => row.original.trackId.trackName,
+      cell: ({ row }) => row.original.trackId?.trackName || row.original.trackId || '—',
     },
     {
       accessorKey: 'sessionDate',

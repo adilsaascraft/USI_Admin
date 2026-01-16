@@ -1,14 +1,14 @@
 // components/CustomTimePicker.tsx
-import { Controller, useFormContext } from "react-hook-form"
-import { Label } from "@/components/ui/label"
+import { Controller, useFormContext } from 'react-hook-form'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from "@/components/ui/select"
-import { useEffect } from "react"
+} from '@/components/ui/select'
+import { useEffect } from 'react'
 
 interface Props {
   name: string
@@ -23,31 +23,39 @@ export const CustomTimePicker = ({ name, label }: Props) => {
   // Set default if none exists
   useEffect(() => {
     if (!timeValue) {
-      setValue(name, "09:00 AM")
+      setValue(name, '09:00 AM')
     }
   }, [timeValue, name, setValue])
 
   const parseTime = (time: string) => {
-    const [timePart, meridian] = time.split(" ")
-    const [hr, min] = timePart.split(":")
+    const [timePart, meridian] = time.split(' ')
+    const [hr, min] = timePart.split(':')
     return { hour: hr, minute: min, meridian }
   }
 
-  const handleChange = (type: "hour" | "minute" | "meridian", value: string) => {
-    const { hour, minute, meridian } = parseTime(timeValue || "09:00 AM")
+  const handleChange = (
+    type: 'hour' | 'minute' | 'meridian',
+    value: string
+  ) => {
+    const { hour, minute, meridian } = parseTime(timeValue || '09:00 AM')
 
-    const newTime = `${type === "hour" ? value : hour}:${type === "minute" ? value : minute} ${
-      type === "meridian" ? value : meridian
-    }`
+    const newTime = `${type === 'hour' ? value : hour}:${
+      type === 'minute' ? value : minute
+    } ${type === 'meridian' ? value : meridian}`
 
     setValue(name, newTime)
   }
 
-  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"))
-  const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"))
-  const meridians = ["AM", "PM"]
+  const hours = Array.from({ length: 12 }, (_, i) =>
+    String(i + 1).padStart(2, '0')
+  )
+  const minutes = Array.from({ length: 12 }, (_, i) =>
+    String(i * 5).padStart(2, '0')
+  )
+  const meridians = ['AM', 'PM']
 
-  const current = parseTime(timeValue || "05:00 PM")
+  const current = parseTime(timeValue || '05:00 PM')
+  console.log('Current Time Value:', timeValue, current)
 
   return (
     <div className="flex flex-col gap-1 w-full">
@@ -58,7 +66,10 @@ export const CustomTimePicker = ({ name, label }: Props) => {
           name={name}
           control={control}
           render={() => (
-            <Select onValueChange={(val) => handleChange("hour", val)} defaultValue={current.hour}>
+            <Select
+              onValueChange={(val) => handleChange('hour', val)}
+              defaultValue={current.hour}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="HH" />
               </SelectTrigger>
@@ -79,7 +90,7 @@ export const CustomTimePicker = ({ name, label }: Props) => {
           control={control}
           render={() => (
             <Select
-              onValueChange={(val) => handleChange("minute", val)}
+              onValueChange={(val) => handleChange('minute', val)}
               defaultValue={current.minute}
             >
               <SelectTrigger className="w-full">
@@ -102,8 +113,9 @@ export const CustomTimePicker = ({ name, label }: Props) => {
           control={control}
           render={() => (
             <Select
-              onValueChange={(val) => handleChange("meridian", val)}
+              onValueChange={(val) => handleChange('meridian', val)}
               defaultValue={current.meridian}
+              value={current.meridian}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="AM/PM" />

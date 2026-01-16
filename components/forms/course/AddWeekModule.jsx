@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Textarea } from '@/components/ui/textarea'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
+import RichTextEditor from '@/components/RichTextEditor'
 import {
   Form,
   FormField,
   FormItem,
   FormLabel,
   FormControl,
+  FormMessage,
   Input,
   Button,
   Select,
@@ -22,11 +24,7 @@ import {
 } from '@/lib/imports'
 import { apiRequest } from '@/lib/apiRequest'
 
-export default function AddCourseModule({
-  courseId,
-  defaultValues,
-  onSave,
-}) {
+export default function AddCourseModule({ courseId, defaultValues, onSave }) {
   const [loading, setLoading] = useState(false)
   const DRAFT_KEY = 'add-module-form'
   const { drafts, setDraft, clearDraft } = useFormDraftStore()
@@ -42,45 +40,31 @@ export default function AddCourseModule({
           defaultValues?.weekCategoryId?._id ||
           defaultValues?.weekCategoryId ||
           '',
-        contentType: defaultValues?.contentType || 'video',
+        description: defaultValues?.description || '',
         topicName: defaultValues?.topicName || '',
         aboutTopic: defaultValues?.aboutTopic || '',
         contentUrl: defaultValues?.contentUrl || '',
         videoDuration: defaultValues?.videoDuration || '',
-        additionalQuestions:
-          defaultValues?.additionalQuestions?.map((q) => ({ value: q })) || [],
         additionalResources:
           defaultValues?.additionalResources?.map((r) => ({ value: r })) || [],
       },
   })
 
-    // ================= DRAFT PERSIST =================
-    useEffect(() => {
-      if (defaultValues?._id) return
-  
-      const subscription = form.watch((values) => {
-        setDraft(DRAFT_KEY, values)
-      })
-  
-      return () => subscription.unsubscribe()
-    }, [form.watch, defaultValues?._id])
+  /* ================= DRAFT PERSIST ================= */
 
-  const {
-    control,
-    watch,
-    register,
-    handleSubmit,
-    reset,
-  } = form
+  useEffect(() => {
+    if (defaultValues?._id) return
 
-  const contentType = watch('contentType')
+    const subscription = form.watch((values) => {
+      setDraft(DRAFT_KEY, values)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [form.watch, defaultValues?._id])
+
+  const { control, register, handleSubmit, reset } = form
 
   /* ================= FIELD ARRAYS ================= */
-
-  const questionsArray = useFieldArray({
-    control,
-    name: 'additionalQuestions',
-  })
 
   const resourcesArray = useFieldArray({
     control,
@@ -104,23 +88,16 @@ export default function AddCourseModule({
 
       if (!values.weekCategoryId)
         return toast.error('Week category is required')
-      if (!values.topicName.trim())
-        return toast.error('Topic name is required')
+      if (!values.topicName.trim()) return toast.error('Topic name is required')
       if (!values.contentUrl.trim())
         return toast.error('Content URL is required')
 
       const payload = {
         topicName: values.topicName.trim(),
-        contentType: values.contentType,
+        description: values.description?.trim() || undefined,
         aboutTopic: values.aboutTopic?.trim() || undefined,
         contentUrl: values.contentUrl.trim(),
-        videoDuration:
-          values.contentType === 'video'
-            ? values.videoDuration?.trim()
-            : undefined,
-        additionalQuestions: values.additionalQuestions
-          .map((q) => q.value?.trim())
-          .filter(Boolean),
+        videoDuration: values.videoDuration?.trim() || undefined,
         additionalResources: values.additionalResources
           .map((r) => r.value?.trim())
           .filter(Boolean),
@@ -133,7 +110,7 @@ export default function AddCourseModule({
           method: 'PUT',
           body: payload,
           showToast: true,
-          successMessage: 'Module Update Successfully'
+          successMessage: 'Module Update Successfully',
         })
       } else {
         // ✅ CREATE
@@ -147,7 +124,7 @@ export default function AddCourseModule({
       }
 
       onSave?.()
-      form.reset()
+      reset()
       clearDraft(DRAFT_KEY)
     } catch (err) {
       toast.error(err.message || 'Something went wrong')
@@ -192,29 +169,6 @@ export default function AddCourseModule({
               )}
             />
 
-            {/* Content Type */}
-            <FormField
-              control={control}
-              name="contentType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Content Type *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full p-3">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="video">Video</SelectItem>
-                      <SelectItem value="image">Image</SelectItem>
-                      <SelectItem value="document">Document</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
-
             {/* Topic Name */}
             <FormItem>
               <FormLabel>Topic Name *</FormLabel>
@@ -234,20 +188,35 @@ export default function AddCourseModule({
               />
             </FormItem>
 
-            {/* Additional Questions */}
-            <div className="space-y-2">
-              <FormLabel>Additional Questions</FormLabel>
+            {/* Content URL */}
+            <FormItem>
+              <FormLabel>Content URL *</FormLabel>
+              <Input
+                {...register('contentUrl')}
+                placeholder="e.g https://vimeo.com/1234"
+              />
+            </FormItem>
 
-              {questionsArray.fields.map((f, i) => (
+            {/* Video Duration */}
+            <FormItem>
+              <FormLabel>Video Duration (Minutes:Seconds)</FormLabel>
+              <Input {...register('videoDuration')} placeholder="e.g. 20:45" />
+            </FormItem>
+
+            {/* Additional Resources */}
+            <div className="space-y-2">
+              <FormLabel>Additional Resources</FormLabel>
+
+              {resourcesArray.fields.map((f, i) => (
                 <div key={f.id} className="flex gap-2">
                   <Input
-                    placeholder={`Question ${i + 1}`}
-                    {...register(`additionalQuestions.${i}.value`)}
+                    placeholder={`Resource ${i + 1}`}
+                    {...register(`additionalResources.${i}.value`)}
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => questionsArray.remove(i)}
+                    onClick={() => resourcesArray.remove(i)}
                   >
                     ✕
                   </Button>
@@ -258,64 +227,31 @@ export default function AddCourseModule({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => questionsArray.append({ value: '' })}
+                onClick={() => resourcesArray.append({ value: '' })}
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >
-                + Add Question
+                + Add Resource
               </Button>
             </div>
 
-            {/* Content URL */}
-            <FormItem>
-              <FormLabel>Content URL *</FormLabel>
-              <Input
-                {...register('contentUrl')}
-                placeholder="e.g https://vimeo.com/1234"
-              />
-            </FormItem>
-
-            {/* VIDEO ONLY */}
-            {contentType === 'video' && (
-              <>
+            {/* Description (Rich Text Editor) */}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Video Duration (Minutes:Seconds)</FormLabel>
-                  <Input
-                    {...register('videoDuration')}
-                    placeholder="e.g. 20:45"
-                  />
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <RichTextEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      placeholder="Write something..."
+                    />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
-
-                <div className="space-y-2">
-                  <FormLabel>Additional Resources</FormLabel>
-
-                  {resourcesArray.fields.map((f, i) => (
-                    <div key={f.id} className="flex gap-2">
-                      <Input
-                        placeholder={`Resource ${i + 1}`}
-                        {...register(`additionalResources.${i}.value`)}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => resourcesArray.remove(i)}
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  ))}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => resourcesArray.append({ value: '' })}
-                    className="bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    + Add Resource
-                  </Button>
-                </div>
-              </>
-            )}
+              )}
+            />
           </form>
         </Form>
       </div>

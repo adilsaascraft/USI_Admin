@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
-import { CourseFormSchema, CourseFormValues } from '@/validations/courseSchema'
+import {
+  CourseFormSchema,
+  CourseFormValues,
+} from '@/validations/courseSchema'
 import { FaCalendarAlt, FaCalendarDay } from 'react-icons/fa'
 import InputWithIcon from '@/components/InputWithIcon'
 import RichTextEditor from '@/components/RichTextEditor'
@@ -23,23 +26,23 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-  Button,
-  SheetClose,
-  status,
   SelectGroup,
   SelectLabel,
+  Button,
+  SheetClose,
   registrationType,
-  timezones
+  timezones,
+  status,
 } from '@/lib/imports'
 import { CustomDatePicker, CustomTimePicker } from '@/lib/imports'
 import { mutate } from 'swr'
 import { fetchClient } from '@/lib/fetchClient'
 
-/* ================= IMAGE CONFIG ================= */
+// ================= IMAGE CONSTANTS =================
 const MAX_FILE_SIZE = 5 * 1024 * 1024
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
-/* ================= PROPS ================= */
+// ================= PROPS =================
 interface AddCourseFormProps {
   onSuccess: (newCourse: any) => void
   courseToEdit?: any | null
@@ -60,130 +63,129 @@ export default function AddCourseForm({
   const { drafts, setDraft, clearDraft } = useFormDraftStore()
   const courseDraft = drafts[DRAFT_KEY]
 
-  /* ================= IMAGE STATE ================= */
+  // ================= IMAGE STATE =================
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(
-    courseToEdit?.courseImage || null
+    courseToEdit?.image || null
   )
 
-  /* ================= FORM ================= */
+  // ================= FORM =================
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(CourseFormSchema),
-    defaultValues: courseToEdit ||
+    defaultValues:
+      courseToEdit ||
       courseDraft || {
         courseName: '',
-        courseImage: '',
+        image: '',
         description: '',
         timeZone: '',
         startDate: '',
         endDate: '',
         startTime: '',
         endTime: '',
-        registrationType: 'free',
+        registrationType: 'free', // ✅ FIXED
         amount: 0,
         streamLink: '',
         status: 'Active',
       },
   })
 
-    // ================= DRAFT PERSIST =================
-    useEffect(() => {
-      if (courseToEdit?._id) return
+  // ================= DRAFT PERSIST =================
+  useEffect(() => {
+    if (courseToEdit?._id) return
 
-      const subscription = form.watch((values) => {
-        setDraft(DRAFT_KEY, values)
-      })
+    const subscription = form.watch((values) => {
+      setDraft(DRAFT_KEY, values)
+    })
 
-      return () => subscription.unsubscribe()
-    }, [form.watch, courseToEdit?._id])
-
-  
+    return () => subscription.unsubscribe()
+  }, [form.watch, courseToEdit?._id])
   // ================= IMAGE SYNC (EDIT MODE) =================
-    useEffect(() => {
-      if (courseToEdit?.courseImage) {
-        form.setValue('courseImage', courseToEdit.courseImage, { shouldValidate: false })
-        setImagePreview(courseToEdit.courseImage)
-      }
-    }, [courseToEdit, form])
-  
-    // ================= IMAGE RESET =================
-    const resetCourseImage = () => {
-      if (courseToEdit?.courseImage) {
-        form.setValue('courseImage', courseToEdit.image, { shouldValidate: false })
-        setImagePreview(courseToEdit.courseImage)
-      } else {
-        form.setValue('courseImage', '', { shouldValidate: false })
-        setImagePreview(null)
-      }
-  
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+  useEffect(() => {
+    if (courseToEdit?.image) {
+      form.setValue('image', courseToEdit.image, { shouldValidate: false })
+      setImagePreview(courseToEdit.image)
     }
-  
+  }, [courseToEdit, form])
+
+  // ================= IMAGE RESET =================
+  const resetCourseImage = () => {
+    if (courseToEdit?.image) {
+      form.setValue('image', courseToEdit.image, { shouldValidate: false })
+      setImagePreview(courseToEdit.image)
+    } else {
+      form.setValue('image', '', { shouldValidate: false })
+      setImagePreview(null)
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   // ================= IMAGE CHANGE =================
-    const handleImageChange = (files?: FileList) => {
-      if (!files || !files[0]) return
-  
-      const file = files[0]
-  
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        toast.error('Only JPG, JPEG, PNG, WEBP images are allowed')
-        resetCourseImage()
-        return
-      }
-  
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error('Image size must be ≤ 5 MB')
-        resetCourseImage()
-        return
-      }
-  
-      const img = new Image()
-      img.onload = () => {
-        if (img.width !== 300 || img.height !== 250) {
-          toast.error('Image must be exactly 300 × 250 px')
-          resetCourseImage()
-          return
-        }
-  
-        const url = URL.createObjectURL(file)
-        setImagePreview(url)
-        form.setValue('courseImage', files, { shouldValidate: true })
-      }
-  
-      img.onerror = () => {
-        toast.error('Invalid image file')
-        resetCourseImage()
-      }
-  
-      img.src = URL.createObjectURL(file)
+  const handleCourseImageChange = (files?: FileList) => {
+    if (!files || !files[0]) return
+
+    const file = files[0]
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Only JPG, JPEG, PNG, WEBP images are allowed')
+      resetCourseImage()
+      return
     }
 
-      const { watch, setValue } = form
-      const startDate = watch('startDate')
-      const endDate = watch('endDate')
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('Image size must be ≤ 5 MB')
+      resetCourseImage()
+      return
+    }
 
-      // ================= AUTO FIX END DATE =================
-        useEffect(() => {
-          if (!startDate || !endDate) return
-      
-          const s = toDate(startDate)
-          const e = toDate(endDate)
-      
-          if (e <= s) {
-            const newEnd = new Date(s)
-            newEnd.setDate(newEnd.getDate() + 1)
-      
-            const formatted = `${String(newEnd.getDate()).padStart(2, '0')}/${String(
-              newEnd.getMonth() + 1
-            ).padStart(2, '0')}/${newEnd.getFullYear()}`
-      
-            setValue('endDate', formatted)
-          }
-        }, [startDate])
+    const img = new Image()
+    img.onload = () => {
+      if (img.width !== 300 || img.height !== 250) {
+        toast.error('Image must be exactly 300 × 250 px')
+        resetCourseImage()
+        return
+      }
 
-  /* ================= SUBMIT ================= */
+      const url = URL.createObjectURL(file)
+      setImagePreview(url)
+      form.setValue('image', files, { shouldValidate: true })
+    }
+
+    img.onerror = () => {
+      toast.error('Invalid image file')
+      resetCourseImage()
+    }
+
+    img.src = URL.createObjectURL(file)
+  }
+
+  const { watch, setValue } = form
+  const startDate = watch('startDate')
+  const endDate = watch('endDate')
+
+  // ================= AUTO FIX END DATE =================
+  useEffect(() => {
+    if (!startDate || !endDate) return
+
+    const s = toDate(startDate)
+    const e = toDate(endDate)
+
+    if (e <= s) {
+      const newEnd = new Date(s)
+      newEnd.setDate(newEnd.getDate() + 1)
+
+      const formatted = `${String(newEnd.getDate()).padStart(2, '0')}/${String(
+        newEnd.getMonth() + 1
+      ).padStart(2, '0')}/${newEnd.getFullYear()}`
+
+      setValue('endDate', formatted)
+    }
+  }, [startDate])
+
+  // ================= SUBMIT =================
   async function onSubmit(data: CourseFormValues) {
     try {
       setLoading(true)
@@ -192,8 +194,8 @@ export default function AddCourseForm({
       Object.entries(data).forEach(([key, value]) => {
         if (value === undefined || value === null) return
 
-        if (key === 'courseImage' && value instanceof FileList) {
-          formData.append('courseImage', value[0])
+        if (key === 'image' && value instanceof FileList) {
+          formData.append('image', value[0])
           return
         }
 
@@ -219,8 +221,8 @@ export default function AddCourseForm({
 
       toast.success(
         courseToEdit
-          ? 'Course updated successfully'
-          : 'Course created successfully',
+          ? 'Course updated successfully!'
+          : 'Course created successfully!',
         { description: getIndianFormattedDate() }
       )
 
@@ -228,14 +230,14 @@ export default function AddCourseForm({
       clearDraft(DRAFT_KEY)
       onSuccess(result.data)
       mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/courses`)
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to save course')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save course')
     } finally {
       setLoading(false)
     }
   }
 
-const registrationTypeValue = watch('registrationType')
+  const registrationTypeValue = watch('registrationType')
   const isPaidEvent = registrationTypeValue === 'paid'
 
   useEffect(() => {
@@ -244,7 +246,6 @@ const registrationTypeValue = watch('registrationType')
     }
   }, [registrationTypeValue])
 
-  /* ================= UI ================= */
   return (
     <div className="flex flex-col min-h-full">
       <div className="p-3 border-b">
@@ -252,13 +253,15 @@ const registrationTypeValue = watch('registrationType')
           {courseToEdit ? 'Edit Course' : 'Add Course'}
         </h2>
       </div>
+
       <div className="flex-1 overflow-y-auto custom-scroll pb-20">
         <Form {...form}>
           <form
             id="course-form"
             onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 p-4"
+            className="space-y-4 p-3"
           >
+            {/* Course NAME */}
             <FormField
               control={form.control}
               name="courseName"
@@ -266,26 +269,30 @@ const registrationTypeValue = watch('registrationType')
                 <FormItem>
                   <FormLabel>Course Name *</FormLabel>
                   <FormControl>
-                    <InputWithIcon {...field} icon={<FaCalendarAlt />}
-                    placeholder='type course name' />
+                    <InputWithIcon
+                      {...field}
+                      icon={<FaCalendarAlt />}
+                      placeholder="type course name..."
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Course IMAGE */}
             <FormField
               control={form.control}
-              name="courseImage"
+              name="image"
               render={() => (
                 <FormItem>
-                  <FormLabel>Course Thumbnail *</FormLabel>
+                  <FormLabel>Course Image *</FormLabel>
                   <Input
                     ref={fileInputRef}
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     onChange={(e) =>
-                      handleImageChange(e.target.files || undefined)
+                      handleCourseImageChange(e.target.files || undefined)
                     }
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -428,12 +435,13 @@ const registrationTypeValue = watch('registrationType')
               />
             </div>
 
+            {/* Course Streaming link */}
             <FormField
               control={form.control}
               name="streamLink"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel>Webinar Streaming Link *</FormLabel>
+                  <FormLabel>Course Overview Link *</FormLabel>
                   <FormControl>
                     <InputWithIcon
                       {...field}
@@ -445,6 +453,7 @@ const registrationTypeValue = watch('registrationType')
                 </FormItem>
               )}
             />
+
             {/* Status */}
             <FormField
               control={form.control}
@@ -509,7 +518,7 @@ const registrationTypeValue = watch('registrationType')
         </SheetClose>
         <Button
           type="submit"
-          form="course-form"
+          form="webinar-form"
           onClick={form.handleSubmit(onSubmit)}
           disabled={loading}
           className="bg-orange-600 text-white hover:bg-orange-700"

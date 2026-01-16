@@ -12,12 +12,13 @@ export const CourseFormSchema = z
       .min(1, 'Description is required.')
       .max(100000, 'Description cannot exceed 100000 characters.'),
 
-    courseImage: z.union([
+    // ✅ FIXED: allow FileList (create) OR string URL (edit)
+    image: z.union([
       z
         .any()
         .refine(
           (file) => file?.length === 1,
-          'Please upload a course image (300 × 250 px)'
+          'Please upload a webinar image (300 × 250 px)'
         ),
       z.string().url(),
     ]),
@@ -60,3 +61,6 @@ export const CourseFormSchema = z
   })
 
 export type CourseFormValues = z.infer<typeof CourseFormSchema>
+
+
+

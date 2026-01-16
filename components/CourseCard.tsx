@@ -1,19 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { JSX, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CourseType } from '@/types/course'
+import { CourseType } from "@/types/course"
 import Image from 'next/image'
-import { fetchClient } from '@/lib/fetchClient'
-import { getIndianFormattedDate } from '@/lib/formatIndianDate'
+import { fetchClient } from "@/lib/fetchClient"
+import { getIndianFormattedDate } from "@/lib/formatIndianDate"
 import {
   Calendar,
   Pencil,
   Trash2,
   Clock3,
+  History,
   FileText,
   Tag,
-  CheckCircle,
-  XCircle,
+  Check,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { toast } from "sonner"
 import clsx from 'clsx'
 import {
   AlertDialog,
@@ -36,45 +36,28 @@ import {
 } from '@/components/ui/alert-dialog'
 import { mutate } from 'swr'
 
-
-
-/* ================= PROPS ================= */
 type CourseCardProps = {
-  course: CourseType
-  onEdit: (course: CourseType) => void
+  event: CourseType
+  onEdit: (event: CourseType) => void
 }
 
-export default function CourseCard({ course, onEdit }: CourseCardProps) {
+export default function CourseCard({ event, onEdit }: CourseCardProps) {
   const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  /* ================= STATUS MAP ================= */
-  const statusMap = {
-    Active: {
-      label: 'Active',
-      color: 'bg-green-100 text-green-700',
-      icon: <CheckCircle className="h-4 w-4 mr-1" />,
-    },
-    Inactive: {
-      label: 'Inactive',
-      color: 'bg-red-100 text-red-700',
-      icon: <XCircle className="h-4 w-4 mr-1" />,
-    },
-  } as const
-
-  const currentStatus = statusMap[course.status]
-
+ 
   /* ================= HANDLERS ================= */
   const handleManage = () => {
-    router.push(`/courses/${course._id}/weekcategory`)
+    router.push(`/courses/${event._id}/weekcategory`)
   }
+
   // ✅ Delete API call
   async function handleDelete() {
     setLoading(true)
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/courses/${course._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/courses/${event._id}`,
         { method: 'DELETE' }
       )
       const data = await res.json()
@@ -83,11 +66,10 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
         throw new Error(data.message || 'Failed to delete course')
       }
 
-      toast('Course deleted successfully', {
+      toast('Course has been deleted', {
         description: getIndianFormattedDate(),
       })
-
-      mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/courses`)
+      mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/courses`)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {
@@ -96,98 +78,89 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
     }
   }
 
-  /* ================= UI ================= */
   return (
     <Card className="p-0 group relative flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       {/* Course Image */}
       <div className="relative h-[250px] w-full overflow-hidden">
         <Image
-          src={course.courseImage}
-          alt={course.courseName}
+          src={event.image}
+          alt={event.courseName}
           fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-fit transition-transform duration-300 group-hover:scale-105"
         />
       </div>
 
-      {/* Status Badge */}
-      <span
-        className={clsx(
-          'absolute top-65 left-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold backdrop-blur',
-          currentStatus.color
-        )}
-      >
-        {currentStatus.icon}
-        {currentStatus.label}
-      </span>
-
       {/* Content */}
       <CardContent className="flex flex-col gap-3 p-4 text-sm">
-        <div className="flex items-center gap-3">
-          <h2 className="line-clamp-2 text-lg font-semibold text-sky-800">
-            <button
-              className="text-sky-800 hover:underline cursor-pointer"
-              onClick={handleManage}
-            >
-              {course.courseName}
-            </button>
-          </h2>
-        </div>
+        <h2 className="line-clamp-2 text-lg font-semibold text-sky-800">
+          <button
+            className="text-sky-800 hover:underline cursor-pointer"
+            onClick={handleManage}
+          >
+            {event.courseName}
+          </button>
+        </h2>
 
         {/* Registration Type */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Tag size={16} />
           <span>
-            Registration: {course.registrationType}
-            {course.registrationType === 'paid' && ` (₹${course.amount})`}
+            <span className="font-medium">Registration:</span>{' '}
+            {event.registrationType.charAt(0).toUpperCase() +
+              event.registrationType.slice(1)}
           </span>
         </div>
 
-        {/* Date / Time */}
-        <div className="flex items-center gap-2">
+        {/* Date & Time */}
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Calendar size={16} />
           <span>
-            {course.startDate} {course.startTime} – {course.endDate}{' '}
-            {course.endTime}
+            {event.startDate} {event.startTime} – {event.endDate}{' '}
+            {event.endTime}
           </span>
         </div>
 
-        {/* Time Zone */}
-        <div className="flex items-center gap-2">
+        {/* Timezone */}
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Clock3 size={16} />
-          <span>Time Zone: {course.timeZone}</span>
+          <span>Time Zone: {event.timeZone}</span>
         </div>
       </CardContent>
 
-      {/* Manage Menu */}
+      {/* Manage Dropdown */}
       <div className="absolute right-3 top-65">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="bg-orange-600 hover:bg-orange-700 text-white">
+            <Button
+              size="sm"
+              className="rounded-lg bg-orange-600 px-3 py-1.5 text-white shadow hover:bg-orange-700"
+            >
               Manage
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={handleManage}>
-              <FileText className="mr-2 h-4 w-4" />
-              Manage Course
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onClick={handleManage}>
+                <FileText className="mr-2 h-4 w-4" />
+                Manage Course
+              </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => onEdit(course)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit Course
-            </DropdownMenuItem>
-
-            <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Course
-            </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(event)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Course
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Course
+              </DropdownMenuItem>
+            </>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {/* Delete Dialog */}
+      {/* Delete Alert */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -197,8 +170,8 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
           </AlertDialogHeader>
 
           <p className="text-sm text-gray-600">
-            This action cannot be undone.{' '}
-            <span className="font-semibold">{course.courseName}</span> will be
+            This action cannot be undone. The course{' '}
+            <span className="font-semibold">{event.courseName}</span> will be
             permanently removed.
           </p>
 
@@ -207,7 +180,7 @@ export default function CourseCard({ course, onEdit }: CourseCardProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={loading}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               {loading ? 'Deleting...' : 'Confirm'}
             </AlertDialogAction>

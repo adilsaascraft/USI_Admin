@@ -5,7 +5,7 @@ export type CourseType = {
 
   /* ================= CORE ================= */
   courseName: string
-  courseImage: string
+  image: string
   description?: string
 
   /* ================= DATE & TIME ================= */
