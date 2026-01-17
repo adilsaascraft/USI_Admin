@@ -38,28 +38,39 @@ import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 
 type Speaker = {
   _id: string
-  prefix: string
+  prefix?: string
   speakerName: string
-  country: string
+  speakerProfilePicture?: string
+  country?: string
+}
+
+type Session = {
+  _id: string
+  sessionName: string
+  chairperson?: Speaker[]
 }
 
 type TopicApiRow = {
   _id: string
   title: string
-  topicType: string
+  topicType: 'Presentation' | 'Quiz' | 'Panel Discussion'
   startTime: string
   endTime: string
   videoLink?: string
-  sessionId: {
-    _id: string
-    sessionName: string
-  }
+  sessionId: Session
   speakerId: Speaker[]
-  moderator?: string
-  panelist?: string[]
-  quizMaster?: string
-  teamMember?: string[]
+  moderator?: Speaker
+  panelist?: Speaker[]
+  quizMaster?: Speaker
+  teamMember?: Speaker[]
 }
+
+/* ================= HELPERS ================= */
+
+const renderSpeaker = (s: Speaker) =>
+  `${s.prefix ? s.prefix + ' ' : ''}${s.speakerName}${
+    s.country ? ` (${s.country})` : ''
+  }`
 
 /* ================= COMPONENT ================= */
 
@@ -69,7 +80,7 @@ export default function TopicClient({
   conferenceId: string
 }) {
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [editingTopic, setEditingTopic] = useState<any | null>(null)
+  const [editingTopic, setEditingTopic] = useState<TopicApiRow | null>(null)
 
   const { data, isLoading, mutate } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/topics`,
@@ -133,6 +144,7 @@ export default function TopicClient({
       ),
       enableSorting: false,
     },
+
     {
       accessorKey: 'title',
       header: sortableHeader('Topic Title'),
@@ -145,6 +157,7 @@ export default function TopicClient({
         </div>
       ),
     },
+
     {
       accessorKey: 'topicType',
       header: sortableHeader('Type'),
@@ -152,39 +165,34 @@ export default function TopicClient({
         <Badge variant="outline">{row.original.topicType}</Badge>
       ),
     },
+
     {
       id: 'time',
       header: 'Time Slot',
       cell: ({ row }) => `${row.original.startTime} – ${row.original.endTime}`,
     },
 
-    /* ===== SPEAKERS WITH ACCORDION ===== */
+    /* ===== CHAIRPERSONS ===== */
     {
-      id: 'speakers',
-      header: 'Speakers',
+      id: 'chairpersons',
+      header: 'Chairperson(s)',
       cell: ({ row }) => {
-        const { topicType, speakerId } = row.original
+        const chairs = row.original.sessionId?.chairperson || []
 
-        // ✅ Speakers only for Presentation & Debate
-        const hasSpeakers =
-          topicType === 'Presentation' || topicType === 'Debate'
-
-        if (!hasSpeakers) {
+        if (!chairs.length) {
           return <span className="text-muted-foreground">—</span>
         }
 
         return (
           <Accordion type="single" collapsible>
-            <AccordionItem value="speakers">
+            <AccordionItem value="chair">
               <AccordionTrigger className="py-0">
-                {speakerId.length} Speaker(s)
+                {chairs.length} Chairperson(s)
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-1 text-sm">
-                  {speakerId.map((s) => (
-                    <p key={s._id}>
-                      • {s.prefix} {s.speakerName} ({s.country})
-                    </p>
+                  {chairs.map((c) => (
+                    <p key={c._id}>• {renderSpeaker(c)}</p>
                   ))}
                 </div>
               </AccordionContent>
@@ -194,7 +202,41 @@ export default function TopicClient({
       },
     },
 
-    /* ===== ROLES WITH MULTIPLE ACCORDIONS ===== */
+    /* ===== SPEAKERS (PRESENTATION) ===== */
+    {
+      id: 'speakers',
+      header: 'Speakers',
+      cell: ({ row }) => {
+        if (row.original.topicType !== 'Presentation') {
+          return <span className="text-muted-foreground">—</span>
+        }
+
+        const speakers = row.original.speakerId || []
+
+        if (!speakers.length) {
+          return <span className="text-muted-foreground">—</span>
+        }
+
+        return (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="speakers">
+              <AccordionTrigger className="py-0">
+                {speakers.length} Speaker(s)
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-1 text-sm">
+                  {speakers.map((s) => (
+                    <p key={s._id}>• {renderSpeaker(s)}</p>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )
+      },
+    },
+
+    /* ===== ROLES (PANEL / QUIZ) ===== */
     {
       id: 'roles',
       header: 'Roles',
@@ -210,7 +252,7 @@ export default function TopicClient({
                     Moderator
                   </AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm">• {t.moderator}</p>
+                    <p className="text-sm">• {renderSpeaker(t.moderator)}</p>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -218,14 +260,14 @@ export default function TopicClient({
 
             {t.panelist?.length ? (
               <Accordion type="single" collapsible>
-                <AccordionItem value="panel">
+                <AccordionItem value="panelist">
                   <AccordionTrigger className="py-0">
-                    Panel ({t.panelist.length})
+                    Panelist ({t.panelist.length})
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-1 text-sm">
-                      {t.panelist.map((p, i) => (
-                        <p key={i}>• {p}</p>
+                      {t.panelist.map((p) => (
+                        <p key={p._id}>• {renderSpeaker(p)}</p>
                       ))}
                     </div>
                   </AccordionContent>
@@ -240,7 +282,7 @@ export default function TopicClient({
                     Quiz Master
                   </AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm">• {t.quizMaster}</p>
+                    <p className="text-sm">• {renderSpeaker(t.quizMaster)}</p>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -254,8 +296,8 @@ export default function TopicClient({
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-1 text-sm">
-                      {t.teamMember.map((m, i) => (
-                        <p key={i}>• {m}</p>
+                      {t.teamMember.map((m) => (
+                        <p key={m._id}>• {renderSpeaker(m)}</p>
                       ))}
                     </div>
                   </AccordionContent>
@@ -283,6 +325,7 @@ export default function TopicClient({
           '-'
         ),
     },
+
     {
       id: 'actions',
       header: 'Actions',

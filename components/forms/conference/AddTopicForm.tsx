@@ -91,6 +91,7 @@ export default function AddTopicForm({
     },
   })
 
+
   const topicType = form.watch('topicType')
 
   /* ================= RESET DEPENDENT FIELDS ================= */
@@ -115,6 +116,14 @@ export default function AddTopicForm({
       form.setValue('panelist', [])
     }
   }, [topicType, form])
+
+  useEffect(() => {
+    if (topicType === 'Debate') {
+      const team = form.getValues('teamMember') || []
+      form.setValue('speakerId', team, { shouldValidate: true })
+    }
+  }, [topicType, form.watch('teamMember')])
+
 
   /* ================= PREFILL EDIT MODE ================= */
 
@@ -273,6 +282,9 @@ export default function AddTopicForm({
   async function onSubmit(data: TopicFormValues) {
     try {
       setLoading(true)
+      if (data.topicType === 'Debate') {
+        data.speakerId = data.teamMember
+      }
 
       // Filter out empty string values for single select fields
       const payload = {
@@ -305,8 +317,23 @@ export default function AddTopicForm({
       })
 
       onSave(result.data)
+      form.reset({
+        conferenceId,
+        sessionId: '',
+        topicType: 'Presentation',
+        title: '',
+        startTime: '',
+        endTime: '',
+        videoLink: '',
+        description: '',
+        speakerId: [],
+        panelist: [],
+        teamMember: [],
+        moderator: '',
+        quizMaster: '',
+      })
+
       clearDraft(DRAFT_KEY)
-      form.reset()
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {
@@ -343,7 +370,7 @@ export default function AddTopicForm({
                       <Button variant="outline" className="w-full justify-between">
                         {field.value
                           ? sessions.find((s) => s._id === field.value)
-                              ?.sessionName
+                            ?.sessionName
                           : 'Select session'}
                         <ChevronsUpDown className="h-4 w-4 opacity-50" />
                       </Button>
@@ -385,7 +412,7 @@ export default function AddTopicForm({
                 <FormItem>
                   <FormLabel>Topic Type *</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
+                    <SelectTrigger className='w-full p-3'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -609,7 +636,7 @@ export default function AddTopicForm({
           type="submit"
           form="topic-form"
           disabled={loading}
-          className="bg-orange-600 text-white"
+          className="bg-orange-600 hover:bg-orange-700 text-white"
         >
           {loading ? 'Saving...' : defaultValues?._id ? 'Update' : 'Create'}
         </Button>

@@ -55,7 +55,6 @@ export const CustomTimePicker = ({ name, label }: Props) => {
   const meridians = ['AM', 'PM']
 
   const current = parseTime(timeValue || '05:00 PM')
-  console.log('Current Time Value:', timeValue, current)
 
   return (
     <div className="flex flex-col gap-1 w-full">

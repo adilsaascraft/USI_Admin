@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+
 import { Textarea } from '@/components/ui/textarea'
-import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import RichTextEditor from '@/components/RichTextEditor'
+import { useFormDraftStore } from '@/stores/useFormDraftStore'
+import { apiRequest } from '@/lib/apiRequest'
+
 import {
   Form,
   FormField,
@@ -22,47 +26,82 @@ import {
   SheetClose,
   toast,
 } from '@/lib/imports'
-import { apiRequest } from '@/lib/apiRequest'
 
-export default function AddCourseModule({ courseId, defaultValues, onSave }) {
+import {
+  CourseModuleSchema,
+  CourseModuleValues,
+} from '@/validations/courseModuleSchema'
+
+type Props = {
+  courseId: string
+  defaultValues?: Partial<CourseModuleValues> & { _id?: string }
+  onSave?: () => void
+}
+
+export default function AddCourseModule({
+  courseId,
+  defaultValues,
+  onSave,
+}: Props) {
   const [loading, setLoading] = useState(false)
+  const [weekCategories, setWeekCategories] = useState<any[]>([])
+
   const DRAFT_KEY = 'add-module-form'
   const { drafts, setDraft, clearDraft } = useFormDraftStore()
   const courseDraft = drafts[DRAFT_KEY]
-  const [weekCategories, setWeekCategories] = useState([])
 
   /* ================= FORM ================= */
 
-  const form = useForm({
-    defaultValues: defaultValues ||
-      courseDraft || {
-        weekCategoryId:
-          defaultValues?.weekCategoryId?._id ||
-          defaultValues?.weekCategoryId ||
-          '',
-        description: defaultValues?.description || '',
-        topicName: defaultValues?.topicName || '',
-        aboutTopic: defaultValues?.aboutTopic || '',
-        contentUrl: defaultValues?.contentUrl || '',
-        videoDuration: defaultValues?.videoDuration || '',
-        additionalResources:
-          defaultValues?.additionalResources?.map((r) => ({ value: r })) || [],
-      },
+  const form = useForm<CourseModuleValues>({
+    resolver: zodResolver(CourseModuleSchema),
+    defaultValues: {
+      weekCategoryId: '',
+      contentType: 'video',
+      topicName: '',
+      aboutTopic: '',
+      contentUrl: '',
+      videoDuration: '',
+      description: '',
+      additionalResources: [{ value: '' }],
+    },
   })
 
-  /* ================= DRAFT PERSIST ================= */
+  const { control, register, handleSubmit, reset, watch } = form
+
+  /* ================= PREFILL (EDIT MODE) ================= */
+
+  const resolvedWeekCategoryId = defaultValues?.weekCategoryId
+
+
+  useEffect(() => {
+    if (!defaultValues?._id) return
+    if (!weekCategories.length) return // ⬅️ CRITICAL
+
+    reset({
+      weekCategoryId: resolvedWeekCategoryId || '',
+      contentType: defaultValues.contentType ?? 'video',
+      topicName: defaultValues.topicName ?? '',
+      aboutTopic: defaultValues.aboutTopic ?? '',
+      contentUrl: defaultValues.contentUrl ?? '',
+      videoDuration: defaultValues.videoDuration ?? '',
+      description: defaultValues.description ?? '',
+      additionalResources:
+        defaultValues.additionalResources?.length
+          ? defaultValues.additionalResources.map((r) => ({
+            value: typeof r === 'string' ? r : r.value,
+          }))
+          : [{ value: '' }],
+    })
+  }, [defaultValues, weekCategories, reset])
+
+
+  /* ================= DRAFT ================= */
 
   useEffect(() => {
     if (defaultValues?._id) return
-
-    const subscription = form.watch((values) => {
-      setDraft(DRAFT_KEY, values)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [form.watch, defaultValues?._id])
-
-  const { control, register, handleSubmit, reset } = form
+    const sub = watch((values) => setDraft(DRAFT_KEY, values))
+    return () => sub.unsubscribe()
+  }, [watch, defaultValues?._id])
 
   /* ================= FIELD ARRAYS ================= */
 
@@ -82,38 +121,31 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
 
   /* ================= SUBMIT ================= */
 
-  const onSubmit = async (values) => {
+  const onSubmit = async (values: CourseModuleValues) => {
     try {
       setLoading(true)
 
-      if (!values.weekCategoryId)
-        return toast.error('Week category is required')
-      if (!values.topicName.trim()) return toast.error('Topic name is required')
-      if (!values.contentUrl.trim())
-        return toast.error('Content URL is required')
-
       const payload = {
         topicName: values.topicName.trim(),
-        description: values.description?.trim() || undefined,
+        contentType: values.contentType,
         aboutTopic: values.aboutTopic?.trim() || undefined,
         contentUrl: values.contentUrl.trim(),
         videoDuration: values.videoDuration?.trim() || undefined,
-        additionalResources: values.additionalResources
-          .map((r) => r.value?.trim())
+        description: values.description?.trim() || undefined,
+        additionalResources: (values.additionalResources ?? [])
+          .map((r) => r.value.trim())
           .filter(Boolean),
       }
 
       if (defaultValues?._id) {
-        // ✅ UPDATE
         await apiRequest({
           endpoint: `/api/admin/modules/${defaultValues._id}`,
           method: 'PUT',
           body: payload,
           showToast: true,
-          successMessage: 'Module Update Successfully',
+          successMessage: 'Module Updated Successfully',
         })
       } else {
-        // ✅ CREATE
         await apiRequest({
           endpoint: `/api/admin/courses/${courseId}/week-categories/${values.weekCategoryId}/modules`,
           method: 'POST',
@@ -126,7 +158,7 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
       onSave?.()
       reset()
       clearDraft(DRAFT_KEY)
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {
       setLoading(false)
@@ -151,20 +183,52 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Week Category *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
                     <FormControl>
-                      <SelectTrigger className="w-full p-3">
-                        <SelectValue placeholder="Select week" />
+                      <SelectTrigger className='w-full p-3'>
+                        <SelectValue placeholder="Select week category" />
                       </SelectTrigger>
                     </FormControl>
+
                     <SelectContent>
                       {weekCategories.map((w) => (
                         <SelectItem key={w._id} value={w._id}>
-                          {w.weekCategoryName}
+                          {w.weekCategoryName} {/* ✅ UI LABEL */}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
+            {/* Content Type */}
+            <FormField
+              control={control}
+              name="contentType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Content Type *</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className='w-full p-3'>
+                        <SelectValue placeholder="Select content type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="video">Video</SelectItem>
+                      <SelectItem value="image">Image</SelectItem>
+                      <SelectItem value="document">Document</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -174,7 +238,7 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
               <FormLabel>Topic Name *</FormLabel>
               <Input
                 {...register('topicName')}
-                placeholder="e.g Urinary Tract Infections"
+                placeholder="e.g. Urinary Tract Infections"
               />
             </FormItem>
 
@@ -183,8 +247,8 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
               <FormLabel>About Topic</FormLabel>
               <Textarea
                 {...register('aboutTopic')}
-                placeholder="Enter about topic... eg. Assessment and management of uncomplicated and complicated infections, antimicrobial stewardship, recurrent infections, and prevention strategies."
                 rows={4}
+                placeholder="Short overview of this topic…"
               />
             </FormItem>
 
@@ -193,14 +257,17 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
               <FormLabel>Content URL *</FormLabel>
               <Input
                 {...register('contentUrl')}
-                placeholder="e.g https://vimeo.com/1234"
+                placeholder="e.g. https://vimeo.com/123456"
               />
             </FormItem>
 
             {/* Video Duration */}
             <FormItem>
               <FormLabel>Video Duration (Minutes:Seconds)</FormLabel>
-              <Input {...register('videoDuration')} placeholder="e.g. 20:45" />
+              <Input
+                {...register('videoDuration')}
+                placeholder="e.g. 20:45"
+              />
             </FormItem>
 
             {/* Additional Resources */}
@@ -210,8 +277,8 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
               {resourcesArray.fields.map((f, i) => (
                 <div key={f.id} className="flex gap-2">
                   <Input
-                    placeholder={`Resource ${i + 1}`}
                     {...register(`additionalResources.${i}.value`)}
+                    placeholder={`Resource link ${i + 1}`}
                   />
                   <Button
                     type="button"
@@ -225,18 +292,17 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
 
               <Button
                 type="button"
-                variant="outline"
                 size="sm"
+                className='bg-orange-600 hover:bg-orange-700 text-white'
                 onClick={() => resourcesArray.append({ value: '' })}
-                className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 + Add Resource
               </Button>
             </div>
 
-            {/* Description (Rich Text Editor) */}
+            {/* Description */}
             <FormField
-              control={form.control}
+              control={control}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -245,10 +311,9 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
                     <RichTextEditor
                       value={field.value || ''}
                       onChange={field.onChange}
-                      placeholder="Write something..."
+                      placeholder="Write detailed description here…"
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -256,32 +321,22 @@ export default function AddCourseModule({ courseId, defaultValues, onSave }) {
         </Form>
       </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 left-0 right-0 border-t px-6 py-4 flex justify-between">
+      <div className="sticky bottom-0 border-t px-6 py-4 flex justify-between">
         <SheetClose asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className="border border-gray-400"
-            disabled={loading}
-          >
+          <Button variant="outline" disabled={loading}>
             Close
           </Button>
         </SheetClose>
 
-        <Button
-          type="submit"
-          form="module-form"
-          disabled={loading}
-          className="bg-orange-600 text-white hover:bg-orange-700"
-        >
+        <Button form="module-form" type="submit" disabled={loading}
+          className='bg-orange-600 hover:bg-orange-700 text-white'>
           {loading
             ? defaultValues?._id
               ? 'Updating...'
               : 'Creating...'
             : defaultValues?._id
-            ? 'Update'
-            : 'Create'}
+              ? 'Update'
+              : 'Create'}
         </Button>
       </div>
     </div>
