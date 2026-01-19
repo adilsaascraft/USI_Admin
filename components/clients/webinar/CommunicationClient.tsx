@@ -10,7 +10,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import { Checkbox } from '@/components/ui/checkbox'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -38,7 +38,7 @@ type Registration = {
   }
 }
 
-type ApiResponse = {
+type Response = {
   data: Registration[]
   webinar: {
     attendedMailSent: boolean
@@ -61,8 +61,8 @@ export default function CommunicationClient({
 
   /* ================= FETCH ================= */
 
-  const { data, isLoading, mutate } = useSWR<ApiResponse>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinar/${webinarId}/registrations`,
+  const { data, isLoading, mutate } = useSWR<Response>(
+    `${process.env.NEXT_PUBLIC__URL}/admin/webinar/${webinarId}/registrations`,
     fetcher
   )
 
@@ -90,10 +90,10 @@ export default function CommunicationClient({
   const sendBulkMail = async (type: 'attended' | 'not-attended') => {
     const endpoint =
       type === 'attended'
-        ? `/api/admin/webinar/${webinarId}/email/attended`
-        : `/api/admin/webinar/${webinarId}/email/not-attended`
+        ? `/admin/webinar/${webinarId}/email/attended`
+        : `/admin/webinar/${webinarId}/email/not-attended`
 
-    await apiRequest({
+    await Request({
       endpoint,
       method: 'POST',
       body: type === 'attended' ? { surveyLink } : undefined,
@@ -113,10 +113,10 @@ const resendIndividual = async (
 ) => {
   const endpoint =
     type === 'attended'
-      ? `/api/admin/webinar/${webinarId}/email/attended/${userId}`
-      : `/api/admin/webinar/${webinarId}/email/not-attended/${userId}`
+      ? `/admin/webinar/${webinarId}/email/attended/${userId}`
+      : `/admin/webinar/${webinarId}/email/not-attended/${userId}`
 
-  await apiRequest({
+  await Request({
     endpoint,
     method: 'POST',
     body: type === 'attended' ? { surveyLink } : undefined,

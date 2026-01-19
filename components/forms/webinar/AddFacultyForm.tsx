@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
   AssignFacultySchema,
@@ -100,7 +100,7 @@ export default function AddFacultyForm({
       try {
         setDropdownLoading(true)
         const res = await fetchClient(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`
+          `${process.env.NEXT_PUBLIC__URL}//speakers/active`
         )
         const data = await res.json()
         setSpeakers(data.data || [])
@@ -126,8 +126,8 @@ export default function AddFacultyForm({
         facultyType: data.facultyType,
       }
 
-      await apiRequest<typeof bodyData>({
-        endpoint: `/api/admin/assign-speakers/${webinarId}`,
+      await Request<typeof bodyData>({
+        endpoint: `//admin/assign-speakers/${webinarId}`,
         method: 'POST',
         body: bodyData,
         showToast: true,

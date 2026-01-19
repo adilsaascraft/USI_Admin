@@ -21,7 +21,7 @@ import { webinarType } from '@/lib/constants'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
-// --- Tabs (must match API dynamicStatus exactly) ---
+// --- Tabs (must match  dynamicStatus exactly) ---
 const tabs = ['Live', 'Upcoming', 'Past', 'All'] as const
 
 export default function WebinarPageClient({
@@ -29,7 +29,7 @@ export default function WebinarPageClient({
 }: {
   initialWebinars: WebinarType[]
 }) {
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/webinars`
+  const _URL = `${process.env.NEXT_PUBLIC__URL}/webinars`
 
   const [open, setOpen] = useState(false)
   const [webinarToEdit, setWebinarToEdit] = useState<WebinarType | null>(null)
@@ -41,7 +41,7 @@ export default function WebinarPageClient({
   const itemsPerPage = 10
 
   // ✅ Fetch webinars
-  const { data, isLoading } = useSWR(API_URL, fetcher, {
+  const { data, isLoading } = useSWR(_URL, fetcher, {
     fallbackData: initialWebinars,
   })
 
@@ -88,7 +88,7 @@ export default function WebinarPageClient({
   }
 
   async function handleSuccess() {
-    await mutate(API_URL)
+    await mutate(_URL)
     setOpen(false)
     setWebinarToEdit(null)
   }

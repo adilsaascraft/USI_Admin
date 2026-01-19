@@ -8,7 +8,7 @@ import WebinarPageClient from "@/components/clients/WebinarPageClient"
 
 export default function WebinarPage() {
   const { data} = useSWR<{ success: boolean; data: WebinarType[] }>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars`,
+    `${process.env.NEXT_PUBLIC__URL}/webinars`,
     fetcher,
     {
       revalidateOnFocus: true,   // refetch on tab focus

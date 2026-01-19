@@ -61,14 +61,14 @@ export default function SubmitFeedbackByUserPage() {
         setLoading(true)
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/feedback`
+          `${process.env.NEXT_PUBLIC__URL}/webinars/${webinarId}/feedback`
         )
 
         if (!res.ok) throw new Error('Failed to load feedback')
 
         const json = await res.json()
 
-        // ✅ EXACT mapping based on your API response
+        // ✅ EXACT mapping based on your  response
         setQuestions(json?.data?.feedbacks || [])
       } catch (err) {
         console.error(err)
@@ -111,7 +111,7 @@ export default function SubmitFeedbackByUserPage() {
       setSubmitting(true)
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/send-feedback`,
+        `${process.env.NEXT_PUBLIC__URL}/webinars/${webinarId}/send-feedback`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

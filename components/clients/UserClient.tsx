@@ -9,7 +9,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { fetcher } from '@/lib/fetcher'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 import EntitySkeleton from '../EntitySkeleton'
 import { Input } from '@/components/ui/input'
 import {
@@ -47,7 +47,7 @@ export default function UsersClient() {
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null)
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/users/all`,
+    `${process.env.NEXT_PUBLIC__URL}/users/all`,
     fetcher
   )
 
@@ -64,7 +64,7 @@ export default function UsersClient() {
     }
   }, [users])
 
-  // Update status API
+  // Update status 
   const updateStatus = async (
     userId: string,
     status: 'Pending' | 'Approved'
@@ -72,8 +72,8 @@ export default function UsersClient() {
     try {
       setLoadingUserId(userId)
 
-      await apiRequest({
-        endpoint: `/api/users/status/${userId}`,
+      await Request({
+        endpoint: `/users/status/${userId}`,
         method: 'PUT',
         body: { status },
         showToast: true,

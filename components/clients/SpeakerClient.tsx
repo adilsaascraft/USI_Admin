@@ -22,7 +22,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { fetcher } from '@/lib/fetcher'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 import EntitySkeleton from '../EntitySkeleton'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 
@@ -37,7 +37,7 @@ export default function SpeakerClient() {
 
   // 🔑 Fetch speakers
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/speakers`,
+    `${process.env.NEXT_PUBLIC_API_URL}/speakers`,
     fetcher
   )
 
@@ -72,8 +72,8 @@ export default function SpeakerClient() {
   // Delete
   const handleDelete = async (id: string) => {
     try {
-      await apiRequest({
-        endpoint: `/api/admin/speakers/${id}`,
+      await Request({
+        endpoint: `/admin/speakers/${id}`,
         method: 'DELETE',
         showToast: true,
         successMessage: 'Speaker deleted successfully',

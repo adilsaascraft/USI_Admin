@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 import { HelpCircle, Mail, Phone, MoreVertical } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
@@ -55,7 +55,7 @@ export default function DashboardNavbar() {
       if (segments[0] === 'webinar' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${segments[1]}`
+            `${process.env.NEXT_PUBLIC__URL}/webinars/${segments[1]}`
           )
           const json = await res.json()
           setEntityName(json?.data?.name || null)
@@ -68,7 +68,7 @@ export default function DashboardNavbar() {
       if (segments[0] === 'courses' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/courses/${segments[1]}`
+            `${process.env.NEXT_PUBLIC__URL}/courses/${segments[1]}`
           )
           const json = await res.json()
           setEntityName(json?.data?.courseName || null)
@@ -87,8 +87,8 @@ export default function DashboardNavbar() {
   const handleLogout = async () => {
     setLoading(true)
     try {
-      await apiRequest({
-        endpoint: '/api/admin/logout',
+      await Request({
+        endpoint: '/admin/logout',
         method: 'POST',
         showToast: false,
       })

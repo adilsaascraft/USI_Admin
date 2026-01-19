@@ -88,12 +88,12 @@ export default function AddWeekCategoryForm({
       const isEdit = Boolean(defaultValues?._id)
 
       const endpoint = isEdit
-        ? `/api/admin/week-categories/${defaultValues!._id}`
-        : `/api/admin/courses/${courseId}/week-categories`
+        ? `/admin/week-categories/${defaultValues!._id}`
+        : `/admin/courses/${courseId}/week-categories`
 
       const method = isEdit ? 'PUT' : 'POST'
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC__URL}${endpoint}`, {
         method,
         headers: {
           'Content-Type': 'application/json',

@@ -25,7 +25,7 @@ export default function ConferencePageClient({
 }: {
   initialConferences: ConferenceType[]
 }) {
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/conferences`
+  const _URL = `${process.env.NEXT_PUBLIC__URL}/conferences`
 
   const [open, setOpen] = useState(false)
   const [conferenceToEdit, setConferenceToEdit] =
@@ -38,7 +38,7 @@ export default function ConferencePageClient({
 
   /* ================= FETCH ================= */
 
-  const { data, isLoading } = useSWR(API_URL, fetcher, {
+  const { data, isLoading } = useSWR(_URL, fetcher, {
     fallbackData: initialConferences,
   })
 
@@ -85,7 +85,7 @@ export default function ConferencePageClient({
   }
 
   async function handleSuccess() {
-    await mutate(API_URL)
+    await mutate(_URL)
     setOpen(false)
     setConferenceToEdit(null)
   }

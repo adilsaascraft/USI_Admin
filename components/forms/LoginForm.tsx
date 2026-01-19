@@ -1,5 +1,5 @@
 'use client'
-import { apiRequest } from '@/lib/apiRequest';
+import { Request } from '@/lib/apiRequest';
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -18,22 +18,22 @@ import { Eye, EyeOff } from 'lucide-react'
 // const SITE_KEY = '6LcgsNkrAAAAAJDmSvRPZJtPibpwkdRpBLMldGut'
 
 interface LoginResponse {
-  accessToken: string;
+  message: string
+  accessToken: string
   user: {
-    _id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
+    _id: string
+    name: string
+    email: string
+    role: string
+  }
 }
-
 
 export function LoginForm() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  // const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+
   const setUser = useAuthStore((state) => state.setUser)
 
   const {
@@ -44,49 +44,36 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   })
 
-// const recaptchaRef = useRef<ReCAPTCHA>(null)
-const onSubmit = async (data: LoginFormData) => {
-  setError("")
-  setIsLoading(true)
+  const onSubmit = async (data: LoginFormData) => {
+    setError('')
+    setIsLoading(true)
 
-  // if (!captchaToken) {
-  //     setError('Please complete the reCAPTCHA')
-  //     setIsLoading(false)
-  //     return
-  //   }
+    try {
+      await Request<{ email: string; password: string }, LoginResponse>({
+        endpoint: '/api/admin/login',
+        method: 'POST',
+        body: {
+          email: data.email,
+          password: data.password,
+        },
+        onSuccess: (json) => {
+          // ✅ Normalize _id → id for Zustand
+          setUser({
+            id: json.user._id,
+            name: json.user.name,
+            email: json.user.email,
+            role: json.user.role,
+          })
 
-  try {
-    await apiRequest<
-      { email: string; password: string },
-      LoginResponse
-    >({
-      endpoint: "/api/admin/login",
-      method: "POST",
-      body: {
-        email: data.email,
-        password: data.password,
-      },
-      onSuccess: (json) => {
-  // ✅ Store access token
-  localStorage.setItem("token", json.accessToken)
-
-  setUser({
-    id: json.user._id,     // ✅ normalize here
-    email: json.user.email,
-    name: json.user.name,
-    role: json.user.role,
-  })
-
-  router.replace("/dashboard")
-},
-
-    })
-  } catch (err: any) {
-    setError(err.message || "Login failed")
-  } finally {
-    setIsLoading(false)
+          router.replace('/dashboard')
+        },
+      })
+    } catch (err: any) {
+      setError(err.message || 'Login failed')
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
 
 
 

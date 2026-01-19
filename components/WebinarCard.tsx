@@ -76,12 +76,12 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
     router.push(`/webinar/${event._id}/faculty`)
   }
 
-  // ✅ Delete API call
+  // ✅ Delete  call
   async function handleDelete() {
     setLoading(true)
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinars/${event._id}`,
+        `${process.env.NEXT_PUBLIC__URL}/admin/webinars/${event._id}`,
         { method: 'DELETE' }
       )
       const data = await res.json()
@@ -93,7 +93,7 @@ export default function WebinarCard({ event, onEdit }: WebinarCardProps) {
       toast('Webinar has been deleted', {
         description: getIndianFormattedDate(),
       })
-      mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/webinars`)
+      mutate(`${process.env.NEXT_PUBLIC__URL}/webinars`)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {

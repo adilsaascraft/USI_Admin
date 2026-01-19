@@ -1,59 +1,77 @@
 'use client'
-import { create } from 'zustand'
 
-type User = {
+import { create } from 'zustand'
+import { Request } from '@/lib/apiRequest'
+
+export type AuthUser = {
   id: string
+  name: string
   email: string
-  role?: string
-  name?: string
+  mobile?: string
+  role: string
 }
 
 type AuthState = {
-  user: User | null
-  token: string | null
-  setUser: (user: User | null, token?: string) => void
+  user: AuthUser | null
+  isHydrated: boolean
+
+  setUser: (user: AuthUser) => void
+  updateUser: (data: Partial<AuthUser>) => void
   hydrateUser: () => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  token: null,
+  isHydrated: false,
 
-  setUser: (user, token) => {
-    if (token) {
-      localStorage.setItem('token', token)
-      set({ token })
-    }
-    set({ user })
-  },
+  /* ---------------- Set user directly (used on login) ---------------- */
+  setUser: (user) =>
+    set({
+      user,
+      isHydrated: true, // 🔐 mark hydrated immediately
+    }),
 
+  /* ---------------- Update user safely ---------------- */
+  updateUser: (data) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...data } : state.user,
+    })),
+
+  /* ---------------- Hydration (NO profile  for admin) ---------------- */
   hydrateUser: async () => {
-    const token = localStorage.getItem('token')
-    if (!token) return set({ user: null, token: null })
+    const { isHydrated } = get()
+    if (isHydrated) return // 🔐 hard guard
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-      if (res.ok) {
-        const data = await res.json()
-        set({ user: data.user, token })
-      } else {
-        localStorage.removeItem('token')
-        set({ user: null, token: null })
-      }
+      /**
+       * If you have a lightweight endpoint like:
+       *   GET /auth/me
+       * that reads cookies and returns { id, name, email, role }
+       * USE IT HERE.
+       *
+       * Otherwise — simply mark hydrated.
+       */
+
+      // ❌ DO NOT call /users/profile for admin
+      set({ isHydrated: true })
     } catch {
-      localStorage.removeItem('token')
-      set({ user: null, token: null })
+      set({ user: null, isHydrated: true })
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token')
-    set({ user: null, token: null })
+  /* ---------------- Logout ---------------- */
+  logout: async () => {
+    try {
+      await Request({
+        endpoint: '/admin/logout',
+        method: 'POST',
+      })
+    } finally {
+      set({
+        user: null,
+        isHydrated: true,
+      })
+    }
   },
 }))

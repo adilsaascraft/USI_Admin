@@ -101,7 +101,7 @@ export default function AddFeedbackForm({
       setLoading(true)
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/feedback`,
+        `${process.env.NEXT_PUBLIC__URL}//webinars/${webinarId}/feedback`,
         {
           method: defaultValues ? 'PUT' : 'POST',
           headers: {

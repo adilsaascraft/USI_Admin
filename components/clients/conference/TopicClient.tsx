@@ -50,7 +50,7 @@ type Session = {
   chairperson?: Speaker[]
 }
 
-type TopicApiRow = {
+type TopicRow = {
   _id: string
   title: string
   topicType: 'Presentation' | 'Quiz' | 'Panel Discussion'
@@ -80,21 +80,21 @@ export default function TopicClient({
   conferenceId: string
 }) {
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [editingTopic, setEditingTopic] = useState<TopicApiRow | null>(null)
+  const [editingTopic, setEditingTopic] = useState<TopicRow | null>(null)
 
   const { data, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/topics`,
+    `${process.env.NEXT_PUBLIC__URL}/conferences/${conferenceId}/topics`,
     fetcher
   )
 
-  const topics: TopicApiRow[] = useMemo(() => data?.data ?? [], [data])
+  const topics: TopicRow[] = useMemo(() => data?.data ?? [], [data])
 
   const handleAdd = () => {
     setEditingTopic(null)
     setSheetOpen(true)
   }
 
-  const handleEdit = (topic: TopicApiRow) => {
+  const handleEdit = (topic: TopicRow) => {
     setEditingTopic(topic)
     setSheetOpen(true)
   }
@@ -102,7 +102,7 @@ export default function TopicClient({
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/topics/${id}`,
+        `${process.env.NEXT_PUBLIC__URL}/admin/topics/${id}`,
         { method: 'DELETE' }
       )
 
@@ -127,7 +127,7 @@ export default function TopicClient({
 
   /* ================= TABLE ================= */
 
-  const columns: ColumnDef<TopicApiRow>[] = [
+  const columns: ColumnDef<TopicRow>[] = [
     {
       id: 'select',
       header: ({ table }) => (

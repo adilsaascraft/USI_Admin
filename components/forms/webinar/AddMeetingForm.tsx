@@ -88,12 +88,12 @@ export default function AddMeetingForm({
       const isEdit = Boolean(defaultValues?._id)
 
       const endpoint = isEdit
-        ? `/api/admin/meetings/${defaultValues!._id}`
-        : `/api/admin/meetings/${webinarId}`
+        ? `//admin/meetings/${defaultValues!._id}`
+        : `//admin/meetings/${webinarId}`
 
       const method = isEdit ? 'PUT' : 'POST'
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC__URL}${endpoint}`, {
         method,
         headers: {
           'Content-Type': 'application/json',

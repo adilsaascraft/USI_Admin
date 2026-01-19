@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { DataTable } from '@/components/DataTable'
 import { ColumnDef } from '@tanstack/react-table'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import AddFeedbackForm from '@/components/forms/webinar/AddFeedbackForm'
@@ -68,7 +68,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
     isLoading,
     mutate,
   } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/feedback`,
+    `${process.env.NEXT_PUBLIC__URL}/webinars/${webinarId}/feedback`,
     fetcher
   )
 
@@ -82,7 +82,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
   /* ================= FEEDBACK BY USER (NO LAZY LOAD) ================= */
 
   const { data: userFeedbackRes } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/send-feedback`,
+    `${process.env.NEXT_PUBLIC__URL}/webinars/${webinarId}/send-feedback`,
     fetcher
   )
 
@@ -111,8 +111,8 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
   /* ================= DELETE ================= */
 
   const handleDelete = async () => {
-    await apiRequest({
-      endpoint: `/api/webinars/${webinarId}/feedback`,
+    await Request({
+      endpoint: `/webinars/${webinarId}/feedback`,
       method: 'DELETE',
       showToast: true,
       successMessage: 'Feedback deleted successfully',

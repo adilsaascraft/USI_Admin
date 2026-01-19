@@ -35,7 +35,7 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
 
   // Fetch Halls
   const { data, isLoading, error, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/halls`,
+    `${process.env.NEXT_PUBLIC__URL}//conferences/${conferenceId}/halls`,
     fetcher
   )
 
@@ -59,7 +59,7 @@ export default function HallClient({ conferenceId }: { conferenceId: string }) {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/halls/${id}`,
+        `${process.env.NEXT_PUBLIC__URL}//admin/halls/${id}`,
         { method: 'DELETE' }
       )
 

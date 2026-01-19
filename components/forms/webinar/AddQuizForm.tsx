@@ -100,12 +100,12 @@ const courseDraft = drafts[DRAFT_KEY]
       setLoading(true)
 
       const endpoint = defaultValues?._id
-        ? `/api/quizzes/${defaultValues._id}`
-        : `/api/webinars/${webinarId}/quizzes`
+        ? `//quizzes/${defaultValues._id}`
+        : `//webinars/${webinarId}/quizzes`
 
       const method = defaultValues?._id ? 'PUT' : 'POST'
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC__URL}${endpoint}`, {
         method,
         headers: {
           'Content-Type': 'application/json',

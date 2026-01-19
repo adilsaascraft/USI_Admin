@@ -48,7 +48,7 @@ export default function MeetingClient({ webinarId }: { webinarId: string }) {
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
 
   const { data, isLoading, error, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/meetings`,
+    `${process.env.NEXT_PUBLIC__URL}/admin/meetings`,
     fetcher
   )
 
@@ -76,7 +76,7 @@ export default function MeetingClient({ webinarId }: { webinarId: string }) {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/meetings/${id}`,
+        `${process.env.NEXT_PUBLIC__URL}/admin/meetings/${id}`,
         { method: 'DELETE' }
       )
 

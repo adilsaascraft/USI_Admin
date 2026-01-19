@@ -8,7 +8,7 @@ import CoursePageClient from '@/components/clients/CoursePageClient'
 
 export default function CoursePage() {
   const { data } = useSWR<{ success: boolean; data: CourseType[] }>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/courses`,
+    `${process.env.NEXT_PUBLIC__URL}/courses`,
     fetcher,
     {
       revalidateOnFocus: true, // refetch on tab focus

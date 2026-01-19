@@ -28,7 +28,7 @@ export default function CoursePageClient({
 }: {
   initialCourses: CourseType[]
 }) {
-  const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/courses`
+  const _URL = `${process.env.NEXT_PUBLIC__URL}/courses`
   const [open, setOpen] = useState(false)
   const [courseToEdit, setCourseToEdit] = useState<CourseType | null>(null)
   const [search, setSearch] = useState('')
@@ -39,7 +39,7 @@ export default function CoursePageClient({
   const itemsPerPage = 10
 
   // ✅ Fetch courses
-  const { data, isLoading } = useSWR(API_URL, fetcher, {
+  const { data, isLoading } = useSWR(_URL, fetcher, {
     fallbackData: initialCourses,
   })
 
@@ -86,7 +86,7 @@ export default function CoursePageClient({
   }
 
   async function handleSuccess() {
-    await mutate(API_URL)
+    await mutate(_URL)
     setOpen(false)
     setCourseToEdit(null)
   }

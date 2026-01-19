@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Textarea } from '@/components/ui/textarea'
 import RichTextEditor from '@/components/RichTextEditor'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 
 import {
   Form,
@@ -113,10 +113,10 @@ export default function AddCourseModule({
   /* ================= FETCH WEEK CATEGORIES ================= */
 
   useEffect(() => {
-    apiRequest({
-      endpoint: `/api/courses/${courseId}/week-categories/active`,
+    Request({
+      endpoint: `/courses/${courseId}/week-categories/active`,
       method: 'GET',
-    }).then((res) => setWeekCategories(res.data || []))
+    }).then((res: { data: any }) => setWeekCategories(res.data || []))
   }, [courseId])
 
   /* ================= SUBMIT ================= */
@@ -138,16 +138,16 @@ export default function AddCourseModule({
       }
 
       if (defaultValues?._id) {
-        await apiRequest({
-          endpoint: `/api/admin/modules/${defaultValues._id}`,
+        await Request({
+          endpoint: `/admin/modules/${defaultValues._id}`,
           method: 'PUT',
           body: payload,
           showToast: true,
           successMessage: 'Module Updated Successfully',
         })
       } else {
-        await apiRequest({
-          endpoint: `/api/admin/courses/${courseId}/week-categories/${values.weekCategoryId}/modules`,
+        await Request({
+          endpoint: `/admin/courses/${courseId}/week-categories/${values.weekCategoryId}/modules`,
           method: 'POST',
           body: payload,
           showToast: true,

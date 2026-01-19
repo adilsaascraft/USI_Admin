@@ -96,7 +96,7 @@ export function DataTable<TData extends Record<string, any>, TValue>({
               .map((column) => (
                 <DropdownMenuCheckboxItem
                   key={column.id}
-                  className="capitalize"
+                  className="ctalize"
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >

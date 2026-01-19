@@ -18,7 +18,7 @@ import {
 import { DataTable } from '@/components/DataTable'
 import { ColumnDef } from '@tanstack/react-table'
 import { toast } from 'sonner'
-import { apiRequest } from '@/lib/apiRequest'
+import { Request } from '@/lib/apiRequest'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import AddQnAForm from '@/components/forms/webinar/AddQnAForm'
@@ -45,7 +45,7 @@ export default function QnAClient({ webinarId }: { webinarId: string }) {
   /* ================= FETCH ================= */
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/qna`,
+    `${process.env.NEXT_PUBLIC__URL}/webinars/${webinarId}/qna`,
     fetcher
   )
 
@@ -66,8 +66,8 @@ export default function QnAClient({ webinarId }: { webinarId: string }) {
 
   const handleDelete = async () => {
     try {
-      await apiRequest({
-        endpoint: `/api/webinars/${webinarId}/qna`,
+      await Request({
+        endpoint: `/webinars/${webinarId}/qna`,
         method: 'DELETE',
         showToast: true,
         successMessage: 'Q&A deleted successfully',

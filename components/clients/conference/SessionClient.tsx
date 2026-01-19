@@ -30,7 +30,7 @@ import { SessionValues } from '@/validations/sessionSchema'
 
 /* ================= TYPES ================= */
 
-type SessionApiRow = {
+type SessionRow = {
   _id: string
   conferenceId: { _id: string }
   sessionName: string
@@ -64,11 +64,11 @@ export default function SessionClient({
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/sessions`,
+    `${process.env.NEXT_PUBLIC__URL}/conferences/${conferenceId}/sessions`,
     fetcher
   )
 
-  const sessions: SessionApiRow[] = useMemo(() => data?.data ?? [], [data])
+  const sessions: SessionRow[] = useMemo(() => data?.data ?? [], [data])
 
   /* ================= HANDLERS ================= */
 
@@ -77,7 +77,7 @@ export default function SessionClient({
     setSheetOpen(true)
   }
 
-  const handleEdit = (session: SessionApiRow) => {
+  const handleEdit = (session: SessionRow) => {
   setEditingSession({
     _id: session._id,
     conferenceId: session.conferenceId._id,
@@ -99,7 +99,7 @@ export default function SessionClient({
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/sessions/${id}`,
+        `${process.env.NEXT_PUBLIC__URL}/admin/sessions/${id}`,
         { method: 'DELETE' }
       )
 
@@ -124,7 +124,7 @@ export default function SessionClient({
 
   /* ================= TABLE ================= */
 
-  const columns: ColumnDef<SessionApiRow>[] = [
+  const columns: ColumnDef<SessionRow>[] = [
     {
       id: 'select',
       header: ({ table }) => (
