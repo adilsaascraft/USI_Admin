@@ -1,10 +1,10 @@
-// lib/Request.ts
+// lib/apiRequest.ts
 import { fetchClient } from './fetchClient'
 import { toast } from 'sonner'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
-interface RequestConfig<TBody, TResponse> {
+interface ApiRequestConfig<TBody, TResponse> {
   endpoint: string
   method?: HttpMethod
   body?: TBody
@@ -25,8 +25,8 @@ export async function Request<
   showToast = false,
   successMessage,
   onSuccess,
-}: RequestConfig<TBody, TResponse>): Promise<TResponse> {
-  const baseUrl = process.env.NEXT_PUBLIC__URL!
+}: ApiRequestConfig<TBody, TResponse>): Promise<TResponse> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL!
 
   // ✅ SUPPORT RELATIVE + ABSOLUTE BASE URL
   const url =

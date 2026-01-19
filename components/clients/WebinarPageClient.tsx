@@ -29,7 +29,7 @@ export default function WebinarPageClient({
 }: {
   initialWebinars: WebinarType[]
 }) {
-  const _URL = `${process.env.NEXT_PUBLIC__URL}/webinars`
+  const _URL = `${process.env.NEXT_PUBLIC_API_URL}/api/webinars`
 
   const [open, setOpen] = useState(false)
   const [webinarToEdit, setWebinarToEdit] = useState<WebinarType | null>(null)

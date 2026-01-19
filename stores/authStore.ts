@@ -16,7 +16,6 @@ type AuthState = {
   isHydrated: boolean
 
   setUser: (user: AuthUser) => void
-  updateUser: (data: Partial<AuthUser>) => void
   hydrateUser: () => Promise<void>
   logout: () => Promise<void>
 }
@@ -25,42 +24,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isHydrated: false,
 
-  /* ---------------- Set user directly (used on login) ---------------- */
-  setUser: (user) =>
+  /* ----------------------------------------------------
+     Set user (ONLY after successful login response)
+  ---------------------------------------------------- */
+  setUser: (user) => {
     set({
       user,
-      isHydrated: true, // 🔐 mark hydrated immediately
-    }),
+      isHydrated: true,
+    })
+  },
 
-  /* ---------------- Update user safely ---------------- */
-  updateUser: (data) =>
-    set((state) => ({
-      user: state.user ? { ...state.user, ...data } : state.user,
-    })),
-
-  /* ---------------- Hydration (NO profile  for admin) ---------------- */
+  /* ----------------------------------------------------
+     Hydrate from cookie session (/admin/me)
+  ---------------------------------------------------- */
   hydrateUser: async () => {
-    const { isHydrated } = get()
-    if (isHydrated) return // 🔐 hard guard
+    if (get().isHydrated) return
 
     try {
-      /**
-       * If you have a lightweight endpoint like:
-       *   GET /auth/me
-       * that reads cookies and returns { id, name, email, role }
-       * USE IT HERE.
-       *
-       * Otherwise — simply mark hydrated.
-       */
+      const res = await Request<null, {
+        authenticated: boolean
+        user?: AuthUser
+      }>({
+        endpoint: '/admin/me',
+        method: 'GET',
+      })
 
-      // ❌ DO NOT call /users/profile for admin
-      set({ isHydrated: true })
+      if (res.authenticated && res.user) {
+        set({ user: res.user, isHydrated: true })
+      } else {
+        set({ user: null, isHydrated: true })
+      }
     } catch {
+      // ❌ not authenticated or refresh failed
       set({ user: null, isHydrated: true })
     }
   },
 
-  /* ---------------- Logout ---------------- */
+  /* ----------------------------------------------------
+     Logout (backend clears cookies)
+  ---------------------------------------------------- */
   logout: async () => {
     try {
       await Request({

@@ -7,10 +7,11 @@ let refreshPromise: Promise<void> | null = null
 
 async function refreshAccessToken() {
   if (!refreshPromise) {
-    refreshPromise = fetch('/api/admin/refresh-token', {
+    refreshPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`, {
       method: 'POST',
       credentials: 'include',
     })
+
       .then((res) => {
         if (!res.ok) {
           throw new Error('Refresh failed')
