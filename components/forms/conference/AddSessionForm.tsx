@@ -111,18 +111,18 @@ export default function AddSessionForm({
 
       const [d, h, t, s] = await Promise.all([
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/admin/conferences/${conferenceId}/dates`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/dates`,
           { headers }
         ),
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/conferences/${conferenceId}/halls/active`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/halls/active`,
           { headers }
         ),
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/conferences/${conferenceId}/tracks/active`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/tracks/active`,
           { headers }
         ),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/speakers/active`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`, {
           headers,
         }),
       ])
@@ -146,8 +146,8 @@ export default function AddSessionForm({
 
       const isEdit = !!defaultValues?._id
       const url = isEdit
-        ? `${process.env.NEXT_PUBLIC_API_URL}//admin/sessions/${defaultValues!._id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}//admin/conferences/${conferenceId}/sessions`
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/sessions/${defaultValues!._id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/sessions`
 
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',

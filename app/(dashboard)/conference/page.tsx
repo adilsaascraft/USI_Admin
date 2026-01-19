@@ -8,7 +8,7 @@ import ConferencePageClient from "@/components/clients/ConferencePageClient"
 
 export default function ConferencePage() {
   const { data} = useSWR<{ success: boolean; data: ConferenceType[] }>(
-    `${process.env.NEXT_PUBLIC_API_URL}/conferences`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/conferences`,
     fetcher,
     {
       revalidateOnFocus: true,   // refetch on tab focus

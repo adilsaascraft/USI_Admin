@@ -110,8 +110,8 @@ export default function AddSpeakerForm({
       }
 
       const url = defaultValues?._id
-        ? `${process.env.NEXT_PUBLIC_API_URL}/admin/speakers/${defaultValues._id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/admin/speakers`
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/speakers/${defaultValues._id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin/speakers`
 
       const method = defaultValues?._id ? 'PUT' : 'POST'
 

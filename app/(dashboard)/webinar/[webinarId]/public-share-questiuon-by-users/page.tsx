@@ -23,7 +23,7 @@ export default function PublicQuestionSharePage() {
    const loadWebinar = async () => {
      try {
        const res = await fetch(
-         `${process.env.NEXT_PUBLIC_API_URL}/webinars`
+         `${process.env.NEXT_PUBLIC_API_URL}/api/webinars`
        )
        const result = await res.json()
 

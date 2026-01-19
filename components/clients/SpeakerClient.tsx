@@ -37,7 +37,7 @@ export default function SpeakerClient() {
 
   // 🔑 Fetch speakers
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/speakers`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/speakers`,
     fetcher
   )
 

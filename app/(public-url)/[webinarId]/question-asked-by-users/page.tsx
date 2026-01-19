@@ -73,7 +73,7 @@ export default function Page() {
   const { data, isLoading, error, mutate, isValidating } = useSWR<{
     data: Question[]
   }>(
-    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/questions`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/questions`,
     async (url: string) => {
       const res = await fetch(url)
 

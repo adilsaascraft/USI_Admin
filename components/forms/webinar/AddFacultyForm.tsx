@@ -100,7 +100,7 @@ export default function AddFacultyForm({
       try {
         setDropdownLoading(true)
         const res = await fetchClient(
-          `${process.env.NEXT_PUBLIC_API_URL}//speakers/active`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`
         )
         const data = await res.json()
         setSpeakers(data.data || [])

@@ -52,7 +52,7 @@ export default function SettingClient({ webinarId }: SettingClientProps) {
       if (!token) throw new Error("Unauthorized! Token not found.");
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/settings`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/settings`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -118,7 +118,7 @@ export default function SettingClient({ webinarId }: SettingClientProps) {
 
       const isCreate = !settingId;
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/admin/webinars/${webinarId}/settings`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinars/${webinarId}/settings`;
       const method = isCreate ? "POST" : "PUT";
 
       const res = await fetch(url, {

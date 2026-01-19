@@ -100,8 +100,8 @@ const courseDraft = drafts[DRAFT_KEY]
       setLoading(true)
 
       const endpoint = defaultValues?._id
-        ? `//quizzes/${defaultValues._id}`
-        : `//webinars/${webinarId}/quizzes`
+        ? `/api/quizzes/${defaultValues._id}`
+        : `/api/webinars/${webinarId}/quizzes`
 
       const method = defaultValues?._id ? 'PUT' : 'POST'
 

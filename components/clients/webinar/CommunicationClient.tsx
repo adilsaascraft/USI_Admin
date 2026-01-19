@@ -62,7 +62,7 @@ export default function CommunicationClient({
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR<Response>(
-    `${process.env.NEXT_PUBLIC_API_URL}/admin/webinar/${webinarId}/registrations`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinar/${webinarId}/registrations`,
     fetcher
   )
 

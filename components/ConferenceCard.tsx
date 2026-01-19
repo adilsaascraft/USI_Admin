@@ -57,7 +57,7 @@ export default function ConferenceCard({ event, onEdit }: ConferenceCardProps) {
     setLoading(true)
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/conference/${event._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conference/${event._id}`,
         { method: 'DELETE' }
       )
       const data = await res.json()
@@ -69,7 +69,7 @@ export default function ConferenceCard({ event, onEdit }: ConferenceCardProps) {
       toast.warning('Conference deleted successfully', {
         description: getIndianFormattedDate(),
       })
-      mutate(`${process.env.NEXT_PUBLIC_API_URL}/conferences`)
+      mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/conferences`)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {

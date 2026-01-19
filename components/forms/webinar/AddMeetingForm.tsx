@@ -88,8 +88,8 @@ export default function AddMeetingForm({
       const isEdit = Boolean(defaultValues?._id)
 
       const endpoint = isEdit
-        ? `//admin/meetings/${defaultValues!._id}`
-        : `//admin/meetings/${webinarId}`
+        ? `/api/admin/meetings/${defaultValues!._id}`
+        : `/api/admin/meetings/${webinarId}`
 
       const method = isEdit ? 'PUT' : 'POST'
 

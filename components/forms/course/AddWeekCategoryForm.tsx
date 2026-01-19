@@ -88,8 +88,8 @@ export default function AddWeekCategoryForm({
       const isEdit = Boolean(defaultValues?._id)
 
       const endpoint = isEdit
-        ? `/admin/week-categories/${defaultValues!._id}`
-        : `/admin/courses/${courseId}/week-categories`
+        ? `/api/admin/week-categories/${defaultValues!._id}`
+        : `/api/admin/courses/${courseId}/week-categories`
 
       const method = isEdit ? 'PUT' : 'POST'
 

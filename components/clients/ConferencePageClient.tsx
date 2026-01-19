@@ -25,7 +25,7 @@ export default function ConferencePageClient({
 }: {
   initialConferences: ConferenceType[]
 }) {
-  const _URL = `${process.env.NEXT_PUBLIC_API_URL}/conferences`
+  const _URL = `${process.env.NEXT_PUBLIC_API_URL}/api/conferences`
 
   const [open, setOpen] = useState(false)
   const [conferenceToEdit, setConferenceToEdit] =

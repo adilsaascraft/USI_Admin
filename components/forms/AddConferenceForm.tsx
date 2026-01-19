@@ -206,7 +206,7 @@ export default function AddConferenceForm({
         formData.append(key, value)
       })
 
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/admin/conferences`
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences`
       let method: 'POST' | 'PUT' = 'POST'
 
       if (conferenceToEdit?._id) {
@@ -228,7 +228,7 @@ export default function AddConferenceForm({
       form.reset()
       clearDraft(DRAFT_KEY)
       onSuccess(result.data)
-      mutate(`${process.env.NEXT_PUBLIC_API_URL}/conferences`)
+      mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/conferences`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to save conference')
     } finally {

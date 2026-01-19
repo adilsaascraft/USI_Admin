@@ -46,7 +46,7 @@ export default function FacultyClient({ webinarId }: { webinarId: string }) {
 
   // ✅ Assigned faculty list
   const { data, isLoading, error, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/assign-speakers/${webinarId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/assign-speakers/${webinarId}`,
     fetcher
   )
 
@@ -61,7 +61,7 @@ export default function FacultyClient({ webinarId }: { webinarId: string }) {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/assign-speakers/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/assign-speakers/${id}`,
         { method: 'DELETE' }
       )
 

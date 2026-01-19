@@ -47,7 +47,7 @@ export default function UsersClient() {
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null)
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/users/all`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/users/all`,
     fetcher
   )
 

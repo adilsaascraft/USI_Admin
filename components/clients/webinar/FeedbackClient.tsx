@@ -68,7 +68,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
     isLoading,
     mutate,
   } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/feedback`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/feedback`,
     fetcher
   )
 
@@ -82,7 +82,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
   /* ================= FEEDBACK BY USER (NO LAZY LOAD) ================= */
 
   const { data: userFeedbackRes } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/send-feedback`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/send-feedback`,
     fetcher
   )
 

@@ -42,7 +42,7 @@ export default function TrackClient({
   /* ================= FETCH ================= */
 
   const { data, isLoading, error, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/conferences/${conferenceId}/tracks`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/tracks`,
     fetcher
   )
 
@@ -66,7 +66,7 @@ export default function TrackClient({
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/tracks/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/tracks/${id}`,
         { method: 'DELETE' }
       )
 
