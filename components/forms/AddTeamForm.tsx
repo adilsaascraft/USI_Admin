@@ -70,8 +70,8 @@ export default function AddUserForm({
       setLoading(true)
 
       const url = defaultValues?._id
-        ? `${process.env.NEXT_PUBLIC__URL}/users/register/${defaultValues._id}`
-        : `${process.env.NEXT_PUBLIC__URL}/users/register`
+        ? `${process.env.NEXT_PUBLIC_API_URL}/users/register/${defaultValues._id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/users/register`
 
       const method = defaultValues?._id ? 'PUT' : 'POST'
 

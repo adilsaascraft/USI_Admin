@@ -43,7 +43,7 @@ export default function CourseModuleClient({ courseId }: { courseId: string }) {
   const [editingModule, setEditingModule] = useState<any>(null)
 
   const { data, isLoading, error, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC__URL}/courses/${courseId}/weeks-with-modules`,
+    `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}/weeks-with-modules`,
     fetcher
   )
 
@@ -65,7 +65,7 @@ export default function CourseModuleClient({ courseId }: { courseId: string }) {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC__URL}/admin/modules/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/modules/${id}`,
         { method: 'DELETE' }
       )
 

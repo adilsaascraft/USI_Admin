@@ -4,7 +4,7 @@
 export async function refreshTokenClient(): Promise<boolean> {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC__URL}//admin/refresh-token`,
+      `${process.env.NEXT_PUBLIC_API_URL}//admin/refresh-token`,
       {
         method: "POST",
         credentials: "include",

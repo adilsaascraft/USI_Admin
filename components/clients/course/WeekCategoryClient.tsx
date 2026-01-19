@@ -43,7 +43,7 @@ export default function WeekCategoryClient({ courseId }: { courseId: string }) {
   const [editingWeek, setEditingWeek] = useState<WeekCategory | null>(null)
 
   const { data, isLoading, error, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC__URL}/courses/${courseId}/week-categories`,
+    `${process.env.NEXT_PUBLIC_API_URL}/courses/${courseId}/week-categories`,
     fetcher
   )
 
@@ -67,7 +67,7 @@ export default function WeekCategoryClient({ courseId }: { courseId: string }) {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC__URL}/admin/week-categories/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/week-categories/${id}`,
         { method: 'DELETE' }
       )
 

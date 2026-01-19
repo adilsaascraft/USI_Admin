@@ -45,7 +45,7 @@ export default function QnAClient({ webinarId }: { webinarId: string }) {
   /* ================= FETCH ================= */
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC__URL}/webinars/${webinarId}/qna`,
+    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/qna`,
     fetcher
   )
 

@@ -55,7 +55,7 @@ export default function DashboardNavbar() {
       if (segments[0] === 'webinar' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC__URL}/webinars/${segments[1]}`
+            `${process.env.NEXT_PUBLIC_API_URL}/webinars/${segments[1]}`
           )
           const json = await res.json()
           setEntityName(json?.data?.name || null)
@@ -68,7 +68,7 @@ export default function DashboardNavbar() {
       if (segments[0] === 'courses' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC__URL}/courses/${segments[1]}`
+            `${process.env.NEXT_PUBLIC_API_URL}/courses/${segments[1]}`
           )
           const json = await res.json()
           setEntityName(json?.data?.courseName || null)

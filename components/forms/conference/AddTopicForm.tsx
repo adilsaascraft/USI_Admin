@@ -165,10 +165,10 @@ export default function AddTopicForm({
 
     Promise.all([
       fetch(
-        `${process.env.NEXT_PUBLIC__URL}//conferences/${conferenceId}/sessions`,
+        `${process.env.NEXT_PUBLIC_API_URL}//conferences/${conferenceId}/sessions`,
         { headers }
       ),
-      fetch(`${process.env.NEXT_PUBLIC__URL}//speakers/active`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}//speakers/active`, {
         headers,
       }),
     ]).then(async ([s, sp]) => {
@@ -297,8 +297,8 @@ export default function AddTopicForm({
       const isEdit = !!defaultValues?._id
 
       const url = isEdit
-        ? `${process.env.NEXT_PUBLIC__URL}/admin/topics/${defaultValues._id}`
-        : `${process.env.NEXT_PUBLIC__URL}/admin/conferences/${conferenceId}/topics`
+        ? `${process.env.NEXT_PUBLIC_API_URL}/admin/topics/${defaultValues._id}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/admin/conferences/${conferenceId}/topics`
 
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',

@@ -83,7 +83,7 @@ export default function TopicClient({
   const [editingTopic, setEditingTopic] = useState<TopicRow | null>(null)
 
   const { data, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC__URL}/conferences/${conferenceId}/topics`,
+    `${process.env.NEXT_PUBLIC_API_URL}/conferences/${conferenceId}/topics`,
     fetcher
   )
 
@@ -102,7 +102,7 @@ export default function TopicClient({
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC__URL}/admin/topics/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/topics/${id}`,
         { method: 'DELETE' }
       )
 

@@ -57,7 +57,7 @@ export default function CourseCard({ event, onEdit }: CourseCardProps) {
     setLoading(true)
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC__URL}/admin/courses/${event._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/courses/${event._id}`,
         { method: 'DELETE' }
       )
       const data = await res.json()
@@ -69,7 +69,7 @@ export default function CourseCard({ event, onEdit }: CourseCardProps) {
       toast('Course has been deleted', {
         description: getIndianFormattedDate(),
       })
-      mutate(`${process.env.NEXT_PUBLIC__URL}/courses`)
+      mutate(`${process.env.NEXT_PUBLIC_API_URL}/courses`)
     } catch (err: any) {
       toast.error(err.message || 'Something went wrong')
     } finally {

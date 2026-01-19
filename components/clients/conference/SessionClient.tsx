@@ -64,7 +64,7 @@ export default function SessionClient({
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC__URL}/conferences/${conferenceId}/sessions`,
+    `${process.env.NEXT_PUBLIC_API_URL}/conferences/${conferenceId}/sessions`,
     fetcher
   )
 
@@ -99,7 +99,7 @@ export default function SessionClient({
   const handleDelete = async (id: string) => {
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC__URL}/admin/sessions/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/sessions/${id}`,
         { method: 'DELETE' }
       )
 

@@ -207,7 +207,7 @@ export default function AddCourseForm({
         formData.append(key, value)
       })
 
-      let url = `${process.env.NEXT_PUBLIC__URL}/admin/courses`
+      let url = `${process.env.NEXT_PUBLIC_API_URL}/admin/courses`
       let method: 'POST' | 'PUT' = 'POST'
 
       if (courseToEdit?._id) {
@@ -229,7 +229,7 @@ export default function AddCourseForm({
       form.reset()
       clearDraft(DRAFT_KEY)
       onSuccess(result.data)
-      mutate(`${process.env.NEXT_PUBLIC__URL}/courses`)
+      mutate(`${process.env.NEXT_PUBLIC_API_URL}/courses`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to save course')
     } finally {

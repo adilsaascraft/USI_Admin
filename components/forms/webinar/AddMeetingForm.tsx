@@ -93,7 +93,7 @@ export default function AddMeetingForm({
 
       const method = isEdit ? 'PUT' : 'POST'
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC__URL}${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method,
         headers: {
           'Content-Type': 'application/json',

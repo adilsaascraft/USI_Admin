@@ -88,7 +88,7 @@ export default function AddQnAForm({
       const method = defaultValues ? 'PUT' : 'POST'
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC__URL}//webinars/${webinarId}/qna`,
+        `${process.env.NEXT_PUBLIC_API_URL}//webinars/${webinarId}/qna`,
         {
           method,
           headers: {

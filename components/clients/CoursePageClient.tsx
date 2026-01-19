@@ -28,7 +28,7 @@ export default function CoursePageClient({
 }: {
   initialCourses: CourseType[]
 }) {
-  const _URL = `${process.env.NEXT_PUBLIC__URL}/courses`
+  const _URL = `${process.env.NEXT_PUBLIC_API_URL}/courses`
   const [open, setOpen] = useState(false)
   const [courseToEdit, setCourseToEdit] = useState<CourseType | null>(null)
   const [search, setSearch] = useState('')
