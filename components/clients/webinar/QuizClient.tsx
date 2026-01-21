@@ -50,7 +50,7 @@ export default function QuizClient({ webinarId }: { webinarId: string }) {
   /* ================= FETCH ================= */
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/quizzes`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/quizzes`,
     fetcher
   )
 
@@ -79,7 +79,7 @@ export default function QuizClient({ webinarId }: { webinarId: string }) {
 
     try {
       await apiRequest({
-        endpoint: `/quizzes/${activeQuiz._id}`,
+        endpoint: `/api/quizzes/${activeQuiz._id}`,
         method: 'DELETE',
         showToast: true,
         successMessage: 'Quiz deleted successfully',

@@ -45,7 +45,7 @@ export default function QnAClient({ webinarId }: { webinarId: string }) {
   /* ================= FETCH ================= */
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/qna`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/qna`,
     fetcher
   )
 
@@ -67,7 +67,7 @@ export default function QnAClient({ webinarId }: { webinarId: string }) {
   const handleDelete = async () => {
     try {
       await apiRequest({
-        endpoint: `/webinars/${webinarId}/qna`,
+        endpoint: `/api/webinars/${webinarId}/qna`,
         method: 'DELETE',
         showToast: true,
         successMessage: 'Q&A deleted successfully',
