@@ -84,7 +84,7 @@ export default function QuestionClient({ webinarId }: { webinarId: string }) {
   const { data, isLoading, error, mutate } = useSWR<{
     data: Question[]
   }>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/questions`,
+    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/questions`,
     fetcher
   )
 
@@ -138,7 +138,7 @@ export default function QuestionClient({ webinarId }: { webinarId: string }) {
     if (!deleteId) return
     try {
       const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/questions/${deleteId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/questions/${deleteId}`,
         { method: 'DELETE' }
       )
 

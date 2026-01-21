@@ -21,7 +21,7 @@ import { ArrowUpDown } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { fetcher } from '@/lib/fetcher'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import AddQuizForm from '@/components/forms/webinar/AddQuizForm'
 
@@ -50,7 +50,7 @@ export default function QuizClient({ webinarId }: { webinarId: string }) {
   /* ================= FETCH ================= */
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/quizzes`,
+    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/quizzes`,
     fetcher
   )
 
@@ -78,7 +78,7 @@ export default function QuizClient({ webinarId }: { webinarId: string }) {
     if (!activeQuiz) return
 
     try {
-      await Request({
+      await apiRequest({
         endpoint: `/quizzes/${activeQuiz._id}`,
         method: 'DELETE',
         showToast: true,

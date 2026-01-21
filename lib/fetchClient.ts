@@ -7,10 +7,13 @@ let refreshPromise: Promise<void> | null = null
 
 async function refreshAccessToken() {
   if (!refreshPromise) {
-    refreshPromise = fetch('https://usi-lms.onrender.com/api/admin/refresh-token', {
-      method: 'POST',
-      credentials: 'include',
-    })
+    refreshPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      },
+    )
       .then((res) => {
         if (!res.ok) {
           throw new Error('Refresh failed')

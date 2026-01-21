@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Textarea } from '@/components/ui/textarea'
 import RichTextEditor from '@/components/RichTextEditor'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 
 import {
   Form,
@@ -113,7 +113,7 @@ export default function AddCourseModule({
   /* ================= FETCH WEEK CATEGORIES ================= */
 
   useEffect(() => {
-    Request({
+    apiRequest({
       endpoint: `/courses/${courseId}/week-categories/active`,
       method: 'GET',
     }).then((res: { data: any }) => setWeekCategories(res.data || []))
@@ -138,7 +138,7 @@ export default function AddCourseModule({
       }
 
       if (defaultValues?._id) {
-        await Request({
+        await apiRequest({
           endpoint: `/admin/modules/${defaultValues._id}`,
           method: 'PUT',
           body: payload,
@@ -146,7 +146,7 @@ export default function AddCourseModule({
           successMessage: 'Module Updated Successfully',
         })
       } else {
-        await Request({
+        await apiRequest({
           endpoint: `/admin/courses/${courseId}/week-categories/${values.weekCategoryId}/modules`,
           method: 'POST',
           body: payload,

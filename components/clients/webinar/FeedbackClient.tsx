@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { DataTable } from '@/components/DataTable'
 import { ColumnDef } from '@tanstack/react-table'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import AddFeedbackForm from '@/components/forms/webinar/AddFeedbackForm'
@@ -68,7 +68,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
     isLoading,
     mutate,
   } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/feedback`,
+    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/feedback`,
     fetcher
   )
 
@@ -82,7 +82,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
   /* ================= FEEDBACK BY USER (NO LAZY LOAD) ================= */
 
   const { data: userFeedbackRes } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/send-feedback`,
+    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/send-feedback`,
     fetcher
   )
 
@@ -94,7 +94,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
     return userFeedbackRes.data.map((entry: any) => ({
       _id: entry._id,
       user: {
-        name: entry.userId.name,
+        name: entry.userId.name ,
         email: entry.userId.email,
         mobile: entry.userId.mobile,
         profilePicture: entry.userId.profilePicture,
@@ -111,7 +111,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
   /* ================= DELETE ================= */
 
   const handleDelete = async () => {
-    await Request({
+    await apiRequest({
       endpoint: `/webinars/${webinarId}/feedback`,
       method: 'DELETE',
       showToast: true,

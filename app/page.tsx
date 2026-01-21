@@ -6,18 +6,22 @@ import { useAuthStore } from '@/stores/authStore'
 
 export default function Home() {
   const router = useRouter()
-  const { user, isHydrated } = useAuthStore()
+  const { isAuthenticated, isLoading, hydrate } = useAuthStore()
 
- useEffect(() => {
-  if (!isHydrated) return
+  // 🔐 Bootstrap auth once
+  useEffect(() => {
+    hydrate()
+  }, [])
 
-  if (user) {
-    router.replace('/dashboard')
-  } else {
-    router.replace('/login')
-  }
-}, [isHydrated])
+  // 🔁 Redirect after auth check
+  useEffect(() => {
+    if (isLoading) return
 
-
+    if (isAuthenticated) {
+      router.replace('/webinar')
+    } else {
+      router.replace('/login')
+    }
+  }, [isLoading, isAuthenticated])
   return null
 }

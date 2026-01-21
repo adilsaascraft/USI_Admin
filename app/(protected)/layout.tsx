@@ -1,6 +1,9 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuthStore } from '@/stores/authStore'
+
 import DashboardNavbar from '@/components/DashboardNavbar'
 import Navbar from '@/components/Navbar'
 import WebinarNavbar from '@/components/WebinarNavbar'
@@ -13,6 +16,25 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const { isAuthenticated, isLoading, hydrate } = useAuthStore()
+
+  // =============================
+  // 🔐 AUTH BOOTSTRAP
+  // =============================
+  useEffect(() => {
+    hydrate()
+  }, [])
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login')
+    }
+  }, [isLoading, isAuthenticated])
+
+  // ⛔ Prevent UI flicker while checking session
+  if (isLoading) return null
 
   // =============================
   // 🔍 PATH MATCHING LOGIC
@@ -58,7 +80,7 @@ export default function RootLayout({
       {/* ✅ Always visible */}
       <DashboardNavbar />
 
-      {/* ✅ Exactly ONE navbar renders */}
+      {/* ✅ Exactly ONE contextual navbar */}
       {ActiveNavbar && <div>{ActiveNavbar}</div>}
 
       {/* ✅ Main Content */}

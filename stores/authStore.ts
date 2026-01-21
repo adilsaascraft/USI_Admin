@@ -1,83 +1,85 @@
-'use client'
-
 import { create } from 'zustand'
-import { apiRequest } from '@/lib/apiRequest'
 
-export type AuthUser = {
+interface User {
   id: string
   name: string
   email: string
-  mobile?: string
   role: string
-  status?: 'Pending' | 'Approved'
-  profilePicture?: string
 }
 
-type AuthState = {
-  user: AuthUser | null
-  isHydrated: boolean
+interface AuthState {
+  user: User | null
+  isAuthenticated: boolean
+  isLoading: boolean
 
-  hydrateUser: () => Promise<void>
-  setUser: (user: AuthUser) => void
-  updateUser: (data: Partial<AuthUser>) => void
+  setUser: (user: User) => void
+  clearUser: () => void
+  hydrate: () => Promise<void>
   logout: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isHydrated: false,
+  isAuthenticated: false,
+  isLoading: true,
 
-  /* ---------------- HYDRATE ADMIN SESSION ---------------- */
-  hydrateUser: async () => {
-    if (get().isHydrated) return // 🔐 guard
+  setUser: (user) =>
+    set({
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+    }),
 
+  clearUser: () =>
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+    }),
+
+  hydrate: async () => {
     try {
-      const response = await apiRequest({
-        endpoint: '/admin/me',
-        method: 'GET',
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
+        {
+          credentials: 'include',
+          cache: 'no-store',
+        },
+      )
 
-      if (!response?.authenticated) {
-        throw new Error('Not authenticated')
-      }
+      if (!res.ok) throw new Error()
 
-      const user = response.user
+      const data = await res.json()
 
       set({
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          mobile: user.mobile,
-          role: user.role,
-          status: user.status,
-          profilePicture: user.profilePicture,
+          id: data.user._id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
         },
-        isHydrated: true,
+        isAuthenticated: true,
+        isLoading: false,
       })
-    } catch (error) {
-      set({ user: null, isHydrated: true })
+    } catch {
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      })
     }
   },
 
-  /* ---------------- SET USER (LOGIN) ---------------- */
-  setUser: (user) => set({ user }),
-
-  /* ---------------- UPDATE USER ---------------- */
-  updateUser: (data) =>
-    set((state) => ({
-      user: state.user ? { ...state.user, ...data } : null,
-    })),
-
-  /* ---------------- LOGOUT ---------------- */
   logout: async () => {
-    try {
-      await apiRequest({
-        endpoint: '/admin/logout',
-        method: 'POST',
-      })
-    } finally {
-      set({ user: null, isHydrated: true })
-    }
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+    })
   },
 }))

@@ -1,10 +1,10 @@
 'use client'
 
 import Image from 'next/image'
-import { apiRequest } from '@/lib/apiRequest'
 import { HelpCircle, Mail, Phone, MoreVertical } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+
 import {
   HoverCard,
   HoverCardContent,
@@ -21,14 +21,17 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog'
+
 import { fetchClient } from '@/lib/fetchClient'
 import { useAuthStore } from '@/stores/authStore'
 
 export default function DashboardNavbar() {
-  const isLoggedIn = useAuthStore((state) => state.isHydrated)
-
   const router = useRouter()
   const pathname = usePathname()
+
+  // ✅ CORRECT AUTH FLAG
+  const { isAuthenticated, logout } = useAuthStore()
+
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [entityName, setEntityName] = useState<string | null>(null)
@@ -43,11 +46,10 @@ export default function DashboardNavbar() {
 
       const segments = pathname.split('/').filter(Boolean)
 
-      // /webinar/:id/...
       if (segments[0] === 'webinar' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC_API_URL}/webinars/${segments[1]}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${segments[1]}`,
           )
           const json = await res.json()
           setEntityName(json?.data?.name || null)
@@ -56,11 +58,10 @@ export default function DashboardNavbar() {
         }
       }
 
-      // /courses/:id/...
       if (segments[0] === 'courses' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC_API_URL}/courses/${segments[1]}`
+            `${process.env.NEXT_PUBLIC_API_URL}/api/courses/${segments[1]}`,
           )
           const json = await res.json()
           setEntityName(json?.data?.courseName || null)
@@ -73,38 +74,30 @@ export default function DashboardNavbar() {
     detectEntity()
   }, [pathname])
 
- /* =========================
-   Logout (CORRECT)
-========================= */
-const handleLogout = async () => {
-  setLoading(true)
+  /* =========================
+     Logout (CORRECT & SINGLE SOURCE)
+  ========================= */
+  const handleLogout = async () => {
+    setLoading(true)
 
-  try {
-    await apiRequest({
-      endpoint: '/admin/logout',
-      method: 'POST',
-      showToast: false,
-    })
-  } catch (err) {
-    console.error('Logout failed', err)
-  } finally {
-    // ✅ Clear client user cache ONLY
-    useAuthStore.getState().logout()
+    try {
+      await logout() // ✅ calls API + clears store
+    } catch (err) {
+      console.error('Logout failed', err)
+    } finally {
+      setLogoutDialogOpen(false)
+      setMobileMenuOpen(false)
 
-    // ✅ Close UI states (unchanged)
-    setLogoutDialogOpen(false)
-    setMobileMenuOpen(false)
+      // 🔁 MUST be replace (not push)
+      router.replace('/login')
 
-    //CRITICAL: replace
-    router.replace('/login')
-
-    setLoading(false)
+      setLoading(false)
+    }
   }
-}
 
   return (
     <div
-      className="sticky top-0 z-50 text-white z-[50]"
+      className="sticky top-0 z-50 text-white"
       style={{
         background:
           'linear-gradient(90deg, #BCF3FF 0%, #B4EBFE 11%, #B1E7FD 15%, #75A8F2 100%)',
@@ -127,14 +120,7 @@ const handleLogout = async () => {
 
         {/* Webinar / Course Name */}
         {entityName && (
-          <div
-            className="
-      text-orange-600 hover:text-orange-700 font-semibold
-      text-sm md:text-base
-      max-w-[200px] sm:max-w-[300px] md:max-w-[600px]
-      line-clamp-2 md:line-clamp-1
-    "
-          >
+          <div className="text-orange-600 font-semibold text-sm md:text-base line-clamp-1">
             {entityName}
           </div>
         )}
@@ -147,9 +133,9 @@ const handleLogout = async () => {
               <HoverCardTrigger>
                 <HelpCircle size={20} className="cursor-pointer" />
               </HoverCardTrigger>
-              <HoverCardContent className="text-sm p-4 w-72 rounded-md shadow-lg bg-white space-y-3">
+              <HoverCardContent className="text-sm p-4 w-72 bg-white rounded-md shadow-lg space-y-3">
                 <div className="font-semibold text-gray-800">Need Help?</div>
-                <div className="text-gray-600 text-sm">Contact support:</div>
+                <div className="text-gray-600">Contact support:</div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Mail size={16} />
@@ -165,8 +151,8 @@ const handleLogout = async () => {
           </div>
 
           {/* Desktop logout */}
-          <div className="hidden md:block">
-            {isLoggedIn && (
+          {isAuthenticated && (
+            <div className="hidden md:block">
               <AlertDialog
                 open={logoutDialogOpen}
                 onOpenChange={setLogoutDialogOpen}
@@ -176,6 +162,7 @@ const handleLogout = async () => {
                     Logout
                   </button>
                 </AlertDialogTrigger>
+
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
@@ -183,6 +170,7 @@ const handleLogout = async () => {
                       Are you sure you want to logout?
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
@@ -194,26 +182,28 @@ const handleLogout = async () => {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Mobile menu */}
-          <div className="md:hidden relative">
-            <button onClick={() => setMobileMenuOpen((p) => !p)}>
-              <MoreVertical />
-            </button>
+          {isAuthenticated && (
+            <div className="md:hidden relative">
+              <button onClick={() => setMobileMenuOpen((p) => !p)}>
+                <MoreVertical />
+              </button>
 
-            {mobileMenuOpen && (
-              <div className="absolute right-0 top-10 bg-white text-black rounded-md shadow-lg w-32">
-                <button
-                  onClick={() => setLogoutDialogOpen(true)}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+              {mobileMenuOpen && (
+                <div className="absolute right-0 top-10 bg-white text-black rounded-md shadow-lg w-32">
+                  <button
+                    onClick={() => setLogoutDialogOpen(true)}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -62,7 +62,7 @@ export default function CommunicationClient({
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR<Response>(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinar/${webinarId}/registrations`,
+    `${process.env.NEXT_PUBLIC_API_URL}/admin/webinar/${webinarId}/registrations`,
     fetcher
   )
 
@@ -93,7 +93,7 @@ export default function CommunicationClient({
         ? `/admin/webinar/${webinarId}/email/attended`
         : `/admin/webinar/${webinarId}/email/not-attended`
 
-    await Request({
+    await apiRequest({
       endpoint,
       method: 'POST',
       body: type === 'attended' ? { surveyLink } : undefined,
@@ -116,7 +116,7 @@ const resendIndividual = async (
       ? `/admin/webinar/${webinarId}/email/attended/${userId}`
       : `/admin/webinar/${webinarId}/email/not-attended/${userId}`
 
-  await Request({
+  await apiRequest({
     endpoint,
     method: 'POST',
     body: type === 'attended' ? { surveyLink } : undefined,
