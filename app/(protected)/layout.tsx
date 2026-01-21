@@ -1,12 +1,16 @@
-// app/(protected)/layout.tsx
 import { redirect } from 'next/navigation'
 import ProtectedClientLayout from './ProtectedClientLayout'
+import { getCookieHeader } from '@/lib/serverCookies'
 
 async function getSession() {
+  const cookieHeader = await getCookieHeader()
+
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
     {
-      credentials: 'include',
+      headers: {
+        Cookie: cookieHeader,
+      },
       cache: 'no-store',
     }
   )
@@ -26,6 +30,5 @@ export default async function ProtectedLayout({
     redirect('/login')
   }
 
-  // ✅ Pass through to client layout
   return <ProtectedClientLayout>{children}</ProtectedClientLayout>
 }

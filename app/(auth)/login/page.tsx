@@ -1,14 +1,18 @@
-// app/(auth)/login/page.tsx
-import Image from 'next/image'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import { LoginForm } from '@/components/forms/LoginForm'
 import { Card, CardContent } from '@/components/ui/card'
+import { getCookieHeader } from '@/lib/serverCookies'
 
 async function getSession() {
+  const cookieHeader = await getCookieHeader()
+
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
     {
-      credentials: 'include',
+      headers: {
+        Cookie: cookieHeader,
+      },
       cache: 'no-store',
     }
   )
@@ -20,10 +24,10 @@ async function getSession() {
 export default async function LoginPage() {
   const session = await getSession()
 
-  // 🔐 BLOCK LOGIN PAGE FOR AUTHENTICATED USERS
   if (session?.authenticated) {
     redirect('/dashboard')
   }
+
 
   // ⬇️ UI IS COMPLETELY UNCHANGED
   return (
