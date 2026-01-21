@@ -30,7 +30,7 @@ export async function Request<
 
   // ✅ SUPPORT RELATIVE + ABSOLUTE BASE URL
   const url =
-    baseUrl.startsWith('http')
+    baseUrl.startsWith('https')
       ? new URL(`${baseUrl}${endpoint}`)
       : new URL(`${baseUrl}${endpoint}`, window.location.origin)
 
