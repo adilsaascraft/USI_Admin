@@ -66,6 +66,7 @@ export function LoginForm() {
           })
 
           router.replace('/dashboard')
+          router.refresh()
         },
       })
     } catch (err: any) {

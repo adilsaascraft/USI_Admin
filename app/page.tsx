@@ -1,22 +1,18 @@
-'use client'
+// app/page.tsx
+import { redirect } from 'next/navigation'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuthStore } from '@/stores/authStore'
-
-export default function Home() {
-  const router = useRouter()
-  const { user, isHydrated } = useAuthStore()
-
-  useEffect(() => {
-    if (!isHydrated) return
-
-    if (user) {
-      router.replace('/dashboard')
-    } else {
-      router.replace('/login')
+export default async function Home() {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
+    {
+      credentials: 'include',
+      cache: 'no-store',
     }
-  }, [isHydrated, user, router])
+  )
 
-  return null
+  if (res.ok) {
+    redirect('/dashboard')
+  }
+
+  redirect('/login')
 }

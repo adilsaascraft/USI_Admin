@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { mutate as globalMutate } from 'swr'
 import { fetchClient } from '@/lib/fetchClient'
+import { useAuthStore } from '@/stores/authStore'
 
 export default function DashboardNavbar() {
   const router = useRouter()
@@ -81,29 +82,35 @@ export default function DashboardNavbar() {
     detectEntity()
   }, [pathname])
 
-  /* =========================
-     Logout
-  ========================= */
-  const handleLogout = async () => {
-    setLoading(true)
-    try {
-      await Request({
-        endpoint: '/admin/logout',
-        method: 'POST',
-        showToast: false,
-      })
-    } catch (err) {
-      console.error('Logout failed')
-    } finally {
-      localStorage.removeItem('token')
-      globalMutate(() => true, undefined, { revalidate: false })
-      setIsLoggedIn(false)
-      setLogoutDialogOpen(false)
-      setMobileMenuOpen(false)
-      router.push('/login')
-      setLoading(false)
-    }
+ /* =========================
+   Logout (CORRECT)
+========================= */
+const handleLogout = async () => {
+  setLoading(true)
+
+  try {
+    await Request({
+      endpoint: '/api/admin/logout',
+      method: 'POST',
+      showToast: false,
+    })
+  } catch (err) {
+    console.error('Logout failed', err)
+  } finally {
+    // ✅ Clear client user cache ONLY
+    useAuthStore.getState().logout()
+
+    // ✅ Close UI states (unchanged)
+    setLogoutDialogOpen(false)
+    setMobileMenuOpen(false)
+
+    // ✅ CRITICAL: replace + refresh
+    router.replace('/login')
+    router.refresh()
+
+    setLoading(false)
   }
+}
 
   return (
     <div

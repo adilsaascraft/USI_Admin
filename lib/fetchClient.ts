@@ -2,20 +2,19 @@
 
 import { useAuthStore } from '@/stores/authStore'
 
-let isRefreshing = false
 let refreshPromise: Promise<void> | null = null
 
 async function refreshAccessToken() {
   if (!refreshPromise) {
-    refreshPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-
+    refreshPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      }
+    )
       .then((res) => {
-        if (!res.ok) {
-          throw new Error('Refresh failed')
-        }
+        if (!res.ok) throw new Error('Refresh failed')
       })
       .finally(() => {
         refreshPromise = null
@@ -36,46 +35,29 @@ export async function fetchClient(
     headers.set('Content-Type', 'application/json')
   }
 
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     ...options,
     headers,
     credentials: 'include',
   })
 
-  const isRefreshRequest = url.includes('/admin/refresh-token')
-
-  // 🔐 Access token expired
-  if (response.status === 401 && !isRefreshRequest) {
+  if (response.status === 401) {
     try {
-      if (!isRefreshing) {
-        isRefreshing = true
-        await refreshAccessToken()
-        isRefreshing = false
-      } else {
-        await refreshPromise
-      }
-
-      // 🔁 retry original request ONCE
-      return fetch(url, {
+      await refreshAccessToken()
+      response = await fetch(url, {
         ...options,
         headers,
         credentials: 'include',
       })
     } catch {
-      isRefreshing = false
-
-      const store = useAuthStore.getState()
-      await store.logout()
-
-      // ❌ DO NOT redirect here
+      await useAuthStore.getState().logout()
       throw new Error('Session expired')
     }
-
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => null)
-    throw new Error(error?.message || 'Request failed')
+    const err = await response.json().catch(() => null)
+    throw new Error(err?.message || 'Request failed')
   }
 
   return response

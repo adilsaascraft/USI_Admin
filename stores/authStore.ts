@@ -14,7 +14,6 @@ export type AuthUser = {
 type AuthState = {
   user: AuthUser | null
   isHydrated: boolean
-
   setUser: (user: AuthUser) => void
   hydrateUser: () => Promise<void>
   logout: () => Promise<void>
@@ -24,19 +23,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isHydrated: false,
 
-  /* ----------------------------------------------------
-     Set user (ONLY after successful login response)
-  ---------------------------------------------------- */
-  setUser: (user) => {
+  setUser: (user) =>
     set({
       user,
       isHydrated: true,
-    })
-  },
+    }),
 
-  /* ----------------------------------------------------
-     Hydrate from cookie session (/admin/me)
-  ---------------------------------------------------- */
   hydrateUser: async () => {
     if (get().isHydrated) return
 
@@ -45,7 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         authenticated: boolean
         user?: AuthUser
       }>({
-        endpoint: '/admin/me',
+        endpoint: '/api/admin/me',
         method: 'GET',
       })
 
@@ -55,25 +47,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ user: null, isHydrated: true })
       }
     } catch {
-      // ❌ not authenticated or refresh failed
       set({ user: null, isHydrated: true })
     }
   },
 
-  /* ----------------------------------------------------
-     Logout (backend clears cookies)
-  ---------------------------------------------------- */
   logout: async () => {
     try {
       await Request({
-        endpoint: '/admin/logout',
+        endpoint: '/api/admin/logout',
         method: 'POST',
       })
     } finally {
-      set({
-        user: null,
-        isHydrated: true,
-      })
+      set({ user: null, isHydrated: true })
     }
   },
 }))
