@@ -22,7 +22,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { fetcher } from '@/lib/fetcher'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 import EntitySkeleton from '../EntitySkeleton'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 
@@ -72,8 +72,8 @@ export default function SpeakerClient() {
   // Delete
   const handleDelete = async (id: string) => {
     try {
-      await Request({
-        endpoint: `/admin/speakers/${id}`,
+      await apiRequest({
+        endpoint: `/api/admin/speakers/${id}`,
         method: 'DELETE',
         showToast: true,
         successMessage: 'Speaker deleted successfully',

@@ -9,9 +9,8 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { fetcher } from '@/lib/fetcher'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 import EntitySkeleton from '../EntitySkeleton'
-import { Input } from '@/components/ui/input'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -72,8 +71,8 @@ export default function UsersClient() {
     try {
       setLoadingUserId(userId)
 
-      await Request({
-        endpoint: `/users/status/${userId}`,
+      await apiRequest({
+        endpoint: `/api/users/status/${userId}`,
         method: 'PUT',
         body: { status },
         showToast: true,

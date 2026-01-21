@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 import { useRouter, useParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -49,11 +49,11 @@ export default function ResetPasswordPage() {
   setSuccess('')
 
   try {
-    await Request<
+    await apiRequest<
       { password: string },
       { message?: string }
     >({
-      endpoint: `/admin/reset-password/${params.token}`,
+      endpoint: `/api/admin/reset-password/${params.token}`,
       method: 'POST',
       body: {
         password: data.password,
@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
     setSuccess('Your password has been successfully changed.')
 
     setTimeout(() => {
-      router.push('/login')
+      router.replace('/login')
     }, 3000)
   } catch (err: any) {
     setError(err?.message || 'Failed to reset password.')

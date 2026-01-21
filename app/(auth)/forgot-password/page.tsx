@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -33,11 +33,11 @@ export default function ForgotPasswordPage() {
   setIsLoading(true)
 
   try {
-    const response = await Request<
+    const response = await apiRequest<
       { email: string },
       { message?: string }
     >({
-      endpoint: '/admin/forgot-password',
+      endpoint: '/api/admin/forgot-password',
       method: 'POST',
       body: {
         email: data.email,
