@@ -1,7 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 
 export type AuthUser = {
   id: string
@@ -9,13 +9,17 @@ export type AuthUser = {
   email: string
   mobile?: string
   role: string
+  status?: 'Pending' | 'Approved'
+  profilePicture?: string
 }
 
 type AuthState = {
   user: AuthUser | null
   isHydrated: boolean
-  setUser: (user: AuthUser) => void
+
   hydrateUser: () => Promise<void>
+  setUser: (user: AuthUser) => void
+  updateUser: (data: Partial<AuthUser>) => void
   logout: () => Promise<void>
 }
 
@@ -23,38 +27,53 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isHydrated: false,
 
-  setUser: (user) =>
-    set({
-      user,
-      isHydrated: true,
-    }),
-
+  /* ---------------- HYDRATE ADMIN SESSION ---------------- */
   hydrateUser: async () => {
-    if (get().isHydrated) return
+    if (get().isHydrated) return // 🔐 guard
 
     try {
-      const res = await Request<null, {
-        authenticated: boolean
-        user?: AuthUser
-      }>({
-        endpoint: '/api/admin/me',
+      const response = await apiRequest({
+        endpoint: '/admin/me',
         method: 'GET',
       })
 
-      if (res.authenticated && res.user) {
-        set({ user: res.user, isHydrated: true })
-      } else {
-        set({ user: null, isHydrated: true })
+      if (!response?.authenticated) {
+        throw new Error('Not authenticated')
       }
-    } catch {
+
+      const user = response.user
+
+      set({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
+          role: user.role,
+          status: user.status,
+          profilePicture: user.profilePicture,
+        },
+        isHydrated: true,
+      })
+    } catch (error) {
       set({ user: null, isHydrated: true })
     }
   },
 
+  /* ---------------- SET USER (LOGIN) ---------------- */
+  setUser: (user) => set({ user }),
+
+  /* ---------------- UPDATE USER ---------------- */
+  updateUser: (data) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...data } : null,
+    })),
+
+  /* ---------------- LOGOUT ---------------- */
   logout: async () => {
     try {
-      await Request({
-        endpoint: '/api/admin/logout',
+      await apiRequest({
+        endpoint: '/admin/logout',
         method: 'POST',
       })
     } finally {

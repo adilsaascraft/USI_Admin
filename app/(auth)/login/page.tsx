@@ -2,32 +2,10 @@ import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import { LoginForm } from '@/components/forms/LoginForm'
 import { Card, CardContent } from '@/components/ui/card'
-import { getCookieHeader } from '@/lib/serverCookies'
 
-async function getSession() {
-  const cookieHeader = await getCookieHeader()
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
-    {
-      headers: {
-        Cookie: cookieHeader,
-      },
-      cache: 'no-store',
-    }
-  )
-
-  if (!res.ok) return null
-  return res.json()
-}
 
 export default async function LoginPage() {
-  const session = await getSession()
-
-  if (session?.authenticated) {
-    redirect('/dashboard')
-  }
-
 
   // ⬇️ UI IS COMPLETELY UNCHANGED
   return (

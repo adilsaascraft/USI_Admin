@@ -14,7 +14,7 @@ interface ApiRequestConfig<TBody, TResponse> {
   onSuccess?: (data: TResponse) => void
 }
 
-export async function Request<
+export async function apiRequest<
   TBody = unknown,
   TResponse = any
 >({

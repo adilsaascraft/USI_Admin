@@ -1,9 +1,9 @@
 'use client'
 
 import Image from 'next/image'
-import { Request } from '@/lib/apiRequest'
+import { apiRequest } from '@/lib/apiRequest'
 import { HelpCircle, Mail, Phone, MoreVertical } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   HoverCard,
@@ -21,27 +21,18 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog'
-import { mutate as globalMutate } from 'swr'
 import { fetchClient } from '@/lib/fetchClient'
 import { useAuthStore } from '@/stores/authStore'
 
 export default function DashboardNavbar() {
+  const isLoggedIn = useAuthStore((state) => state.isHydrated)
+
   const router = useRouter()
   const pathname = usePathname()
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [entityName, setEntityName] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  /* =========================
-     Auth check
-  ========================= */
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    setIsLoggedIn(!!token)
-  }, [])
 
   /* =========================
      Detect webinar / course name
@@ -56,7 +47,7 @@ export default function DashboardNavbar() {
       if (segments[0] === 'webinar' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${segments[1]}`
+            `${process.env.NEXT_PUBLIC_API_URL}/webinars/${segments[1]}`
           )
           const json = await res.json()
           setEntityName(json?.data?.name || null)
@@ -69,7 +60,7 @@ export default function DashboardNavbar() {
       if (segments[0] === 'courses' && segments[1]) {
         try {
           const res = await fetchClient(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/courses/${segments[1]}`
+            `${process.env.NEXT_PUBLIC_API_URL}/courses/${segments[1]}`
           )
           const json = await res.json()
           setEntityName(json?.data?.courseName || null)
@@ -89,8 +80,8 @@ const handleLogout = async () => {
   setLoading(true)
 
   try {
-    await Request({
-      endpoint: '/api/admin/logout',
+    await apiRequest({
+      endpoint: '/admin/logout',
       method: 'POST',
       showToast: false,
     })
@@ -104,9 +95,8 @@ const handleLogout = async () => {
     setLogoutDialogOpen(false)
     setMobileMenuOpen(false)
 
-    // ✅ CRITICAL: replace + refresh
+    //CRITICAL: replace
     router.replace('/login')
-    router.refresh()
 
     setLoading(false)
   }

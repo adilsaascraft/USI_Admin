@@ -1,5 +1,5 @@
 'use client'
-import { Request } from '@/lib/apiRequest';
+import { apiRequest } from '@/lib/apiRequest';
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -21,6 +21,7 @@ interface LoginResponse {
   message: string
   accessToken: string
   user: {
+    id: string
     _id: string
     name: string
     email: string
@@ -49,8 +50,8 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      await Request<{ email: string; password: string }, LoginResponse>({
-        endpoint: '/api/admin/login',
+      await apiRequest<{ email: string; password: string }, LoginResponse>({
+        endpoint: '/admin/login',
         method: 'POST',
         body: {
           email: data.email,
@@ -59,7 +60,7 @@ export function LoginForm() {
         onSuccess: (json) => {
           // ✅ Normalize _id → id for Zustand
           setUser({
-            id: json.user._id,
+            id: json.user._id || json.user.id,
             name: json.user.name,
             email: json.user.email,
             role: json.user.role,

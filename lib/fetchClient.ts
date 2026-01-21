@@ -2,19 +2,19 @@
 
 import { useAuthStore } from '@/stores/authStore'
 
+let isRefreshing = false
 let refreshPromise: Promise<void> | null = null
 
 async function refreshAccessToken() {
   if (!refreshPromise) {
-    refreshPromise = fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`,
-      {
-        method: 'POST',
-        credentials: 'include',
-      }
-    )
+    refreshPromise = fetch('https://usi-lms.onrender.com/api/admin/refresh-token', {
+      method: 'POST',
+      credentials: 'include',
+    })
       .then((res) => {
-        if (!res.ok) throw new Error('Refresh failed')
+        if (!res.ok) {
+          throw new Error('Refresh failed')
+        }
       })
       .finally(() => {
         refreshPromise = null
@@ -35,29 +35,46 @@ export async function fetchClient(
     headers.set('Content-Type', 'application/json')
   }
 
-  let response = await fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
     credentials: 'include',
   })
 
-  if (response.status === 401) {
+  const isRefreshRequest = url.includes('/admin/refresh-token')
+
+  // 🔐 Access token expired
+  if (response.status === 401 && !isRefreshRequest) {
     try {
-      await refreshAccessToken()
-      response = await fetch(url, {
+      if (!isRefreshing) {
+        isRefreshing = true
+        await refreshAccessToken()
+        isRefreshing = false
+      } else {
+        await refreshPromise
+      }
+
+      // 🔁 retry original request ONCE
+      return fetch(url, {
         ...options,
         headers,
         credentials: 'include',
       })
     } catch {
-      await useAuthStore.getState().logout()
+      isRefreshing = false
+
+      const store = useAuthStore.getState()
+      await store.logout()
+
+      // ❌ DO NOT redirect here
       throw new Error('Session expired')
     }
+
   }
 
   if (!response.ok) {
-    const err = await response.json().catch(() => null)
-    throw new Error(err?.message || 'Request failed')
+    const error = await response.json().catch(() => null)
+    throw new Error(error?.message || 'Request failed')
   }
 
   return response

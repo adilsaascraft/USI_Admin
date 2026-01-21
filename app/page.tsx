@@ -1,22 +1,23 @@
-import { redirect } from 'next/navigation'
-import { getCookieHeader } from '@/lib/serverCookies'
+'use client'
 
-export default async function Home() {
-  const cookieHeader = await getCookieHeader()
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuthStore } from '@/stores/authStore'
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
-    {
-      headers: {
-        Cookie: cookieHeader,
-      },
-      cache: 'no-store',
-    }
-  )
+export default function Home() {
+  const router = useRouter()
+  const { user, isHydrated } = useAuthStore()
 
-  if (res.ok) {
-    redirect('/dashboard')
+ useEffect(() => {
+  if (!isHydrated) return
+
+  if (user) {
+    router.replace('/dashboard')
+  } else {
+    router.replace('/login')
   }
+}, [isHydrated])
 
-  redirect('/login')
+
+  return null
 }
