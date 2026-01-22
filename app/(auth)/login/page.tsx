@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 import { apiRequest } from '@/lib/apiRequest'
 import { useAuthStore } from '@/stores/authStore'
@@ -27,6 +27,7 @@ export default function LoginPage() {
 
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   // 🔐 Check session when visiting login page
@@ -34,7 +35,7 @@ export default function LoginPage() {
     hydrate()
   }, [])
 
-  // 🚀 If already logged in → dashboard
+  // 🚀 If already logged in → webinar
   useEffect(() => {
     if (isLoading) return
     if (isAuthenticated) {
@@ -50,8 +51,10 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   })
 
-  // 🔑 Login submit
+  // 🔑 Login submit (SAFE, SINGLE-SHOT)
   const onSubmit = async (data: LoginFormData) => {
+    if (submitting || redirecting) return // 🔒 HARD GUARD
+
     setError('')
     setSubmitting(true)
 
@@ -62,15 +65,15 @@ export default function LoginPage() {
         body: data,
       })
 
-      // 🔐 Fetch session after login
+      // 🔐 Fetch session
       await hydrate()
 
+      // 🚦 Lock UI until navigation completes
+      setRedirecting(true)
       router.replace('/webinar')
-      router.refresh()
     } catch (err: any) {
       setError(err.message || 'Login failed')
-    } finally {
-      setSubmitting(false)
+      setSubmitting(false) // ❗ only re-enable on ERROR
     }
   }
 
@@ -121,6 +124,7 @@ export default function LoginPage() {
                         className="!bg-gray-100 text-black"
                         placeholder="Enter your email"
                         {...register('email')}
+                        disabled={submitting || redirecting}
                       />
                       {errors.email && (
                         <p className="text-sm text-red-500">
@@ -145,11 +149,13 @@ export default function LoginPage() {
                         className="!bg-gray-100 pr-10 text-black"
                         placeholder="Enter your password"
                         {...register('password')}
+                        disabled={submitting || redirecting}
                       />
 
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
+                        disabled={submitting || redirecting}
                         className="absolute right-3 top-[38px] text-gray-500"
                       >
                         {showPassword ? (
@@ -170,10 +176,17 @@ export default function LoginPage() {
 
                     <Button
                       type="submit"
-                      disabled={submitting}
-                      className="w-full bg-orange-600 hover:bg-orange-700"
+                      disabled={submitting || redirecting}
+                      className="w-full bg-orange-600 hover:bg-orange-700 flex items-center justify-center gap-2"
                     >
-                      {submitting ? 'Authenticating...' : 'Login'}
+                      {(submitting || redirecting) && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      {redirecting
+                        ? 'Redirecting...'
+                        : submitting
+                        ? 'Authenticating...'
+                        : 'Login'}
                     </Button>
 
                     <div className="mt-4 text-center text-sm text-gray-600">

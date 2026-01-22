@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { apiRequest } from '@/lib/apiRequest'
 
 interface User {
   id: string
@@ -37,19 +38,29 @@ export const useAuthStore = create<AuthState>((set) => ({
       isLoading: false,
     }),
 
+  // 🔐 Restore session from cookie
   hydrate: async () => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/me`,
+      const data = await apiRequest<
+        undefined,
         {
-          credentials: 'include',
-          cache: 'no-store',
-        },
-      )
+          authenticated: boolean
+          user: {
+            _id: string
+            name: string
+            email: string
+            role: string
+          }
+        }
+      >({
+        endpoint: '/api/admin/me',
+        method: 'GET',
+        showToast: false,
+      })
 
-      if (!res.ok) throw new Error()
-
-      const data = await res.json()
+      if (!data.authenticated) {
+        throw new Error('Not authenticated')
+      }
 
       set({
         user: {
@@ -70,16 +81,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  // 🚪 Logout
   logout: async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-
-    set({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-    })
+    try {
+      await apiRequest({
+        endpoint: '/api/admin/logout',
+        method: 'POST',
+        showToast: false,
+      })
+    } catch {
+      // ignore logout errors
+    } finally {
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      })
+    }
   },
 }))

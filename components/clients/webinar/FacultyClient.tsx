@@ -26,6 +26,7 @@ import { fetchClient } from '@/lib/fetchClient'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
+import { apiRequest } from '@/lib/apiRequest'
 
 /* ================= TYPES ================= */
 
@@ -57,26 +58,30 @@ export default function FacultyClient({ webinarId }: { webinarId: string }) {
     setSheetOpen(true)
   }
 
-  // ✅ Delete
-  const handleDelete = async (id: string) => {
-    try {
-      const res = await fetchClient(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/assign-speakers/${id}`,
-        { method: 'DELETE' }
-      )
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.message || 'Delete failed')
+const handleDelete = async (id: string) => {
+  if (deletingId === id) return
+  setDeletingId(id)
 
-      toast.warning('Assigned faculty deleted successfully!', {
-        description: getIndianFormattedDate(),
-      })
+  try {
+    await apiRequest({
+      endpoint: `/api/admin/assign-speakers/${id}`,
+      method: 'DELETE',
+    })
 
-      mutate()
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong ❌')
-    }
+    toast.warning('Assigned faculty deleted successfully!', {
+      description: getIndianFormattedDate(),
+    })
+
+    mutate()
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong ❌')
+  } finally {
+    setDeletingId(null)
   }
+}
+
 
   // ✅ Save callback after assign
   const handleSave = async () => {

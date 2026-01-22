@@ -22,6 +22,7 @@ import {
 import {
   QuestionAnswerSchema,
 } from '@/validations/askedQASchema'
+import { apiRequest } from '@/lib/apiRequest'
 
 /* ================= FORM SCHEMA ================= */
 
@@ -81,40 +82,43 @@ export default function AddQnAForm({
 
   /* ================= SUBMIT ================= */
 
-  const onSubmit = async (values: QnAFormValues) => {
-    try {
-      setLoading(true)
+const onSubmit = async (values: QnAFormValues) => {
+  // 🔒 HARD GUARD — prevents double click
+  if (loading) return
 
-      const method = defaultValues ? 'PUT' : 'POST'
+  setLoading(true)
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/qna`,
-        {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(values),
-        }
-      )
+  try {
+    const method = defaultValues ? 'PUT' : 'POST'
 
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.message || 'Failed to save Q&A')
+    const result = await apiRequest<QnAFormValues, { data: any }>({
+      endpoint: `/api/webinars/${webinarId}/qna`,
+      method,
+      body: values,
+      showToast: false, // we handle toast manually
+    })
 
-      toast.success(
-        defaultValues ? 'FAQ updated successfully' : 'FAQ created successfully'
-      )
+    toast.success(
+      defaultValues
+        ? 'FAQ updated successfully'
+        : 'FAQ created successfully'
+    )
 
-      onSave?.(result.data)
-      form.reset(values)
-      clearDraft(DRAFT_KEY)
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong ❌')
-    } finally {
-      setLoading(false)
-    }
+    onSave?.(result.data)
+
+    form.reset(values)
+    clearDraft(DRAFT_KEY)
+
+    // ❗ DO NOT setLoading(false) here
+    // Component will close / unmount after success
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong ❌')
+
+    // ✅ Only re-enable submit on error
+    setLoading(false)
   }
+}
+
 
   /* ================= UI ================= */
 

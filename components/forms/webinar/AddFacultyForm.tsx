@@ -92,62 +92,92 @@ export default function AddFacultyForm({
     return () => subscription.unsubscribe()
   }, [form.watch, defaultValues?._id])
 
-  // ==========================
-  // Fetch active speakers
-  // ==========================
-  useEffect(() => {
-    async function fetchSpeakers() {
-      try {
-        setDropdownLoading(true)
-        const res = await fetchClient(
-          `${process.env.NEXT_PUBLIC_API_URL}/speakers/active`
-        )
-        const data = await res.json()
-        setSpeakers(data.data || [])
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to load speakers ❌')
-      } finally {
+// ==========================
+// Fetch active speakers
+// ==========================
+useEffect(() => {
+  let mounted = true
+
+  async function fetchSpeakers() {
+    if (!mounted) return
+
+    try {
+      setDropdownLoading(true)
+
+      const res = await apiRequest<
+        undefined,
+        { data: any[] }
+      >({
+        endpoint: '/api/speakers/active',
+        method: 'GET',
+        showToast: false,
+      })
+
+      if (mounted) {
+        setSpeakers(res.data || [])
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load speakers ❌')
+    } finally {
+      if (mounted) {
         setDropdownLoading(false)
       }
     }
-
-    fetchSpeakers()
-  }, [])
-
-  // ==========================
-  // Submit
-  // ==========================
-  async function onSubmit(data: z.infer<typeof AssignFacultySchema>) {
-    try {
-      setLoading(true)
-
-      const bodyData = {
-        speakerId: data.speakerId,
-        facultyType: data.facultyType,
-      }
-
-      await apiRequest<typeof bodyData>({
-        endpoint: `/admin/assign-speakers/${webinarId}`,
-        method: 'POST',
-        body: bodyData,
-        showToast: true,
-        successMessage: 'Speaker assigned successfully!',
-        onSuccess: (res) => {
-          onSave(res.data)
-          form.reset({
-            webinarId,
-            speakerId: '',
-            facultyType: '',
-          })
-          clearDraft(DRAFT_KEY)
-        },
-      })
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong ❌')
-    } finally {
-      setLoading(false)
-    }
   }
+
+  fetchSpeakers()
+
+  return () => {
+    mounted = false
+  }
+}, [])
+
+
+  // ==========================
+// Submit
+// ==========================
+async function onSubmit(
+  data: z.infer<typeof AssignFacultySchema>
+) {
+  // 🔒 HARD GUARD — prevents double click
+  if (loading) return
+
+  setLoading(true)
+
+  try {
+    const bodyData = {
+      speakerId: data.speakerId,
+      facultyType: data.facultyType,
+    }
+
+    const res = await apiRequest<typeof bodyData, { data: any }>({
+      endpoint: `/api/admin/assign-speakers/${webinarId}`,
+      method: 'POST',
+      body: bodyData,
+      showToast: true,
+      successMessage: 'Speaker assigned successfully!',
+    })
+
+    onSave(res.data)
+
+    form.reset({
+      webinarId,
+      speakerId: '',
+      facultyType: '',
+    })
+
+    clearDraft(DRAFT_KEY)
+
+    // ❗ DO NOT setLoading(false) on success
+    // component will close / re-render / unmount
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong ❌')
+
+    // ✅ Re-enable submit ONLY on error
+    setLoading(false)
+  }
+}
+
 
   return (
     <div className="flex flex-col h-screen">
