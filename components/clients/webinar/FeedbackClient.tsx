@@ -330,7 +330,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
               {!feedbackDoc && (
                 <Button
                   onClick={() => setSheetOpen(true)}
-                  className="bg-orange-600 text-white"
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
                 >
                   + Add Feedback
                 </Button>
