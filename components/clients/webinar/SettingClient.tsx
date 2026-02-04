@@ -18,6 +18,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
+import { fetchClient } from "@/lib/fetchClient";
+import { apiRequest } from "@/lib/apiRequest";
 
 interface SettingClientProps {
   webinarId: string;
@@ -42,113 +44,90 @@ export default function SettingClient({ webinarId }: SettingClientProps) {
   });
 
   /* =======================
-     FETCH SETTINGS (GET)
-  ======================= */
-  const fetchSettings = async () => {
-    try {
-      setInitialLoading(true);
+   FETCH SETTINGS (GET)
+======================= */
+const fetchSettings = async () => {
+  try {
+    setInitialLoading(true)
 
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Unauthorized! Token not found.");
+    const res = await fetchClient(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/settings`
+    )
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/settings`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const result = await res.json()
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to fetch settings");
-      }
+    // ✅ Backend returns OBJECT or null
+    if (result.data) {
+      const s = result.data
 
-      // ✅ Backend returns OBJECT or null
-      if (data.data) {
-        const s = data.data;
+      setSettingId(s._id)
+      setIsEditing(false) // view mode
 
-        setSettingId(s._id);
-        setIsEditing(false); // view mode
+      form.reset({
+        faculty: s.faculty ?? false,
+        faq: s.faq ?? false,
+        feedback: s.feedback ?? false,
+        quiz: s.quiz ?? false,
+        meeting: s.meeting ?? false,
+        question: s.question ?? false,
+      })
+    } else {
+      // ✅ First-time load (no settings)
+      setSettingId(null)
+      setIsEditing(true) // enable form
 
-        form.reset({
-          faculty: s.faculty ?? false,
-          faq: s.faq ?? false,
-          feedback: s.feedback ?? false,
-          quiz: s.quiz ?? false,
-          meeting: s.meeting ?? false,
-          question: s.question ?? false,
-        });
-      } else {
-        // ✅ First-time load (no settings)
-        setSettingId(null);
-        setIsEditing(true); // enable form
-
-        form.reset({
-          faculty: false,
-          faq: false,
-          feedback: false,
-          quiz: false,
-          meeting: false,
-          question: false,
-        });
-      }
-    } catch (err) {
-      console.error("Fetch error:", err);
-      toast.error("Failed to load settings");
-    } finally {
-      setInitialLoading(false);
+      form.reset({
+        faculty: false,
+        faq: false,
+        feedback: false,
+        quiz: false,
+        meeting: false,
+        question: false,
+      })
     }
-  };
+  } catch (err) {
+    console.error('Fetch error:', err)
+    toast.error('Failed to load settings')
+  } finally {
+    setInitialLoading(false)
+  }
+}
 
-  useEffect(() => {
-    if (webinarId) fetchSettings();
-  }, [webinarId]);
+useEffect(() => {
+  if (webinarId) fetchSettings()
+}, [webinarId])
 
   /* =======================
-     SUBMIT (POST / PUT)
-  ======================= */
-  const onSubmit = async (data: SettingValues) => {
-    try {
-      setLoading(true);
+   SUBMIT (POST / PUT)
+======================= */
+const onSubmit = async (data: SettingValues) => {
+  try {
+    setLoading(true)
 
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Unauthorized! Token not found.");
+    const isCreate = !settingId
 
-      const isCreate = !settingId;
+    const res = await apiRequest<
+      SettingValues,
+      { data: any }
+    >({
+      endpoint: `/api/admin/webinars/${webinarId}/settings`,
+      method: isCreate ? 'POST' : 'PUT',
+      body: data,
+      showToast: true,
+      successMessage: isCreate
+        ? 'Setting saved successfully!'
+        : 'Setting updated successfully!',
+    })
 
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinars/${webinarId}/settings`;
-      const method = isCreate ? "POST" : "PUT";
+    // 🔒 Lock form again after save
+    await fetchSettings()
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong ❌')
+  } finally {
+    setLoading(false)
+  }
+}
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await res.json();
-      if (!res.ok) {
-        throw new Error(result.message || "Failed to save settings");
-      }
-
-      toast.success(
-        isCreate
-          ? "Setting saved successfully!"
-          : "Setting updated successfully!",
-        { description: getIndianFormattedDate() }
-      );
-
-      await fetchSettings(); // refresh + lock form
-    } catch (err: any) {
-      toast.error(err.message || "Something went wrong ❌");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   /* =======================
      SKELETON

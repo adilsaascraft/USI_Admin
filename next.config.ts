@@ -15,16 +15,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
-  webpack(config) {
-    // SVG as React component support
-    config.module.rules.push({
-      test: /\.svg$/i,
-      issuer: /\.[jt]sx?$/,
-      use: ['@svgr/webpack'],
-    })
-    return config
-  },
 
   turbopack: {},
 }

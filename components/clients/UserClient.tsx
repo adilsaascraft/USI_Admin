@@ -97,6 +97,36 @@ export default function UsersClient() {
     }
   }
 
+  // Delete User
+
+  // Delete user permanently
+const deleteUser = async (userId: string) => {
+  try {
+    setLoadingUserId(userId)
+
+    await apiRequest({
+      endpoint: `/api/users/${userId}`,
+      method: 'DELETE',
+      showToast: true,
+      successMessage: 'User rejected and deleted successfully',
+    })
+
+    // Update local cache
+    mutate(
+      (prev: any) => ({
+        ...prev,
+        users: prev.users.filter((u: User) => u._id !== userId),
+      }),
+      false
+    )
+  } catch (err: any) {
+    toast.error(err.message || 'Failed to delete user')
+  } finally {
+    setLoadingUserId(null)
+  }
+}
+
+
   // Tab filter
   const tabFilteredUsers = useMemo(() => {
     if (activeTab === 'All') return users
@@ -173,37 +203,92 @@ export default function UsersClient() {
       ),
     },
     {
-      id: 'action',
-      header: 'Action',
-      cell: ({ row }) => {
-        const isApproved = row.original.status === 'Approved'
-        const isLoading = loadingUserId === row.original._id
+  id: 'action',
+  header: 'Action',
+  cell: ({ row }) => {
+    const isApproved = row.original.status === 'Approved'
+    const isPending = row.original.status === 'Pending'
+    const isLoading = loadingUserId === row.original._id
 
-        return (
+    return (
+      <div className="flex gap-2">
+        {/* Approve / Suspend */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              disabled={isLoading}
+              className={
+                isApproved
+                  ? 'bg-red-500 hover:bg-red-600 text-white'
+                  : 'bg-green-800 hover:bg-green-900 text-white'
+              }
+            >
+              {isLoading
+                ? 'Updating...'
+                : isApproved
+                ? 'Suspend'
+                : 'Approve'}
+            </Button>
+          </AlertDialogTrigger>
+
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {isApproved ? 'Suspend User?' : 'Approve User?'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {isApproved
+                  ? 'This will suspend the user and revoke their access.'
+                  : 'This will approve the user and grant them access.'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isLoading}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className={
+                  isApproved
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-green-800 hover:bg-green-900'
+                }
+                disabled={isLoading}
+                onClick={() =>
+                  updateStatus(
+                    row.original._id,
+                    isApproved ? 'Pending' : 'Approved'
+                  )
+                }
+              >
+                Confirm
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reject — ONLY for Pending */}
+        {isPending && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 size="sm"
+                variant="destructive"
                 disabled={isLoading}
-                className={
-                  isApproved
-                    ? 'bg-red-500 hover:bg-red-600 text-white'
-                    : 'bg-green-800 hover:bg-green-900 text-white'
-                }
               >
-                {isLoading ? 'Updating...' : isApproved ? 'Suspend' : 'Approve'}
+                Reject
               </Button>
             </AlertDialogTrigger>
 
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  {isApproved ? 'Suspend User?' : 'Approve User?'}
+                  Reject & Delete User?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {isApproved
-                    ? 'This will suspend the user and revoke their access to the platform.'
-                    : 'This will approve the user and grant them access to the platform.'}
+                  This action is permanent. The user will be completely
+                  removed from the system and cannot be recovered.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -212,23 +297,21 @@ export default function UsersClient() {
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  className={isApproved ? 'bg-red-600 hover:bg-red-700' : 'bg-green-800 hover:bg-green-900'}
+                  className="bg-red-600 hover:bg-red-700"
                   disabled={isLoading}
-                  onClick={() =>
-                    updateStatus(
-                      row.original._id,
-                       isApproved ? 'Pending' : 'Approved'
-                    )
-                  }
+                  onClick={() => deleteUser(row.original._id)}
                 >
-                  Confirm
+                  Yes, Delete
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        )
-      },
-    },
+        )}
+      </div>
+    )
+  },
+},
+
   ]
 
   if (isLoading) return <EntitySkeleton title="Users" />
