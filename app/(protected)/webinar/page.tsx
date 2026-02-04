@@ -40,7 +40,7 @@ export default function WebinarPage() {
   const [selectedType, setSelectedType] = useState('All')
   const [currentPage, setCurrentPage] = useState(1)
 
-  const itemsPerPage = 10
+  const itemsPerPage = 40
   const webinars = data?.success ? data.data : []
 
   // ---------- Filters ----------

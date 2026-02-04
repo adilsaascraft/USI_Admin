@@ -18,6 +18,7 @@ import {
   SheetClose,
   toast,
 } from '@/lib/imports'
+import { apiRequest } from '@/lib/apiRequest'
 
 /* ================= SCHEMA ================= */
 
@@ -97,30 +98,25 @@ export default function AddFeedbackForm({
   /* ================= SUBMIT ================= */
 
   const onSubmit = async (values: FeedbackFormValues) => {
+    if (loading) return // ✅ double-click guard
+
     try {
       setLoading(true)
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/feedback`,
-        {
-          method: defaultValues ? 'PUT' : 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(values),
-        }
-      )
-
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.message)
+      await apiRequest<FeedbackFormValues, any>({
+        endpoint: `/api/webinars/${webinarId}/feedback`,
+        method: defaultValues ? 'PUT' : 'POST',
+        body: values,
+        showToast: false,
+      })
 
       toast.success(defaultValues ? 'Feedback updated' : 'Feedback created')
+
       onSave?.()
       form.reset()
       clearDraft(DRAFT_KEY)
-    } catch (e: any) {
-      toast.error(e.message)
+    } catch (err: any) {
+      toast.error(err.message || 'Something went wrong ❌')
     } finally {
       setLoading(false)
     }
@@ -240,8 +236,8 @@ export default function AddFeedbackForm({
               ? 'Updating...'
               : 'Creating...'
             : defaultValues
-            ? 'Update'
-            : 'Create'}
+              ? 'Update'
+              : 'Create'}
         </Button>
       </div>
     </div>
