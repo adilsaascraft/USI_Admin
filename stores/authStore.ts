@@ -19,7 +19,7 @@ interface AuthState {
   logout: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
@@ -40,6 +40,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   // 🔐 Restore session from cookie
   hydrate: async () => {
+    // Prevent multiple simultaneous hydration calls
+    const state = get()
+    if (!state.isLoading && state.isAuthenticated) {
+      return
+    }
+
+    set({ isLoading: true })
+
     try {
       const data = await apiRequest<
         undefined,
@@ -58,7 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         showToast: false,
       })
 
-      if (!data.authenticated) {
+      if (!data.authenticated || !data.user) {
         throw new Error('Not authenticated')
       }
 
@@ -72,7 +80,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true,
         isLoading: false,
       })
-    } catch {
+    } catch (error) {
       set({
         user: null,
         isAuthenticated: false,
@@ -89,8 +97,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         method: 'POST',
         showToast: false,
       })
-    } catch {
-      // ignore logout errors
+    } catch (error) {
+      // Ignore logout API errors
+      console.error('Logout error:', error)
     } finally {
       set({
         user: null,
