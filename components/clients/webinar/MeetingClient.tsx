@@ -37,6 +37,8 @@ export type Meeting = {
   }
   meetingName: string
   meetingLink: string
+  meetingId: string
+  passCode: string
   createdAt: string
 }
 
@@ -139,6 +141,20 @@ export default function MeetingClient({ webinarId }: { webinarId: string }) {
         >
           Open Link
         </a>
+      ),
+    },
+    {
+      accessorKey: 'meetingId',
+      header: sortableHeader('Meeting ID'),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.meetingId}</span>
+      ),
+    },
+    {
+      accessorKey: 'passCode',
+      header: sortableHeader('Meeting Passcode'),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.passCode}</span>
       ),
     },
 

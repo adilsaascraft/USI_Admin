@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { MeetingSchema, MeetingValues } from '@/validations/meetingSchema'
-import { FaVideo } from 'react-icons/fa'
+import { FaHashtag, FaLink, FaRegEdit, FaShieldAlt} from 'react-icons/fa'
 import InputWithIcon from '@/components/InputWithIcon'
 import { useFormDraftStore } from '@/stores/useFormDraftStore'
 import {
@@ -16,10 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/lib/imports'
-
 import { Button, SheetClose, toast } from '@/lib/imports'
-
-import { getIndianFormattedDate } from '@/lib/formatIndianDate'
+import { apiRequest } from '@/lib/apiRequest'
 
 /* ================= PROPS ================= */
 
@@ -29,6 +27,8 @@ type Props = {
     _id: string
     meetingName: string
     meetingLink: string
+    meetingId: string
+    passCode: string
   }
   onSave: () => void
 }
@@ -51,6 +51,8 @@ export default function AddMeetingForm({
         webinarId,
         meetingName: '',
         meetingLink: '',
+        meetingId: '',
+        passCode: '',
       },
   })
 
@@ -72,55 +74,60 @@ export default function AddMeetingForm({
         webinarId,
         meetingName: defaultValues.meetingName,
         meetingLink: defaultValues.meetingLink,
+        meetingId: defaultValues.meetingId,
+        passCode: defaultValues.passCode,
       })
     }
   }, [defaultValues, webinarId, form])
 
   /* ================= SUBMIT ================= */
+/* ================= SUBMIT ================= */
+const onSubmit = async (data: z.infer<typeof MeetingSchema>) => {
+  // 🔒 prevent double submit
+  if (loading) return
 
-  const onSubmit = async (data: z.infer<typeof MeetingSchema>) => {
-    try {
-      setLoading(true)
+  try {
+    setLoading(true)
 
-      const token = localStorage.getItem('token')
-      if (!token) throw new Error('Unauthorized')
+    const isEdit = Boolean(defaultValues?._id)
 
-      const isEdit = Boolean(defaultValues?._id)
+    const endpoint = isEdit
+      ? `/api/admin/meetings/${defaultValues!._id}`
+      : `/api/admin/meetings/${webinarId}`
 
-      const endpoint = isEdit
-        ? `/api/admin/meetings/${defaultValues!._id}`
-        : `/api/admin/meetings/${webinarId}`
+    const method = isEdit ? 'PUT' : 'POST'
 
-      const method = isEdit ? 'PUT' : 'POST'
+    await apiRequest<
+      z.infer<typeof MeetingSchema>,
+      any
+    >({
+      endpoint,
+      method,
+      body: data,
+      showToast: true,
+      successMessage: isEdit
+        ? 'Meeting updated successfully!'
+        : 'Meeting created successfully!',
+    })
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      })
+    // ✅ same post-success behavior
+    onSave()
+    clearDraft(DRAFT_KEY)
 
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.message)
-
-      toast.success(
-        isEdit
-          ? 'Meeting updated successfully!'
-          : 'Meeting created successfully!',
-        { description: getIndianFormattedDate() }
-      )
-
-      onSave()
-      form.reset({ webinarId, meetingName: '', meetingLink: '' })
-      clearDraft(DRAFT_KEY)
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
+    form.reset({
+      webinarId,
+      meetingName: '',
+      meetingLink: '',
+      meetingId: '',
+      passCode: '',
+    })
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong')
+  } finally {
+    setLoading(false)
   }
+}
+
 
   /* ================= UI ================= */
 
@@ -137,12 +144,12 @@ export default function AddMeetingForm({
             name="meetingName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Meeting Name *</FormLabel>
+                <FormLabel>Meeting Name (Topic Name) *</FormLabel>
                 <FormControl>
                   <InputWithIcon
                     {...field}
-                    placeholder="e.g. Zoom Orientation Session"
-                    icon={<FaVideo />}
+                    placeholder="e.g. USI - ISU Webinar 10th February "
+                    icon={<FaRegEdit />}
                     disabled={loading}
                   />
                 </FormControl>
@@ -161,8 +168,48 @@ export default function AddMeetingForm({
                 <FormControl>
                   <InputWithIcon
                     {...field}
-                    placeholder="https://zoom.us/..."
-                    icon={<FaVideo />}
+                    placeholder="https://us02web.zoom.us/j/8571676655?pwd......"
+                    icon={<FaLink />}
+                    disabled={loading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Meeting ID */}
+          <FormField
+            control={form.control}
+            name="meetingId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Meeting ID (if any)</FormLabel>
+                <FormControl>
+                  <InputWithIcon
+                    {...field}
+                    placeholder="e.g. 857 1036 3803"
+                    icon={<FaHashtag />}
+                    disabled={loading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Meeting Passcode */}
+          <FormField
+            control={form.control}
+            name="passCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Meeting PassCode (if any)</FormLabel>
+                <FormControl>
+                  <InputWithIcon
+                    {...field}
+                    placeholder="e.g. 284568"
+                    icon={<FaShieldAlt />}
                     disabled={loading}
                   />
                 </FormControl>

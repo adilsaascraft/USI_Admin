@@ -14,6 +14,10 @@ export const MeetingSchema = z.object({
     .string()
     .min(1, 'Meeting link is required.')
     .url('Meeting link must be a valid URL'),
+
+  meetingId: z.string().optional(),
+  passCode: z.string().optional(),
 })
 
 export type MeetingValues = z.infer<typeof MeetingSchema>
+

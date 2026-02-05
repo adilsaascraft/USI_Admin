@@ -68,9 +68,10 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
     isLoading,
     mutate,
   } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/feedback`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/feedback`,
     fetcher
   )
+  
 
   const feedbackDoc: FeedbackResponse | null = feedbackData?.data ?? null
 
@@ -79,10 +80,13 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
     [feedbackDoc]
   )
 
+    console.log(feedbackTableData)
+
+
   /* ================= FEEDBACK BY USER (NO LAZY LOAD) ================= */
 
   const { data: userFeedbackRes } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/webinars/${webinarId}/send-feedback`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/send-feedback`,
     fetcher
   )
 
@@ -112,7 +116,7 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
 
   const handleDelete = async () => {
     await apiRequest({
-      endpoint: `/webinars/${webinarId}/feedback`,
+      endpoint: `/api/webinars/${webinarId}/feedback`,
       method: 'DELETE',
       showToast: true,
       successMessage: 'Feedback deleted successfully',
