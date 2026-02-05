@@ -3,30 +3,33 @@
 import { useAuthStore } from '@/stores/authStore'
 
 let isRefreshing = false
-let refreshPromise: Promise<Response> | null = null
+let refreshPromise: Promise<void> | null = null
 
-async function refreshAccessToken(): Promise<Response> {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`,
-    {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
+async function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`,
+      {
+        method: 'POST',
+        credentials: 'include',
       },
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error('Refresh failed')
+    )
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Refresh failed')
+        }
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
   }
 
-  return response
+  return refreshPromise
 }
 
 export async function fetchClient(
   url: string,
-  options: RequestInit = {},
+  options: RequestInit = {}
 ): Promise<Response> {
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
@@ -38,48 +41,38 @@ export async function fetchClient(
   const response = await fetch(url, {
     ...options,
     headers,
-    credentials: 'include', // ⚠️ CRITICAL: Send cookies
+    credentials: 'include',
   })
 
-  const isRefreshRequest = url.includes('/api/admin/refresh-token')
-  const isLoginRequest = url.includes('/api/admin/login')
+  const isRefreshRequest = url.includes(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/refresh-token`)
 
-  // 🔐 Handle 401 - Token expired
-  if (response.status === 401 && !isRefreshRequest && !isLoginRequest) {
+  // 🔐 Access token expired
+  if (response.status === 401 && !isRefreshRequest) {
     try {
-      // Prevent multiple simultaneous refresh attempts
       if (!isRefreshing) {
         isRefreshing = true
-        refreshPromise = refreshAccessToken()
+        await refreshAccessToken()
+        isRefreshing = false
+      } else {
+        await refreshPromise
       }
 
-      // Wait for refresh to complete
-      await refreshPromise
-
-      isRefreshing = false
-      refreshPromise = null
-
-      // 🔁 Retry original request with new token
+      // 🔁 retry original request ONCE
       return fetch(url, {
         ...options,
         headers,
         credentials: 'include',
       })
-    } catch (error) {
+    } catch {
       isRefreshing = false
-      refreshPromise = null
 
-      // 🚪 Force logout on refresh failure
       const store = useAuthStore.getState()
-      store.clearUser()
+      await store.logout()
 
-      // Redirect to login
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'
-      }
-
-      throw new Error('Session expired. Please login again.')
+      // ❌ DO NOT redirect here
+      throw new Error('Session expired')
     }
+
   }
 
   if (!response.ok) {
@@ -89,3 +82,9 @@ export async function fetchClient(
 
   return response
 }
+
+
+
+
+
+
