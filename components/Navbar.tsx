@@ -12,6 +12,7 @@ import {
   FaUsers, // Conference
   FaUserGraduate, // Speakers (faculty / graduate)
   FaUserShield, // User Status
+  FaHeadset,
 } from 'react-icons/fa'
 
 const menuItems = [
@@ -44,6 +45,11 @@ const menuItems = [
     name: 'User Status',
     href: '/users',
     icon: <FaUserShield size={20} />,
+  },
+  {
+    name: 'Support',
+    href: '/technical-support',
+    icon: <FaHeadset size={20} />
   },
 ]
 

@@ -111,8 +111,8 @@ export default function Page() {
   const resolveTicket = async (id: string) => {
     try {
       await apiRequest({
-        endpoint: `/api/support-message/${id}/resolve`,
-        method: 'PATCH',
+        endpoint: `/api/support-message/${id}/reply`,
+        method: 'POST',
         showToast: true,
         successMessage: 'Ticket resolved successfully',
       })
@@ -287,7 +287,7 @@ export default function Page() {
                               e.preventDefault()
                             }
                           >
-                            Resolve
+                            Reply
                           </DropdownMenuItem>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
