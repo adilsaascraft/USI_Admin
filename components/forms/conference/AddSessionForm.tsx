@@ -41,6 +41,8 @@ import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 import { SessionSchema, SessionValues } from '@/validations/sessionSchema'
+import { apiRequest } from '@/lib/apiRequest'
+import { fetcher } from '@/lib/fetcher'
 
 type ConferenceDate = {
   date: string
@@ -101,80 +103,81 @@ export default function AddSessionForm({
     if (defaultValues) form.reset(defaultValues)
   }, [defaultValues, form])
 
-  /* ================= FETCH ================= */
+/* ================= FETCH ================= */
 
-  useEffect(() => {
-    async function fetchData() {
-      const token = localStorage.getItem('token')
-      if (!token) return
-      const headers = { Authorization: `Bearer ${token}` }
+useEffect(() => {
+  if (!conferenceId) return
 
-      const [d, h, t, s] = await Promise.all([
-        fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/dates`,
-          { headers }
-        ),
-        fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/halls/active`,
-          { headers }
-        ),
-        fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/tracks/active`,
-          { headers }
-        ),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`, {
-          headers,
-        }),
-      ])
-
-      setDates((await d.json()).dates || [])
-      setHalls((await h.json()).data || [])
-      setTracks((await t.json()).data || [])
-      setSpeakers((await s.json()).data || [])
-    }
-
-    fetchData()
-  }, [conferenceId])
-
-  /* ================= SUBMIT ================= */
-
-  async function onSubmit(data: SessionValues) {
+  async function fetchData() {
     try {
-      setLoading(true)
-      const token = localStorage.getItem('token')
-      if (!token) throw new Error('Unauthorized')
+      const [datesRes, hallsRes, tracksRes, speakersRes] =
+        await Promise.all([
+          fetcher(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/dates`
+          ),
+          fetcher(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/halls/active`
+          ),
+          fetcher(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/tracks/active`
+          ),
+          fetcher(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`
+          ),
+        ])
 
-      const isEdit = !!defaultValues?._id
-      const url = isEdit
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/sessions/${defaultValues!._id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/sessions`
-
-      const res = await fetch(url, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      })
-
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.message)
-
-      toast.success(
-        isEdit ? 'Session updated successfully!' : 'Session created successfully!',
-        { description: getIndianFormattedDate() }
-      )
-
-      onSave(result.data)
-      form.reset()
-      clearDraft(DRAFT_KEY)
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
+      setDates(datesRes?.dates ?? [])
+      setHalls(hallsRes?.data ?? [])
+      setTracks(tracksRes?.data ?? [])
+      setSpeakers(speakersRes?.data ?? [])
+    } catch (err) {
+      console.error('Failed to fetch session form data', err)
     }
   }
+
+  fetchData()
+}, [conferenceId])
+
+
+/* ================= SUBMIT ================= */
+
+const onSubmit = async (values: SessionValues) => {
+  if (loading) return // ✅ double-click guard
+
+  try {
+    setLoading(true)
+
+    const isEdit = Boolean(defaultValues?._id)
+
+    const result = await apiRequest<
+      SessionValues,
+      { data: SessionValues & { _id: string } }
+    >({
+      endpoint: isEdit
+        ? `/api/admin/sessions/${defaultValues!._id}`
+        : `/api/admin/conferences/${conferenceId}/sessions`,
+      method: isEdit ? 'PUT' : 'POST',
+      body: values,
+      showToast: false,
+    })
+
+    toast.success(
+      isEdit
+        ? 'Session updated successfully!'
+        : 'Session created successfully!',
+      { description: getIndianFormattedDate() }
+    )
+
+    onSave?.(result.data) // ✅ backend source of truth
+    form.reset()
+    clearDraft(DRAFT_KEY)
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong')
+  } finally {
+    setLoading(false)
+  }
+}
+
 
   /* ================= UI ================= */
 
@@ -231,11 +234,11 @@ export default function AddSessionForm({
                         </Button>
                       </PopoverTrigger>
 
-                      <PopoverContent className="w-full p-0">
+                      <PopoverContent className="w-full p-0 max-h-[300px] overflow-hidden">
                         <Command>
                           <CommandInput placeholder="Search speaker..." />
                           <CommandEmpty>No speaker found</CommandEmpty>
-                          <CommandGroup>
+                          <CommandGroup className="max-h-[240px] overflow-y-auto">
                             {speakers.map((s) => {
                               const selected = value.includes(s._id)
                               return (
@@ -248,10 +251,12 @@ export default function AddSessionForm({
                                         : [...value, s._id]
                                     )
                                   }
+                                  
                                 >
                                   {s.prefix} {s.speakerName}
                                   {selected && (
                                     <Check className="ml-auto h-4 w-4" />
+                                    
                                   )}
                                 </CommandItem>
                               )

@@ -26,6 +26,11 @@ export const ConferenceFormSchema = z
       z.string().url(),
     ]),
 
+    status: z
+    .string()
+    .min(1, 'Status is required.')
+    .max(50, 'Status cannot exceed 50 characters.'),
+
     startDate: z.string().min(1, 'Start date is required.'),
     endDate: z.string().min(1, 'End date is required.'),
     timeZone: z.string().min(1, 'Time zone is required.'),

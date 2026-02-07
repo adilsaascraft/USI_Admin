@@ -30,6 +30,7 @@ import {
   status,
 } from '@/lib/imports'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
+import { apiRequest } from '@/lib/apiRequest'
 
 /* ================= TYPES ================= */
 
@@ -69,57 +70,42 @@ export default function AddSessionTrackForm({
 
   /* ================= SUBMIT ================= */
 
-  async function onSubmit(data: z.infer<typeof SessionTrackSchema>) {
-    try {
-      setLoading(true)
-      const token = localStorage.getItem('token')
-      if (!token) throw new Error('Unauthorized! Token not found.')
+const onSubmit = async (values: z.infer<typeof SessionTrackSchema>) => {
+  if (loading) return // ✅ double-click guard
 
-      let url = ''
-      let method = ''
-      let body = JSON.stringify(data)
+  try {
+    setLoading(true)
 
-      if (defaultValues?._id) {
-        // Edit Mode
-        url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/tracks/${defaultValues._id}`
-        method = 'PUT'
-      } else {
-        // Add Mode
-        url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/tracks`
-        method = 'POST'
-        body = JSON.stringify({ ...data })
-      }
+    const isEdit = Boolean(defaultValues?._id)
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body,
-      })
+    const result = await apiRequest<
+      z.infer<typeof SessionTrackSchema>,
+      { data: SessionTrackValues & { _id: string } }
+    >({
+      endpoint: isEdit
+        ? `/api/admin/tracks/${defaultValues!._id}`
+        : `/api/admin/conferences/${conferenceId}/tracks`,
+      method: isEdit ? 'PUT' : 'POST',
+      body: values,
+      showToast: false,
+    })
 
-      const result = await res.json()
-      if (!res.ok)
-        throw new Error(result.message || 'Failed to save session track')
+    toast.success(
+      isEdit
+        ? 'Session Track updated successfully!'
+        : 'Session Track created successfully!',
+      { description: getIndianFormattedDate() }
+    )
 
-      toast.success(
-        defaultValues?._id
-          ? 'Session Track updated successfully!'
-          : 'Session Track created successfully!',
-        {
-          description: getIndianFormattedDate(),
-        }
-      )
-
-      onSave?.(result.data)
-      form.reset()
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong ❌')
-    } finally {
-      setLoading(false)
-    }
+    onSave?.(result.data) // ✅ backend source of truth
+    form.reset()
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong ❌')
+  } finally {
+    setLoading(false)
   }
+}
+
 
   /* ================= UI ================= */
 

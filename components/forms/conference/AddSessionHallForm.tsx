@@ -27,6 +27,7 @@ import {
   status,
 } from '@/lib/imports'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate';
+import { apiRequest } from '@/lib/apiRequest';
 
 type AddHallFormProps = {
   conferenceId: string
@@ -54,56 +55,44 @@ export default function AddSessionHallForm({ conferenceId, defaultValues, onSave
     }
   }, [defaultValues, form])
 
-  async function onSubmit(data: z.infer<typeof SessionHallSchema>) {
-    try {
-      setLoading(true)
-      const token = localStorage.getItem("token")
-      if (!token) throw new Error("Unauthorized! Token not found.")
+/* ================= SUBMIT ================= */
 
-      let url = ""
-      let method = ""
-      let body = JSON.stringify(data)
+const onSubmit = async (values: z.infer<typeof SessionHallSchema>) => {
+  if (loading) return // ✅ double-click guard
 
-      if (defaultValues?._id) {
-        // Edit Mode 
-        url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/halls/${defaultValues._id}`
-        method = 'PUT'
-      } else {
-        // Add Mode
-        url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/halls`
-        method = 'POST'
-        body = JSON.stringify({ ...data })
-      }
+  try {
+    setLoading(true)
 
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body,
-      })
+    const isEdit = Boolean(defaultValues?._id)
 
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.message || "Failed to save session hall")
+    const result = await apiRequest<
+      z.infer<typeof SessionHallSchema>,
+      any
+    >({
+      endpoint: isEdit
+        ? `/api/admin/halls/${defaultValues!._id}`
+        : `/api/admin/conferences/${conferenceId}/halls`,
+      method: isEdit ? 'PUT' : 'POST',
+      body: values,
+      showToast: false,
+    })
 
-      toast.success(
-        defaultValues?._id
-          ? "Session Hall updated successfully!"
-          : "Session Hall created successfully!",
-        {
-          description: getIndianFormattedDate(),
-        }
-      )
+    toast.success(
+      isEdit
+        ? 'Session Hall updated successfully!'
+        : 'Session Hall created successfully!',
+      { description: getIndianFormattedDate() }
+    )
 
-      onSave?.(result.data)
-      form.reset()
-    } catch (err: any) {
-      toast.error(err.message || "Something went wrong ❌")
-    } finally {
-      setLoading(false)
-    }
+    onSave?.(result.data)
+    form.reset()
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong ❌')
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <div className="flex flex-col h-screen">

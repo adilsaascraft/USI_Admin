@@ -42,6 +42,8 @@ import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { FaTextHeight, FaVideo } from 'react-icons/fa'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 import { TopicSchema, TopicFormValues } from '@/validations/topicSchema'
+import { apiRequest } from '@/lib/apiRequest'
+import { fetcher } from '@/lib/fetcher'
 
 /* ================= PROPS ================= */
 
@@ -157,25 +159,29 @@ export default function AddTopicForm({
 
   /* ================= FETCH ================= */
 
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) return
+useEffect(() => {
+  if (!conferenceId) return
 
-    const headers = { Authorization: `Bearer ${token}` }
+  async function fetchData() {
+    try {
+      const [sessionsRes, speakersRes] = await Promise.all([
+        fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/sessions`
+        ),
+        fetcher(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`
+        ),
+      ])
 
-    Promise.all([
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/conferences/${conferenceId}/sessions`,
-        { headers }
-      ),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/speakers/active`, {
-        headers,
-      }),
-    ]).then(async ([s, sp]) => {
-      setSessions((await s.json()).data || [])
-      setSpeakers((await sp.json()).data || [])
-    })
-  }, [conferenceId])
+      setSessions(sessionsRes?.data ?? [])
+      setSpeakers(speakersRes?.data ?? [])
+    } catch (err) {
+      console.error('Failed to fetch sessions or speakers', err)
+    }
+  }
+
+  fetchData()
+}, [conferenceId])
 
   /* ================= RENDER SPEAKER POPOVER ================= */
 
@@ -279,67 +285,69 @@ export default function AddTopicForm({
 
   /* ================= SUBMIT ================= */
 
-  async function onSubmit(data: TopicFormValues) {
-    try {
-      setLoading(true)
-      if (data.topicType === 'Debate') {
-        data.speakerId = data.teamMember
-      }
+const onSubmit = async (values: TopicFormValues) => {
+  if (loading) return // ✅ double-click guard
 
-      // Filter out empty string values for single select fields
-      const payload = {
-        ...data,
-        moderator: data.moderator || undefined,
-        quizMaster: data.quizMaster || undefined,
-      }
+  try {
+    setLoading(true)
 
-      const token = localStorage.getItem('token')
-      const isEdit = !!defaultValues?._id
+    const isEdit = Boolean(defaultValues?._id)
 
-      const url = isEdit
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/topics/${defaultValues._id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin/conferences/${conferenceId}/topics`
-
-      const res = await fetch(url, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.message)
-
-      toast.success('Topic saved successfully!', {
-        description: getIndianFormattedDate(),
-      })
-
-      onSave(result.data)
-      form.reset({
-        conferenceId,
-        sessionId: '',
-        topicType: 'Presentation',
-        title: '',
-        startTime: '',
-        endTime: '',
-        videoLink: '',
-        description: '',
-        speakerId: [],
-        panelist: [],
-        teamMember: [],
-        moderator: '',
-        quizMaster: '',
-      })
-
-      clearDraft(DRAFT_KEY)
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
+    // -------------------------------
+    // Normalize payload (business logic)
+    // -------------------------------
+    const payload: TopicFormValues = {
+      ...values,
+      speakerId:
+        values.topicType === 'Debate'
+          ? values.teamMember
+          : values.speakerId,
+      moderator: values.moderator || undefined,
+      quizMaster: values.quizMaster || undefined,
     }
+
+    const result = await apiRequest<
+      TopicFormValues,
+      { data: TopicFormValues & { _id: string } }
+    >({
+      endpoint: isEdit
+        ? `/api/admin/topics/${defaultValues!._id}`
+        : `/api/admin/conferences/${conferenceId}/topics`,
+      method: isEdit ? 'PUT' : 'POST',
+      body: payload,
+      showToast: false,
+    })
+
+    toast.success('Topic saved successfully!', {
+      description: getIndianFormattedDate(),
+    })
+
+    onSave?.(result.data) // ✅ backend source of truth
+
+    form.reset({
+      conferenceId,
+      sessionId: '',
+      topicType: 'Presentation',
+      title: '',
+      startTime: '',
+      endTime: '',
+      videoLink: '',
+      description: '',
+      speakerId: [],
+      panelist: [],
+      teamMember: [],
+      moderator: '',
+      quizMaster: '',
+    })
+
+    clearDraft(DRAFT_KEY)
+  } catch (err: any) {
+    toast.error(err.message || 'Something went wrong')
+  } finally {
+    setLoading(false)
   }
+}
+
 
   /* ================= UI ================= */
 
