@@ -14,12 +14,17 @@ import {
   FaQuestionCircle,
   FaComments,
   FaCog,
-  FaRuler,
   FaExternalLinkAlt,
+  FaUsers,
 } from 'react-icons/fa'
 
 /* ✅ MENU CONFIG */
 const menuItems = [
+  {
+    name: 'Registrations',
+    slug: 'registrations',
+    icon: <FaUsers size={20} />,
+  },
   {
     name: 'Faculty',
     slug: 'faculty',
