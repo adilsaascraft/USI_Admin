@@ -35,6 +35,7 @@ type User = {
   state?: string
   city?: string
   status: 'Pending' | 'Approved'
+  uploadDocument?: string
 }
 
 const tabs = ['Pending', 'Approved', 'All'] as const
@@ -191,6 +192,35 @@ const deleteUser = async (userId: string) => {
         </div>
       ),
     },
+
+
+    {
+  accessorKey: 'uploadDocument',
+  header: 'Uploaded Document',
+  cell: ({ row }) => {
+    const docUrl = row.original.uploadDocument
+
+    if (!docUrl) {
+      return (
+        <span className="text-xs text-muted-foreground">
+          Not uploaded
+        </span>
+      )
+    }
+
+    return (
+      <Button
+        variant="link"
+        size="sm"
+        className="p-0 h-auto text-blue-600 hover:underline"
+        onClick={() => window.open(docUrl, '_blank', 'noopener,noreferrer')}
+      >
+        View Document
+      </Button>
+    )
+  },
+},
+
     {
       accessorKey: 'status',
       header: 'Status',

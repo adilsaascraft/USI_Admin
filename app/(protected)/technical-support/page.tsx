@@ -38,6 +38,22 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form'
+
+import RichTextEditor from '@/components/RichTextEditor'
+
+
 const statusStyles: Record<string, string> = {
   OPEN: "bg-red-100 text-red-700 border border-red-200",
   RESOLVED: "bg-green-100 text-green-700 border border-green-200",
@@ -81,12 +97,32 @@ const ITEMS_PER_PAGE = 30
 
 /* ================= PAGE ================= */
 
+const ReplySchema = z.object({
+  description: z.string().min(1, 'Reply message is required'),
+})
+
+type ReplyValues = z.infer<typeof ReplySchema>
+
+
 export default function Page() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
   const [statusFilter, setStatusFilter] =
     useState<StatusFilter>('ALL')
+  const [replyText, setReplyText] = useState('')
+  const [replyTicketId, setReplyTicketId] = useState<string | null>(null)
+  const [isReplySubmitting, setIsReplySubmitting] = useState(false)
+
+
+  const form = useForm<ReplyValues>({
+    resolver: zodResolver(ReplySchema),
+    defaultValues: {
+      description: '',
+    },
+  })
+
+
 
   /* ================= FETCH ================= */
 
@@ -108,19 +144,34 @@ export default function Page() {
 
   /* ================= ACTIONS ================= */
 
-  const resolveTicket = async (id: string) => {
+  const handleReplySubmit = async (values: ReplyValues) => {
+    if (!replyTicketId || isReplySubmitting) return
+
+    setIsReplySubmitting(true)
+
     try {
       await apiRequest({
-        endpoint: `/api/support-message/${id}/reply`,
+        endpoint: `/api/support-message/${replyTicketId}/reply`,
         method: 'POST',
+        body: {
+          replyMessage: values.description,
+        },
         showToast: true,
-        successMessage: 'Ticket resolved successfully',
+        successMessage: 'Reply sent successfully',
       })
+
+      form.reset()
+      setReplyTicketId(null)
       mutate()
     } catch (error) {
       toast.error((error as Error).message)
+    } finally {
+      setIsReplySubmitting(false)
     }
   }
+
+
+
 
   const deleteTicket = async (id: string) => {
     try {
@@ -249,9 +300,8 @@ export default function Page() {
             disabled={isValidating}
           >
             <RefreshCcw
-              className={`h-4 w-4 ${
-                isValidating ? 'animate-spin' : ''
-              }`}
+              className={`h-4 w-4 ${isValidating ? 'animate-spin' : ''
+                }`}
             />
           </Button>
         </div>
@@ -280,38 +330,85 @@ export default function Page() {
 
                   <DropdownMenuContent align="end">
                     {item.status === 'OPEN' && (
-                      <AlertDialog>
+                      <AlertDialog
+                        open={replyTicketId === item._id}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setReplyTicketId(null)
+                            setReplyText('')
+                          }
+                        }}
+                      >
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
-                            onSelect={(e) =>
+                            onSelect={(e) => {
                               e.preventDefault()
-                            }
+                              setReplyTicketId(item._id)
+                            }}
                           >
                             Reply
                           </DropdownMenuItem>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+
+                        <AlertDialogContent className="w-full max-w-lg sm:max-w-xl">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Mark this ticket as resolved?
-                            </AlertDialogTitle>
+                            <AlertDialogTitle>Reply to Ticket</AlertDialogTitle>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                            className='bg-red-600 hover:bg-red-700'
-                              onClick={() =>
-                                resolveTicket(item._id)
-                              }
+
+                          <Form {...form}>
+                            <form
+                              onSubmit={form.handleSubmit(handleReplySubmit)}
+                              className="flex flex-col gap-4"
                             >
-                              Resolve
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
+                              {/* Editor Area */}
+                              <div className="max-h-[60vh] overflow-y-auto pr-1">
+                                <FormField
+                                  control={form.control}
+                                  name="description"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Reply Message</FormLabel>
+                                      <FormControl>
+                                        <RichTextEditor
+                                          value={field.value || ''}
+                                          onChange={field.onChange}
+                                          placeholder="Write your reply..."
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              {/* Footer – always outside editor */}
+                              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3 pt-3 border-t">
+                                <AlertDialogCancel
+                                  type="button"
+                                  disabled={isReplySubmitting}
+                                  onClick={() => {
+                                    form.reset()
+                                    setReplyTicketId(null)
+                                  }}
+                                >
+                                  Cancel
+                                </AlertDialogCancel>
+
+                                <Button
+                                  type="submit"
+                                  disabled={isReplySubmitting}
+                                  className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
+                                >
+                                  {isReplySubmitting ? 'Sending...' : 'Send Reply'}
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
                         </AlertDialogContent>
+
                       </AlertDialog>
                     )}
+
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -362,14 +459,13 @@ export default function Page() {
               )}
 
               <div className="mt-2">
-  <span
-    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-      statusStyles[item.status] || "bg-gray-100 text-gray-700"
-    }`}
-  >
-    Status: {item.status === "OPEN" ? "Open" : "Resolved"}
-  </span>
-</div>
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusStyles[item.status] || "bg-gray-100 text-gray-700"
+                    }`}
+                >
+                  Status: {item.status === "OPEN" ? "Open" : "Resolved"}
+                </span>
+              </div>
 
 
               <p className="mt-4 text-sm whitespace-pre-line">
