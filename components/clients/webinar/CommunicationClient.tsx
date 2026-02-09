@@ -62,7 +62,7 @@ export default function CommunicationClient({
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR<Response>(
-    `${process.env.NEXT_PUBLIC_API_URL}/admin/webinar/${webinarId}/registrations`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinar/${webinarId}/registrations`,
     fetcher
   )
 
@@ -83,15 +83,15 @@ export default function CommunicationClient({
 
   /* ================= SURVEY LINK ================= */
 
-  const surveyLink = `${process.env.NEXT_PUBLIC_FEEDBACK_URL}/${webinarId}/submit-feedback-by-user`
+  const surveyLink = `${process.env.NEXT_PUBLIC_FEEDBACK_URL}/api/${webinarId}/submit-feedback-by-user`
 
   /* ================= BULK EMAIL ================= */
 
   const sendBulkMail = async (type: 'attended' | 'not-attended') => {
     const endpoint =
       type === 'attended'
-        ? `/admin/webinar/${webinarId}/email/attended`
-        : `/admin/webinar/${webinarId}/email/not-attended`
+        ? `/api/admin/webinar/${webinarId}/email/attended`
+        : `/api/admin/webinar/${webinarId}/email/not-attended`
 
     await apiRequest({
       endpoint,
@@ -113,8 +113,8 @@ const resendIndividual = async (
 ) => {
   const endpoint =
     type === 'attended'
-      ? `/admin/webinar/${webinarId}/email/attended/${userId}`
-      : `/admin/webinar/${webinarId}/email/not-attended/${userId}`
+      ? `/api/admin/webinar/${webinarId}/email/attended/${userId}`
+      : `/api/admin/webinar/${webinarId}/email/not-attended/${userId}`
 
   await apiRequest({
     endpoint,

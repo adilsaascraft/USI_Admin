@@ -10,6 +10,20 @@ import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { apiRequest } from '@/lib/apiRequest'
+import { toast } from 'sonner'
+
 
 /* ================= TYPES ================= */
 
@@ -56,7 +70,30 @@ export default function WebinarRegistrationClient({
     [data]
   )
 
- 
+
+  const [sendingReminder, setSendingReminder] = useState(false)
+
+  const sendReminderEmail = async () => {
+    if (sendingReminder) return // 🔒 double-click guard
+
+    try {
+      setSendingReminder(true)
+
+      await apiRequest({
+        endpoint: `/api/admin/webinar/${webinarId}/send-join-webinar`,
+        method: 'POST',
+        showToast: true,
+        successMessage: 'Reminder email sent successfully',
+      })
+    } catch (error) {
+      toast.error((error as Error).message)
+    } finally {
+      setSendingReminder(false)
+    }
+  }
+
+
+
 
   /* ================= CSV EXPORT ================= */
 
@@ -89,68 +126,68 @@ export default function WebinarRegistrationClient({
   /* ================= COLUMNS ================= */
 
   const columns: ColumnDef<WebinarRegistration>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) =>
-          table.toggleAllPageRowsSelected(!!value)
-        }
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) =>
-          row.toggleSelected(!!value)
-        }
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) =>
+            table.toggleAllPageRowsSelected(!!value)
+          }
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) =>
+            row.toggleSelected(!!value)
+          }
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
 
-  {
-    id: 'name',
-    accessorFn: (row) =>
-      row.user ? `${row.user.prefix}. ${row.user.name}` : '',
-    header: sortableHeader('Full Name'),
-    cell: ({ row }) => (
-      <span className="font-medium">
-        {getFullName(row.original)}
-      </span>
-    ),
-  },
+    {
+      id: 'name',
+      accessorFn: (row) =>
+        row.user ? `${row.user.prefix}. ${row.user.name}` : '',
+      header: sortableHeader('Full Name'),
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {getFullName(row.original)}
+        </span>
+      ),
+    },
 
-  {
-    id: 'email',
-    accessorFn: (row) =>
-      row.user?.email ?? row.email ?? '',
-    header: sortableHeader('Email'),
-    cell: ({ row }) => <span>{getEmail(row.original)}</span>,
-  },
+    {
+      id: 'email',
+      accessorFn: (row) =>
+        row.user?.email ?? row.email ?? '',
+      header: sortableHeader('Email'),
+      cell: ({ row }) => <span>{getEmail(row.original)}</span>,
+    },
 
-  {
-    id: 'mobile',
-    accessorFn: (row) =>
-      row.user?.mobile ?? '',
-    header: sortableHeader('Mobile'),
-    cell: ({ row }) => <span>{getMobile(row.original)}</span>,
-  },
+    {
+      id: 'mobile',
+      accessorFn: (row) =>
+        row.user?.mobile ?? '',
+      header: sortableHeader('Mobile'),
+      cell: ({ row }) => <span>{getMobile(row.original)}</span>,
+    },
 
-  {
-    accessorKey: 'registeredOn',
-    header: sortableHeader('Registered At'),
-    cell: ({ row }) => (
-      <span>
-        {getIndianFormattedDate(
-          new Date(row.original.registeredOn)
-        )}
-      </span>
-    ),
-  },
-]
+    {
+      accessorKey: 'registeredOn',
+      header: sortableHeader('Registered At'),
+      cell: ({ row }) => (
+        <span>
+          {getIndianFormattedDate(
+            new Date(row.original.registeredOn)
+          )}
+        </span>
+      ),
+    },
+  ]
 
 
   /* ================= STATES ================= */
@@ -165,11 +202,65 @@ export default function WebinarRegistrationClient({
       {/* Header */}
       <div className="flex flex-wrap gap-3 justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">All Registrations</h1>
+
+        <div className="flex gap-2">
           <Button variant="outline" onClick={exportCSV}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+              className='bg-orange-600 hover:bg-orange-700 text-white'
+                variant="outline"
+                disabled={regList.length === 0}
+                title={
+                  regList.length === 0
+                    ? 'No registrations available'
+                    : undefined
+                }
+              >
+                Send Reminder Email
+              </Button>
+            </AlertDialogTrigger>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Send Reminder Email?
+                </AlertDialogTitle>
+
+                <AlertDialogDescription>
+                  This will send a program join reminder email to{" "}
+                  <span className="font-semibold text-xl text-orange-600">
+                    {regList.length}
+                  </span>{" "}
+                  registered users. The email will remind participants about the program and
+                  provide important details to help them prepare and stay informed.
+                </AlertDialogDescription>
+
+              </AlertDialogHeader>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={sendingReminder}>
+                  Cancel
+                </AlertDialogCancel>
+
+                <AlertDialogAction
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                  disabled={sendingReminder}
+                  onClick={sendReminderEmail}
+                >
+                  {sendingReminder ? 'Sending…' : 'Confirm'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
+
+
 
       {/* Table */}
       <DataTable data={regList} columns={columns} />
