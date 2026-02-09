@@ -83,7 +83,7 @@ export default function CommunicationClient({
 
   /* ================= SURVEY LINK ================= */
 
-  const surveyLink = `${process.env.NEXT_PUBLIC_FEEDBACK_URL}/api/${webinarId}/submit-feedback-by-user`
+  const surveyLink = `${process.env.NEXT_PUBLIC_FEEDBACK_URL}/${webinarId}/submit-feedback-by-user`
 
   /* ================= BULK EMAIL ================= */
 
