@@ -208,9 +208,11 @@ export default function FeedbackClient({
       header: 'Parameters',
       cell: ({ row }) => (
         <ul className="list-disc list-inside text-sm">
-          {row.original.options.map((o, i) => (
-            <li key={i}>{o}</li>
-          ))}
+          {Array.isArray(row.original.options) &&
+  row.original.options.map((o, i) => (
+    <li key={i}>{o}</li>
+  ))}
+
         </ul>
       ),
     },
