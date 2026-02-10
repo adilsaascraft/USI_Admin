@@ -132,7 +132,7 @@ export default function SubmitFeedbackByUserPage() {
       setSubmitting(true)
 
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/send-feedback`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/public-feedback`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -142,7 +142,7 @@ export default function SubmitFeedbackByUserPage() {
               ([section, values]) =>
                 Object.entries(values).map(([q, ans]) => ({
                   feedbackName: section,
-                  selectedOption: ans, // 1–5 or Yes/No
+                  selectedOption: ans, 
                 }))
             ),
             sendOtherFeedback: otherFeedback,
@@ -243,7 +243,7 @@ export default function SubmitFeedbackByUserPage() {
               ) : (
                 /* CHECKBOX (SINGLE SELECT – ROW) */
                 <div key={f.label} className="space-y-2">
-                  <p className="font-medium">{f.label}</p>
+                  <p className="text-sm font-semibold leading-tight tracking-tight">{f.label}</p>
 
                   <RadioGroup
                     className="flex flex-wrap gap-6"
@@ -282,12 +282,14 @@ export default function SubmitFeedbackByUserPage() {
       {doc.feedbacks.map((section) => (
         <Card key={section.feedbackName}>
           <CardHeader>
-            <CardTitle>{section.feedbackName}</CardTitle>
+            <CardTitle className="font-bold leading-tight tracking-tight">{section.feedbackName}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {section.options.map((q) => (
               <div key={q} className="space-y-2">
-                <p className="text-xl font-normal">{q}</p>
+                <p className="text-sm font-semibold leading-tight tracking-tight">
+                  {q}
+                </p>
 
                 <RadioGroup
                   className="flex flex-wrap gap-6"
@@ -337,6 +339,8 @@ export default function SubmitFeedbackByUserPage() {
           <CardContent>
             <Textarea
               rows={4}
+              placeholder="Type your response..."
+              className="resize-none"
               onChange={(e) =>
                 setOpenEndedAnswers((p) => ({
                   ...p,
@@ -344,6 +348,7 @@ export default function SubmitFeedbackByUserPage() {
                 }))
               }
             />
+
           </CardContent>
         </Card>
       ))}
