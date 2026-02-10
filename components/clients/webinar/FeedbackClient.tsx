@@ -388,7 +388,12 @@ export default function FeedbackClient({ webinarId }: { webinarId: string }) {
 
       {/* SHEET */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="w-[640px]">
+        <SheetContent side="right" className="w-[500px] sm:w-[600px]">
+          <div className="p-4 border-b">
+            <h2 className="text-xl font-semibold">
+              {"Feedback Form"}
+            </h2>
+          </div>
           <AddFeedbackForm
             webinarId={webinarId}
             defaultValues={
