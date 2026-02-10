@@ -15,6 +15,16 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { webinarType } from '@/lib/constants'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+
 
 /* ================= TYPES ================= */
 
@@ -23,6 +33,10 @@ type Webinar = {
   name: string
   webinarType: string
   dynamicStatus: string
+  startDate:string 
+  startTime: string
+  endDate: string
+  endTime: string
 }
 
 type Question = {
@@ -87,9 +101,10 @@ export default function Page() {
 
   /* ================= MEMOIZED VALUES ================= */
 
-  const webinarName = useMemo(() => {
-    return data?.data?.[0]?.webinarId?.name ?? 'Webinar Questions'
-  }, [data])
+ const webinarMeta = useMemo(() => {
+  return data?.data?.[0]?.webinarId
+}, [data])
+
 
   const filteredAndSortedQuestions = useMemo(() => {
     let list = data?.data ?? []
@@ -153,15 +168,52 @@ export default function Page() {
     <div className="p-4 space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3">
-        <h2 className="text-xl text-center text-sky-800 font-semibold">
-          {webinarName}
-        </h2>
+       <Card className="border-none shadow-md bg-gradient-to-br from-sky-50 to-white">
+  <CardHeader className="space-y-2 text-center">
+    <CardTitle className="text-2xl font-bold text-sky-800">
+      {webinarMeta?.name ?? 'Webinar Questions'}
+    </CardTitle>
 
-        <h3 className="text-lg text-center text-muted-foreground">
-          All Questions Asked By Users
-        </h3>
+    <CardDescription className="flex flex-col items-center gap-3">
+  {/* Type + Status */}
+  <div className="flex flex-wrap justify-center gap-2">
+    <Badge variant="secondary" className="text-sm">
+      {webinarMeta?.webinarType}
+    </Badge>
 
-        {/* Search + Filter */}
+    <Badge
+      variant={
+        webinarMeta?.dynamicStatus === 'Live'
+          ? 'default'
+          : webinarMeta?.dynamicStatus === 'Past'
+          ? 'outline'
+          : 'secondary'
+      }
+    >
+      {webinarMeta?.dynamicStatus}
+    </Badge>
+  </div>
+
+  {/* Date & Time */}
+  <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-muted-foreground">
+    <span>{webinarMeta?.startDate}</span>
+    <span className="hidden sm:inline">•</span>
+    <span>
+      {webinarMeta?.startTime} – {webinarMeta?.endTime}
+    </span>
+  </div>
+</CardDescription>
+
+
+    <p className="text-sm text-muted-foreground pt-2">
+      All questions asked by users
+    </p>
+  </CardHeader>
+
+  <CardContent>
+    {/* Search + Filter stays here */}
+
+            {/* Search + Filter */}
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <Input
             placeholder="Search by name, email, mobile or question..."
@@ -200,6 +252,9 @@ export default function Page() {
             </Button>
           </div>
         </div>
+  </CardContent>
+</Card>
+
       </div>
 
       {/* Cards */}
