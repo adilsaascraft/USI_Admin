@@ -26,9 +26,19 @@ import {
 } from '@/lib/imports'
 import { apiRequest } from '@/lib/apiRequest'
 
-/* =====================================================
-  SCHEMA (ADMIN BUILDER – LOOSE & CORRECT)
-===================================================== */
+/* ================= CONSTANTS ================= */
+
+const SCALE_LABELS = [
+  'Poor',
+  'Fair',
+  'Good',
+  'Very Good',
+  'Excellent',
+]
+
+const YES_NO_LABELS = ['Yes', 'No']
+
+/* ================= SCHEMA ================= */
 
 const CheckboxOptionSchema = z.object({
   label: z.string().optional(),
@@ -40,10 +50,15 @@ const ParticipantFieldSchema = z.object({
   options: z.array(CheckboxOptionSchema).optional(),
 })
 
-const FeedbackItemSchema = z.object({
+const FeedbackQuestionSchema = z.object({
   feedbackName: z.string().optional(),
-  parameterType: z.enum(['scale', 'yes_no']).optional(),
-  options: z.array(z.string().optional()),
+  parameterType: z.enum(['scale', 'yes_no']),
+  options: z.array(z.string()),
+})
+
+const FeedbackSectionSchema = z.object({
+  feedbackLabelName: z.string().optional(),
+  feedbackItems: z.array(FeedbackQuestionSchema),
 })
 
 const OpenEndedSchema = z.object({
@@ -52,16 +67,14 @@ const OpenEndedSchema = z.object({
 
 const FeedbackFormSchema = z.object({
   participantFields: z.array(ParticipantFieldSchema),
-  feedbacks: z.array(FeedbackItemSchema),
+  feedbacks: z.array(FeedbackSectionSchema),
   openEnded: z.array(OpenEndedSchema),
   closeNote: z.string().optional(),
 })
 
 type FeedbackFormValues = z.infer<typeof FeedbackFormSchema>
 
-/* =====================================================
-  COMPONENT
-===================================================== */
+/* ================= COMPONENT ================= */
 
 export default function AddFeedbackForm({
   webinarId,
@@ -85,7 +98,16 @@ export default function AddFeedbackForm({
       draft || {
         participantFields: [],
         feedbacks: [
-          { feedbackName: '', parameterType: 'scale', options: [''] },
+          {
+            feedbackLabelName: '',
+            feedbackItems: [
+              {
+                feedbackName: '',
+                parameterType: 'scale',
+                options: SCALE_LABELS,
+              },
+            ],
+          },
         ],
         openEnded: [{ label: '' }],
         closeNote: '',
@@ -129,25 +151,35 @@ export default function AddFeedbackForm({
     ])
   }
 
-  const addFeedbackOption = (index: number) => {
-    const current = watch(`feedbacks.${index}.options`) || []
-    setValue(`feedbacks.${index}.options`, [...current, ''])
+  const addFeedbackItem = (sectionIndex: number) => {
+    const current =
+      watch(`feedbacks.${sectionIndex}.feedbackItems`) || []
+
+    setValue(`feedbacks.${sectionIndex}.feedbackItems`, [
+      ...current,
+      {
+        feedbackName: '',
+        parameterType: 'scale',
+        options: SCALE_LABELS,
+      },
+    ])
   }
 
   const onChangeParameterType = (
-    index: number,
+    sectionIndex: number,
+    itemIndex: number,
     type: 'scale' | 'yes_no'
   ) => {
-    setValue(`feedbacks.${index}.parameterType`, type)
+    setValue(
+      `feedbacks.${sectionIndex}.feedbackItems.${itemIndex}.parameterType`,
+      type
+    )
 
-    const current = watch(`feedbacks.${index}.options`) || []
-
-    // Ensure at least one parameter exists
-    if (current.length === 0) {
-      setValue(`feedbacks.${index}.options`, [''])
-    }
+    setValue(
+      `feedbacks.${sectionIndex}.feedbackItems.${itemIndex}.options`,
+      type === 'scale' ? SCALE_LABELS : YES_NO_LABELS
+    )
   }
-
 
   /* ================= SUBMIT ================= */
 
@@ -178,107 +210,68 @@ export default function AddFeedbackForm({
   return (
     <div className="flex flex-col min-h-full">
       <FormProvider {...form}>
-        <div className="flex-1 overflow-y-auto custom-scroll mb-20">
+        <div className="flex-1 overflow-y-auto mb-20 px-3">
           <Form {...form}>
             <form
               id="add-feedback-form"
               onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6 px-3"
+              className="space-y-6"
             >
 
               {/* ================= SECTION A ================= */}
               <div className="border p-4 rounded-xl space-y-4">
-                <h3 className="font-semibold">
-                  Participant Details
-                </h3>
+                <h3 className="font-semibold">Participant Details</h3>
 
                 {participantArray.fields.map((f, i) => {
                   const type = watch(`participantFields.${i}.type`)
-
                   return (
-                    <div
-                      key={f.id}
-                      className="border rounded-lg p-4 space-y-3 bg-muted/30"
-                    >
-                      <div className="flex gap-2 items-start">
+                    <div key={f.id} className="border p-4 rounded-lg space-y-3">
+                      <div className="flex gap-2">
                         <FormField
                           control={control}
                           name={`participantFields.${i}.label`}
                           render={({ field }) => (
                             <FormItem className="w-full">
-                              <FormLabel>
-                                {type === 'checkbox'
-                                  ? 'Checkbox Label'
-                                  : 'Input Label'}
-                              </FormLabel>
                               <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder={
-                                    type === 'checkbox'
-                                      ? 'e.g. Designation'
-                                      : 'e.g. Name, Institution, City'
-                                  }
-                                />
+                                <Input {...field} placeholder="Field Label" />
                               </FormControl>
-                              <FormMessage />
                             </FormItem>
                           )}
                         />
-
                         <Button
                           type="button"
                           variant="destructive"
                           onClick={() => participantArray.remove(i)}
-                          className="mt-6"
                         >
                           ✕
                         </Button>
                       </div>
 
                       {type === 'checkbox' && (
-                        <div className="space-y-2 pl-6 border-l-2 border-dashed">
-                          {(watch(
-                            `participantFields.${i}.options`
-                          ) || []).map((_, oi: number) => (
-                            <div key={oi} className="flex gap-2">
-                              <FormField
-                                control={control}
-                                name={`participantFields.${i}.options.${oi}.label`}
-                                render={({ field }) => (
-                                  <Input
-                                    {...field}
-                                    placeholder={`Option ${oi + 1}`}
-                                  />
-                                )}
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                onClick={() => {
+                        <div className="pl-6 space-y-2 border-l-2 border-dashed">
+                          {(watch(`participantFields.${i}.options`) || []).map(
+                            (_, oi: number) => (
+                              <Input
+                                key={oi}
+                                placeholder={`Option ${oi + 1}`}
+                                onChange={(e) => {
                                   const arr =
                                     watch(
                                       `participantFields.${i}.options`
                                     ) || []
+                                  arr[oi].label = e.target.value
                                   setValue(
                                     `participantFields.${i}.options`,
-                                    arr.filter(
-                                      (_: any, x: number) => x !== oi
-                                    )
+                                    arr
                                   )
                                 }}
-                              >
-                                ✕
-                              </Button>
-                            </div>
-                          ))}
-
+                              />
+                            )
+                          )}
                           <Button
-                            type="button"
                             size="sm"
                             variant="outline"
                             onClick={() => addCheckboxOption(i)}
-                            className="bg-orange-600 hover:bg-orange-700 text-white"
                           >
                             + Add Option
                           </Button>
@@ -290,20 +283,14 @@ export default function AddFeedbackForm({
 
                 <div className="flex gap-2">
                   <Button
-                    type="button"
                     variant="outline"
                     onClick={() =>
-                      participantArray.append({
-                        label: '',
-                        type: 'input',
-                      })
+                      participantArray.append({ label: '', type: 'input' })
                     }
                   >
                     + Input
                   </Button>
-
                   <Button
-                    type="button"
                     variant="outline"
                     onClick={() =>
                       participantArray.append({
@@ -318,158 +305,121 @@ export default function AddFeedbackForm({
                 </div>
               </div>
 
-
               {/* ================= SECTION B ================= */}
               <div className="border p-4 rounded-xl space-y-4">
                 <h3 className="font-semibold">Section Label & Parameters</h3>
 
-                {feedbackArray.fields.map((f, i) => {
-                  const type =
-                    watch(`feedbacks.${i}.parameterType`) || 'scale'
-                  const options = watch(`feedbacks.${i}.options`) || []
+                {feedbackArray.fields.map((section, si) => (
+                  <div key={section.id} className="border p-4 rounded-lg space-y-4">
+                    <FormField
+                      control={control}
+                      name={`feedbacks.${si}.feedbackLabelName`}
+                      render={({ field }) => (
+                        <Input {...field} placeholder="Section Label" />
+                      )}
+                    />
 
-                  return (
-                    <div
-                      key={f.id}
-                      className="space-y-4 border p-4 rounded-lg"
-                    >
-                      {/* SECTION LABEL + REMOVE */}
-                      <div className="flex gap-2 items-start">
-                        <FormField
-                          control={control}
-                          name={`feedbacks.${i}.feedbackName`}
-                          render={({ field }) => (
+                    {(watch(`feedbacks.${si}.feedbackItems`) || []).map(
+                      (_: any, qi: number) => {
+                        const type =
+                          watch(
+                            `feedbacks.${si}.feedbackItems.${qi}.parameterType`
+                          ) || 'scale'
+
+                        const options =
+                          watch(
+                            `feedbacks.${si}.feedbackItems.${qi}.options`
+                          ) || []
+
+                        return (
+                          <div key={qi} className="border p-3 rounded space-y-3">
                             <Input
-                              {...field}
-                              placeholder="Section Label e.g. Virtual Platform Experience"
-                            />
-                          )}
-                        />
-
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={() => feedbackArray.remove(i)}
-                        >
-                          ✕
-                        </Button>
-                      </div>
-
-                      {/* PARAMETER TYPE (SHADCN SELECT) */}
-                      <div className="space-y-1">
-                        <label className="text-sm font-medium">
-                          Parameter Type
-                        </label>
-
-                        <Select
-                          value={type}
-                          onValueChange={(val) =>
-                            onChangeParameterType(
-                              i,
-                              val as 'scale' | 'yes_no'
-                            )
-                          }
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select parameter type" />
-                          </SelectTrigger>
-
-                          <SelectContent>
-                            <SelectItem value="scale">
-                              Scale Based (1 to 5)
-                            </SelectItem>
-                            <SelectItem value="yes_no">
-                              Yes / No Based
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* PARAMETERS */}
-                      <div className="space-y-2">
-                        {options.map((_, oi: number) => (
-                          <div key={oi} className="flex gap-2">
-                            <FormField
-                              control={control}
-                              name={`feedbacks.${i}.options.${oi}`}
-                              render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  placeholder={
-                                    type === 'yes_no'
-                                      ? 'e.g. Would you like to attend similar USI virtual programs in the future?'
-                                      : `Parameter ${oi + 1}`
-                                  }
-                                />
-                              )}
-                            />
-
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              onClick={() => {
-                                const arr =
-                                  watch(`feedbacks.${i}.options`) || []
+                              placeholder="Question"
+                              onChange={(e) =>
                                 setValue(
-                                  `feedbacks.${i}.options`,
-                                  arr.filter(
-                                    (_: any, x: number) => x !== oi
-                                  )
+                                  `feedbacks.${si}.feedbackItems.${qi}.feedbackName`,
+                                  e.target.value
                                 )
-                              }}
+                              }
+                            />
+
+                            <Select
+                              value={type}
+                              onValueChange={(val) =>
+                                onChangeParameterType(
+                                  si,
+                                  qi,
+                                  val as 'scale' | 'yes_no'
+                                )
+                              }
                             >
-                              ✕
-                            </Button>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="scale">
+                                  Scale (1–5)
+                                </SelectItem>
+                                <SelectItem value="yes_no">
+                                  Yes / No
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            {options.map((opt: string, oi: number) => (
+                              <Input
+                                key={oi}
+                                value={opt}
+                                disabled
+                                className="bg-muted"
+                              />
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        )
+                      }
+                    )}
 
-                      {/* ADD PARAMETER (BOTH TYPES) */}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => addFeedbackOption(i)}
-                      >
-                        + Add Parameter
-                      </Button>
-                    </div>
-                  )
-                })}
+                    <Button
+                      variant="outline"
+                      onClick={() => addFeedbackItem(si)}
+                    >
+                      + Add Question
+                    </Button>
+                  </div>
+                ))}
 
-                {/* ADD FEEDBACK */}
                 <Button
-                  type="button"
                   variant="outline"
                   onClick={() =>
                     feedbackArray.append({
-                      feedbackName: '',
-                      parameterType: 'scale',
-                      options: [''],
+                      feedbackLabelName: '',
+                      feedbackItems: [
+                        {
+                          feedbackName: '',
+                          parameterType: 'scale',
+                          options: SCALE_LABELS,
+                        },
+                      ],
                     })
                   }
                 >
-                  + Add Feedback
+                  + Add Feedback Section
                 </Button>
               </div>
 
-
               {/* ================= SECTION C ================= */}
               <div className="border p-4 rounded-xl space-y-4">
-                <h3 className="font-semibold">
-                  Open-ended Feedback
-                </h3>
-
+                <h3 className="font-semibold">Open-ended Feedback</h3>
                 {openEndedArray.fields.map((f, i) => (
                   <div key={f.id} className="flex gap-2">
                     <FormField
                       control={control}
                       name={`openEnded.${i}.label`}
                       render={({ field }) => (
-                        <Input {...field} placeholder="What did you like most about the program?" />
+                        <Input {...field} placeholder="Question" />
                       )}
                     />
                     <Button
-                      type="button"
                       variant="destructive"
                       onClick={() => openEndedArray.remove(i)}
                     >
@@ -477,13 +427,9 @@ export default function AddFeedbackForm({
                     </Button>
                   </div>
                 ))}
-
                 <Button
-                  type="button"
                   variant="outline"
-                  onClick={() =>
-                    openEndedArray.append({ label: '' })
-                  }
+                  onClick={() => openEndedArray.append({ label: '' })}
                 >
                   + Add Question
                 </Button>
@@ -491,24 +437,12 @@ export default function AddFeedbackForm({
 
               {/* ================= CLOSE NOTE ================= */}
               <div className="border p-4 rounded-xl space-y-4">
-                <h3 className="font-semibold">
-                  Closing Mesage
-                </h3>
+                <h3 className="font-semibold">Closing Message</h3>
                 <FormField
                   control={control}
                   name="closeNote"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel>Feedback Close Note</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          rows={4}
-                          placeholder="Type feedback close note"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <Textarea rows={4} {...field} />
                   )}
                 />
               </div>
@@ -517,31 +451,19 @@ export default function AddFeedbackForm({
         </div>
       </FormProvider>
 
-      {/* ================= FOOTER ================= */}
       <div className="sticky bottom-0 border-t px-6 py-4 flex justify-between">
         <SheetClose asChild>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={loading}
-          >
+          <Button variant="outline" disabled={loading}>
             Close
           </Button>
         </SheetClose>
-
         <Button
           type="submit"
           form="add-feedback-form"
           disabled={loading}
-          className="bg-orange-600 text-white hover:bg-orange-700"
+          className="bg-orange-600 text-white"
         >
-          {loading
-            ? defaultValues?._id
-              ? 'Updating...'
-              : 'Creating...'
-            : defaultValues?._id
-              ? 'Update'
-              : 'Create'}
+          {loading ? 'Saving...' : 'Save'}
         </Button>
       </div>
     </div>
