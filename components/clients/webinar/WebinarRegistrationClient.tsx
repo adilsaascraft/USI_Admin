@@ -5,7 +5,7 @@ import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/DataTable'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, ArrowUp, ArrowDown, Download } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import { getIndianFormattedDate } from '@/lib/formatIndianDate'
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { apiRequest } from '@/lib/apiRequest'
 import { toast } from 'sonner'
-
+import { ExportCsvButton } from '@/components/export-csv-button'
 
 /* ================= TYPES ================= */
 
@@ -40,17 +40,6 @@ type WebinarRegistration = {
   email?: string
 }
 
-/* ================= HELPERS ================= */
-
-const getFullName = (row: WebinarRegistration) =>
-  row.user ? `${row.user.prefix}. ${row.user.name}` : '—'
-
-const getEmail = (row: WebinarRegistration) =>
-  row.user?.email ?? row.email ?? '—'
-
-const getMobile = (row: WebinarRegistration) =>
-  row.user?.mobile ?? '—'
-
 /* ================= PAGE ================= */
 
 export default function WebinarRegistrationClient({
@@ -58,23 +47,28 @@ export default function WebinarRegistrationClient({
 }: {
   webinarId: string
 }) {
-  const [search, setSearch] = useState('')
+  const [sendingReminder, setSendingReminder] = useState(false)
 
   const { data, isLoading, error } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinar/${webinarId}/registrations-simple`,
-    fetcher
+    fetcher,
   )
 
-  const regList: WebinarRegistration[] = useMemo(
-    () => data?.data ?? [],
-    [data]
-  )
+  const regList: WebinarRegistration[] = useMemo(() => data?.data ?? [], [data])
 
+  /* ================= DYNAMIC FILE NAME ================= */
 
-  const [sendingReminder, setSendingReminder] = useState(false)
+  const fileName = useMemo(() => {
+    const webinarName =
+      data?.webinar?.name || data?.webinarName || `Webinar-${webinarId}`
+
+    return `${webinarName}.csv`
+  }, [data, webinarId])
+
+  /* ================= SEND REMINDER ================= */
 
   const sendReminderEmail = async () => {
-    if (sendingReminder) return // 🔒 double-click guard
+    if (sendingReminder) return
 
     try {
       setSendingReminder(true)
@@ -92,37 +86,6 @@ export default function WebinarRegistrationClient({
     }
   }
 
-
-
-
-  /* ================= CSV EXPORT ================= */
-
-  const exportCSV = () => {
-    const headers = ['Full Name', 'Email', 'Mobile', 'Registered At']
-
-    const rows = regList.map((row) => [
-      getFullName(row),
-      getEmail(row),
-      getMobile(row),
-      getIndianFormattedDate(new Date(row.registeredOn)),
-    ])
-
-    const csvContent =
-      [headers, ...rows]
-        .map((r) => r.map((v) => `"${v}"`).join(','))
-        .join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'webinar-registrations.csv'
-    link.click()
-
-    URL.revokeObjectURL(url)
-  }
-
   /* ================= COLUMNS ================= */
 
   const columns: ColumnDef<WebinarRegistration>[] = [
@@ -131,17 +94,13 @@ export default function WebinarRegistrationClient({
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) =>
-            table.toggleAllPageRowsSelected(!!value)
-          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) =>
-            row.toggleSelected(!!value)
-          }
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
         />
       ),
       enableSorting: false,
@@ -155,25 +114,27 @@ export default function WebinarRegistrationClient({
       header: sortableHeader('Full Name'),
       cell: ({ row }) => (
         <span className="font-medium">
-          {getFullName(row.original)}
+          {row.original.user
+            ? `${row.original.user.prefix}. ${row.original.user.name}`
+            : '—'}
         </span>
       ),
     },
 
     {
       id: 'email',
-      accessorFn: (row) =>
-        row.user?.email ?? row.email ?? '',
+      accessorFn: (row) => row.user?.email ?? row.email ?? '',
       header: sortableHeader('Email'),
-      cell: ({ row }) => <span>{getEmail(row.original)}</span>,
+      cell: ({ row }) => (
+        <span>{row.original.user?.email ?? row.original.email ?? '—'}</span>
+      ),
     },
 
     {
       id: 'mobile',
-      accessorFn: (row) =>
-        row.user?.mobile ?? '',
+      accessorFn: (row) => row.user?.mobile ?? '',
       header: sortableHeader('Mobile'),
-      cell: ({ row }) => <span>{getMobile(row.original)}</span>,
+      cell: ({ row }) => <span>{row.original.user?.mobile ?? '—'}</span>,
     },
 
     {
@@ -181,14 +142,11 @@ export default function WebinarRegistrationClient({
       header: sortableHeader('Registered At'),
       cell: ({ row }) => (
         <span>
-          {getIndianFormattedDate(
-            new Date(row.original.registeredOn)
-          )}
+          {getIndianFormattedDate(new Date(row.original.registeredOn))}
         </span>
       ),
     },
   ]
-
 
   /* ================= STATES ================= */
 
@@ -204,22 +162,37 @@ export default function WebinarRegistrationClient({
         <h1 className="text-2xl font-bold">All Registrations</h1>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCSV}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
+          {/* ✅ REUSABLE CSV EXPORT */}
+          <ExportCsvButton
+            fileName={fileName}
+            data={regList}
+            columns={[
+              {
+                header: 'Full Name',
+                value: (r) =>
+                  r.user ? `${r.user.prefix}. ${r.user.name}` : '—',
+              },
+              {
+                header: 'Email',
+                value: (r) => r.user?.email ?? r.email ?? '—',
+              },
+              {
+                header: 'Mobile',
+                value: (r) => r.user?.mobile ?? '—',
+              },
+              {
+                header: 'Registered At',
+                value: (r) => getIndianFormattedDate(new Date(r.registeredOn)),
+              },
+            ]}
+          />
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-              className='bg-orange-600 hover:bg-orange-700 text-white'
+                className="bg-orange-600 hover:bg-orange-700 text-white"
                 variant="outline"
                 disabled={regList.length === 0}
-                title={
-                  regList.length === 0
-                    ? 'No registrations available'
-                    : undefined
-                }
               >
                 Send Reminder Email
               </Button>
@@ -227,19 +200,15 @@ export default function WebinarRegistrationClient({
 
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>
-                  Send Reminder Email?
-                </AlertDialogTitle>
+                <AlertDialogTitle>Send Reminder Email?</AlertDialogTitle>
 
                 <AlertDialogDescription>
-                  This will send a program join reminder email to{" "}
-                  <span className="font-semibold text-xl text-orange-600">
+                  This will send a reminder email to{' '}
+                  <span className="font-semibold text-orange-600">
                     {regList.length}
-                  </span>{" "}
-                  registered users. The email will remind participants about the program and
-                  provide important details to help them prepare and stay informed.
+                  </span>{' '}
+                  registered users.
                 </AlertDialogDescription>
-
               </AlertDialogHeader>
 
               <AlertDialogFooter>
@@ -259,8 +228,6 @@ export default function WebinarRegistrationClient({
           </AlertDialog>
         </div>
       </div>
-
-
 
       {/* Table */}
       <DataTable data={regList} columns={columns} />

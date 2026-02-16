@@ -11,6 +11,8 @@ import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import { Checkbox } from '@/components/ui/checkbox'
 import { apiRequest } from '@/lib/apiRequest'
+import { getIndianFormattedDate } from '@/lib/formatIndianDate'
+import { ExportCsvButton } from '@/components/export-csv-button'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -28,12 +30,16 @@ import {
 type Registration = {
   _id: string
   attended: boolean
+  attendedAt?: string
   userId: {
     _id: string
     prefix: string
     name: string
     email?: string
     mobile?: string
+    qualification?: string
+    affiliation?: string
+    country?: string
     profilePicture?: string
   }
 }
@@ -43,6 +49,7 @@ type Response = {
   webinar: {
     attendedMailSent: boolean
     notAttendedMailSent: boolean
+    name?: string
   }
 }
 
@@ -57,29 +64,44 @@ export default function CommunicationClient({
     'attended' | 'not-attended' | 'responses'
   >('attended')
 
-  
-
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR<Response>(
     `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinar/${webinarId}/registrations`,
-    fetcher
+    fetcher,
   )
 
   const registrations = useMemo(() => data?.data ?? [], [data])
 
   const attendedUsers = useMemo(
     () => registrations.filter((r) => r.attended),
-    [registrations]
+    [registrations],
   )
 
   const notAttendedUsers = useMemo(
     () => registrations.filter((r) => !r.attended),
-    [registrations]
+    [registrations],
   )
 
   const attendedMailSent = data?.webinar?.attendedMailSent ?? false
   const notAttendedMailSent = data?.webinar?.notAttendedMailSent ?? false
+
+  /* ================= ACTIVE DATA ================= */
+
+  const activeData = useMemo(() => {
+    if (activeTab === 'attended') return attendedUsers
+    if (activeTab === 'not-attended') return notAttendedUsers
+    return []
+  }, [activeTab, attendedUsers, notAttendedUsers])
+
+  /* ================= DYNAMIC FILE NAME ================= */
+
+  const fileName = useMemo(() => {
+    const webinarName = data?.webinar?.name ?? 'USI Webinar'
+    if (activeTab === 'attended') return `${webinarName} Attended.csv`
+    if (activeTab === 'not-attended') return `${webinarName} Not Attended.csv`
+    return `${webinarName}.csv`
+  }, [data, activeTab])
 
   /* ================= SURVEY LINK ================= */
 
@@ -104,27 +126,25 @@ export default function CommunicationClient({
     await mutate()
   }
 
-
   /* ================= INDIVIDUAL RESEND ================= */
 
-const resendIndividual = async (
-  type: 'attended' | 'not-attended',
-  userId: string
-) => {
-  const endpoint =
-    type === 'attended'
-      ? `/api/admin/webinar/${webinarId}/email/attended/${userId}`
-      : `/api/admin/webinar/${webinarId}/email/not-attended/${userId}`
+  const resendIndividual = async (
+    type: 'attended' | 'not-attended',
+    userId: string,
+  ) => {
+    const endpoint =
+      type === 'attended'
+        ? `/api/admin/webinar/${webinarId}/email/attended/${userId}`
+        : `/api/admin/webinar/${webinarId}/email/not-attended/${userId}`
 
-  await apiRequest({
-    endpoint,
-    method: 'POST',
-    body: type === 'attended' ? { surveyLink } : undefined,
-    showToast: true,
-    successMessage: 'Email resent successfully',
-  })
-}
-
+    await apiRequest({
+      endpoint,
+      method: 'POST',
+      body: type === 'attended' ? { surveyLink } : undefined,
+      showToast: true,
+      successMessage: 'Email resent successfully',
+    })
+  }
 
   /* ================= TABLE COLUMNS ================= */
 
@@ -182,6 +202,17 @@ const resendIndividual = async (
           ),
       },
       {
+        header: 'Attended At',
+        cell: ({ row }) =>
+          row.original.attendedAt ? (
+            <span>
+              {getIndianFormattedDate(new Date(row.original.attendedAt))}
+            </span>
+          ) : (
+            '—'
+          ),
+      },
+      {
         header: 'Action',
         cell: ({ row }) => {
           const isAttended = row.original.attended
@@ -197,11 +228,11 @@ const resendIndividual = async (
             <Button
               size="sm"
               variant="outline"
-              className='bg-orange-600 hover:bg-orange-700 text-white'
+              className="bg-orange-600 hover:bg-orange-700 text-white"
               onClick={() =>
                 resendIndividual(
                   isAttended ? 'attended' : 'not-attended',
-                  row.original.userId._id
+                  row.original.userId._id,
                 )
               }
             >
@@ -219,114 +250,73 @@ const resendIndividual = async (
 
   return (
     <div className="space-y-4">
-      {/* Tabs */}
-      <div className="flex gap-6 border-b">
-        {[
-          { key: 'attended', label: 'Attended', count: attendedUsers.length },
-          {
-            key: 'not-attended',
-            label: 'Not Attended',
-            count: notAttendedUsers.length,
-          },
-          { key: 'responses', label: 'Responses', count: 0 },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setActiveTab(t.key as any)}
-            className={`pb-2 flex gap-2 ${
-              activeTab === t.key
-                ? 'border-b-2 border-orange-600 text-orange-600'
-                : 'text-gray-500'
-            }`}
-          >
-            {t.label}
-            <Badge variant="secondary">{t.count}</Badge>
-          </button>
-        ))}
+      {/* Tabs + Export */}
+      <div className="flex justify-between items-center border-b">
+        <div className="flex gap-6">
+          {[
+            { key: 'attended', label: 'Attended', count: attendedUsers.length },
+            {
+              key: 'not-attended',
+              label: 'Not Attended',
+              count: notAttendedUsers.length,
+            },
+            { key: 'responses', label: 'Responses', count: 0 },
+          ].map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key as any)}
+              className={`pb-2 flex gap-2 ${
+                activeTab === t.key
+                  ? 'border-b-2 border-orange-600 text-orange-600'
+                  : 'text-gray-500'
+              }`}
+            >
+              {t.label}
+              <Badge variant="secondary">{t.count}</Badge>
+            </button>
+          ))}
+        </div>
+
+        {activeTab !== 'responses' && (
+          <ExportCsvButton
+            fileName={fileName}
+            data={activeData}
+            columns={[
+              { header: 'Prefix', value: (r) => r.userId.prefix },
+              { header: 'Name', value: (r) => r.userId.name },
+              { header: 'Email', value: (r) => r.userId.email },
+              { header: 'Mobile', value: (r) => r.userId.mobile },
+              {
+                header: 'Qualification',
+                value: (r) => r.userId.qualification,
+              },
+              {
+                header: 'Affiliation',
+                value: (r) => r.userId.affiliation,
+              },
+              { header: 'Country', value: (r) => r.userId.country },
+              {
+                header: 'Attended',
+                value: (r) => (r.attended ? 'Yes' : 'No'),
+              },
+              {
+                header: 'Attended At',
+                value: (r) =>
+                  r.attendedAt
+                    ? getIndianFormattedDate(new Date(r.attendedAt))
+                    : '',
+              },
+            ]}
+          />
+        )}
       </div>
 
-      {/* ATTENDED */}
       {activeTab === 'attended' && (
-        <>
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Attended Users</h2>
-
-            {!attendedMailSent && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="bg-orange-600 hover:bg-orange-700 text-white">
-                    Send Feedback Form
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Send feedback form to all attended users?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will send the feedback form link to all users who
-                      attended the webinar. Please note that you can send this
-                      only once. After this, you can resend individually.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => sendBulkMail('attended')}
-                      className="bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                      Confirm
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-
-          <DataTable data={attendedUsers} columns={columns} />
-        </>
+        <DataTable data={attendedUsers} columns={columns} />
       )}
 
-      {/* NOT ATTENDED */}
       {activeTab === 'not-attended' && (
-        <>
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Not Attended Users</h2>
-
-            {!notAttendedMailSent && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="bg-orange-600 hover:bg-orange-700 text-white">
-                    Send Reminder Email
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Send reminder email to all not-attended users?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will send a reminder email to all users who did not
-                      attend the webinar. Please note that you can send this
-                      only once. After this, you can resend individually.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => sendBulkMail('not-attended')}
-                      className="bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                      Confirm
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-
-          <DataTable data={notAttendedUsers} columns={columns} />
-        </>
+        <DataTable data={notAttendedUsers} columns={columns} />
       )}
 
       {activeTab === 'responses' && (
