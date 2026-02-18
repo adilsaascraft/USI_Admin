@@ -242,6 +242,7 @@ export default function AddFeedbackForm({
                   return (
                     <div key={f.id} className="border p-4 rounded-lg space-y-3">
                       {/* ===== Label + Remove Field ===== */}
+                      <Label className='text-sm font-semibold'>Label</Label>
                       <div className="flex gap-2">
                         <FormField
                           control={control}
@@ -253,8 +254,8 @@ export default function AddFeedbackForm({
                                   {...field}
                                   placeholder={
                                     type === 'checkbox'
-                                      ? `Checkbox Label ${checkboxIndex}`
-                                      : `Input Label ${inputIndex}`
+                                      ? `type checkbox label ${checkboxIndex}`
+                                      : `type input label ${inputIndex}`
                                   }
                                 />
                               </FormControl>
@@ -274,6 +275,7 @@ export default function AddFeedbackForm({
                       {/* ===== Checkbox Options ===== */}
                       {type === 'checkbox' && (
                         <div className="pl-6 space-y-2 border-l-2 border-dashed">
+                          <Label className='text-sm font-semibold'>Option Label</Label>
                           {options.map((opt: any, oi: number) => (
                             <div key={oi} className="flex gap-2 items-center">
                               <Input
@@ -376,6 +378,7 @@ export default function AddFeedbackForm({
                       key={section.id}
                       className="border p-4 rounded-lg space-y-4 relative"
                     >
+                      <Label className='text-sm font-semibold'>Section Label</Label>
                       {/* ===== Section Header ===== */}
                       <div className="flex gap-2 items-center">
                         <FormField
@@ -384,7 +387,7 @@ export default function AddFeedbackForm({
                           render={({ field }) => (
                             <Input
                               {...field}
-                              placeholder={`Section Label ${si + 1}`}
+                              placeholder={`type section label ${si + 1}`}
                             />
                           )}
                         />
@@ -417,11 +420,12 @@ export default function AddFeedbackForm({
                             key={qi}
                             className="border p-3 rounded space-y-3"
                           >
+                            <Label className='text-sm font-semibold'>Parameter</Label>
                             {/* Question + Remove */}
                             <div className="flex gap-2 items-center">
                               <Input
                                 className="flex-1"
-                                placeholder={`Parameter ${qi + 1}`}
+                                placeholder={`type parameter ${qi + 1}`}
                                 value={watch(
                                   `feedbacks.${si}.feedbackItems.${qi}.feedbackName`,
                                 )}

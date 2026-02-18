@@ -29,9 +29,8 @@ import {
   ArrowUpDown,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
 
-/* ================= TYPES (ADMIN SIDE ONLY) ================= */
+/* ================= TYPES ================= */
 
 type ParticipantField = {
   label: string
@@ -39,10 +38,15 @@ type ParticipantField = {
   options: { label: string }[]
 }
 
-type FeedbackSection = {
+type FeedbackItem = {
   feedbackName: string
   parameterType: 'scale' | 'yes_no'
   options: string[]
+}
+
+type FeedbackSection = {
+  feedbackLabelName: string
+  feedbackItems: FeedbackItem[]
 }
 
 type OpenEndedItem = {
@@ -58,6 +62,15 @@ type FeedbackDoc = {
   closeNote?: string
   createdAt: string
   updatedAt: string
+}
+
+/* ================= TABLE ROW TYPE ================= */
+
+type FeedbackRow = {
+  category: 'Participant' | 'Feedback' | 'Open Ended'
+  section: string
+  label: string
+  parameterType: string
 }
 
 /* ================= COMPONENT ================= */
@@ -87,10 +100,47 @@ export default function FeedbackClient({
   const feedbackDoc: FeedbackDoc | null =
     feedbackData?.data ?? null
 
-  const feedbackTableData = useMemo(
-    () => feedbackDoc?.feedbacks ?? [],
-    [feedbackDoc]
-  )
+  /* ================= FLATTEN DATA FOR TABLE ================= */
+
+  const feedbackTableData = useMemo<FeedbackRow[]>(() => {
+    if (!feedbackDoc) return []
+
+    const rows: FeedbackRow[] = []
+
+    // Participant Fields
+    feedbackDoc.participantFields.forEach((f) => {
+      rows.push({
+        category: 'Participant',
+        section: '-',
+        label: f.label,
+        parameterType: f.type,
+      })
+    })
+
+    // Feedback Sections & Questions
+    feedbackDoc.feedbacks.forEach((section) => {
+      section.feedbackItems.forEach((item) => {
+        rows.push({
+          category: 'Feedback',
+          section: section.feedbackLabelName,
+          label: item.feedbackName,
+          parameterType: item.parameterType,
+        })
+      })
+    })
+
+    // Open Ended Questions
+    feedbackDoc.openEnded.forEach((q) => {
+      rows.push({
+        category: 'Open Ended',
+        section: '-',
+        label: q.label,
+        parameterType: 'text',
+      })
+    })
+
+    return rows
+  }, [feedbackDoc])
 
   /* ================= FETCH FEEDBACK BY USER ================= */
 
@@ -187,33 +237,31 @@ export default function FeedbackClient({
 
   /* ================= TABLE COLUMNS ================= */
 
-  const feedbackColumns: ColumnDef<FeedbackSection>[] = [
+  const feedbackColumns: ColumnDef<FeedbackRow>[] = [
     {
-      accessorKey: 'feedbackName',
-      header: sortableHeader('Section'),
+      accessorKey: 'category',
+      header: sortableHeader('Category'),
+      cell: ({ row }) => (
+        <Badge variant="secondary">
+          {row.original.category}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'section',
+      header: 'Section',
+    },
+    {
+      accessorKey: 'label',
+      header: 'Label / Parameter / Question',
     },
     {
       accessorKey: 'parameterType',
       header: 'Type',
       cell: ({ row }) => (
         <Badge variant="outline">
-          {row.original.parameterType === 'scale'
-            ? 'Scale (1–5)'
-            : 'Yes / No'}
+          {row.original.parameterType}
         </Badge>
-      ),
-    },
-    {
-      accessorKey: 'options',
-      header: 'Parameters',
-      cell: ({ row }) => (
-        <ul className="list-disc list-inside text-sm">
-          {Array.isArray(row.original.options) &&
-  row.original.options.map((o, i) => (
-    <li key={i}>{o}</li>
-  ))}
-
-        </ul>
       ),
     },
   ]
@@ -261,22 +309,20 @@ export default function FeedbackClient({
       <div className="flex gap-6 border-b">
         <button
           onClick={() => setActiveTab('feedback')}
-          className={`pb-2 ${
-            activeTab === 'feedback'
+          className={`pb-2 ${activeTab === 'feedback'
               ? 'border-b-2 border-orange-600 text-orange-600'
               : 'text-gray-500'
-          }`}
+            }`}
         >
           Feedback
         </button>
 
         <button
           onClick={() => setActiveTab('by-user')}
-          className={`pb-2 flex items-center gap-2 ${
-            activeTab === 'by-user'
+          className={`pb-2 flex items-center gap-2 ${activeTab === 'by-user'
               ? 'border-b-2 border-orange-600 text-orange-600'
               : 'text-gray-500'
-          }`}
+            }`}
         >
           Feedback By User
           <Badge variant="secondary">{feedbackCount}</Badge>
@@ -349,6 +395,16 @@ export default function FeedbackClient({
               No feedback configured yet.
             </p>
           )}
+
+          {/* ===== Close Note ===== */}
+          {feedbackDoc?.closeNote && (
+            <div className="border rounded-lg p-4 bg-muted">
+              <h4 className="font-semibold mb-2">Close Note</h4>
+              <p className="whitespace-pre-line text-sm">
+                {feedbackDoc.closeNote}
+              </p>
+            </div>
+          )}
         </>
       )}
 
@@ -385,12 +441,13 @@ export default function FeedbackClient({
 
           <AddFeedbackForm
             webinarId={webinarId}
-            // defaultValues={feedbackDoc ?? undefined}
+            defaultValues={feedbackDoc ?? undefined}
             onSave={async () => {
               await mutate()
               setSheetOpen(false)
             }}
           />
+
         </SheetContent>
       </Sheet>
     </div>

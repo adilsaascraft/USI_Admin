@@ -7,19 +7,16 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { toast } from 'sonner'
 import {
-  Send,
-  CheckCircle2,
-  Clock,
-} from 'lucide-react'
+  RadioGroup,
+  RadioGroupItem,
+} from '@/components/ui/radio-group'
+import { toast } from 'sonner'
+import { Send, CheckCircle2 } from 'lucide-react'
 import { Input } from '@/lib/imports'
 
 /* ================= TYPES ================= */
@@ -30,14 +27,29 @@ type ParticipantField = {
   options: { label: string }[]
 }
 
-type FeedbackSection = {
+type FeedbackItem = {
   feedbackName: string
   parameterType: 'scale' | 'yes_no'
   options: string[]
 }
 
+type FeedbackSection = {
+  feedbackLabelName: string
+  feedbackItems: FeedbackItem[]
+}
+
 type OpenEndedItem = {
   label: string
+}
+
+type WebinarInfo = {
+  name: string
+  webinarType: string
+  startDate: string
+  endDate: string
+  startTime: string
+  endTime: string
+  timeZone: string
 }
 
 type FeedbackDoc = {
@@ -45,6 +57,7 @@ type FeedbackDoc = {
   feedbacks: FeedbackSection[]
   openEnded: OpenEndedItem[]
   closeNote?: string
+  webinarId: WebinarInfo
 }
 
 /* ================= CONSTANTS ================= */
@@ -64,18 +77,13 @@ export default function SubmitFeedbackByUserPage() {
   const webinarId = params?.webinarId as string | undefined
 
   const [doc, setDoc] = useState<FeedbackDoc | null>(null)
-
-  const [participantAnswers, setParticipantAnswers] = useState<
-    Record<string, any>
-  >({})
-  const [feedbackAnswers, setFeedbackAnswers] = useState<
-    Record<string, Record<string, string>>
-  >({})
-  const [openEndedAnswers, setOpenEndedAnswers] = useState<
-    Record<string, string>
-  >({})
+  const [participantAnswers, setParticipantAnswers] =
+    useState<Record<string, any>>({})
+  const [feedbackAnswers, setFeedbackAnswers] =
+    useState<Record<string, Record<string, string>>>({})
+  const [openEndedAnswers, setOpenEndedAnswers] =
+    useState<Record<string, string>>({})
   const [otherFeedback, setOtherFeedback] = useState('')
-
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [hasSubmitted, setHasSubmitted] = useState(false)
@@ -103,68 +111,77 @@ export default function SubmitFeedbackByUserPage() {
     load()
   }, [webinarId])
 
-  /* ================= COMPUTED ================= */
-
-  const totalRequired =
-    (doc?.feedbacks.length || 0) +
-    (doc?.openEnded.length || 0)
-
-  const answeredCount =
-    Object.values(feedbackAnswers).reduce(
-      (sum, section) => sum + Object.keys(section).length,
-      0
-    ) + Object.keys(openEndedAnswers).length
-
-  const completion =
-    totalRequired > 0
-      ? Math.round((answeredCount / totalRequired) * 100)
-      : 0
-
   /* ================= SUBMIT ================= */
 
   const handleSubmit = async () => {
-    if (answeredCount < totalRequired) {
-      toast.error('Please complete all questions')
-      return
-    }
-
     try {
       setSubmitting(true)
 
-      await fetch(
+      /* ================= TRANSFORM PARTICIPANT ================= */
+      const formattedParticipantAnswers = Object.entries(
+        participantAnswers
+      ).map(([label, answer]) => ({
+        label,
+        answer,
+      }))
+
+      /* ================= TRANSFORM FEEDBACK ================= */
+      const formattedFeedbacks = Object.entries(
+        feedbackAnswers
+      ).map(([feedbackLabelName, questions]) => ({
+        feedbackLabelName,
+        answers: Object.entries(questions).map(
+          ([feedbackName, answer]) => ({
+            feedbackName,
+            answer,
+          })
+        ),
+      }))
+
+      /* ================= TRANSFORM OPEN ENDED ================= */
+      const formattedOpenEnded = Object.entries(
+        openEndedAnswers
+      ).map(([label, answer]) => ({
+        label,
+        answer,
+      }))
+
+      const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/public-feedback`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            participantAnswers,
-            sendFeedbacks: Object.entries(feedbackAnswers).flatMap(
-              ([section, values]) =>
-                Object.entries(values).map(([q, ans]) => ({
-                  feedbackName: section,
-                  selectedOption: ans, 
-                }))
-            ),
+            participantAnswers: formattedParticipantAnswers,
+            sendFeedbacks: formattedFeedbacks,
+            openEndedAnswers: formattedOpenEnded,
             sendOtherFeedback: otherFeedback,
-            openEndedAnswers,
           }),
         }
       )
 
+      const json = await res.json()
+
+      if (!res.ok) {
+        throw new Error(json?.message || 'Submission failed')
+      }
+
+      toast.success(json.message || 'Feedback submitted successfully')
       setHasSubmitted(true)
-    } catch {
-      toast.error('Failed to submit feedback')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to submit feedback')
     } finally {
       setSubmitting(false)
     }
   }
+
 
   /* ================= LOADING ================= */
 
   if (loading) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto p-6">
-        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-32 w-full" />
         <Skeleton className="h-40 w-full" />
       </div>
     )
@@ -178,7 +195,9 @@ export default function SubmitFeedbackByUserPage() {
     )
   }
 
-  /* ================= SUCCESS SCREEN ================= */
+  const w = doc.webinarId
+
+  /* ================= SUCCESS ================= */
 
   if (hasSubmitted) {
     return (
@@ -189,14 +208,11 @@ export default function SubmitFeedbackByUserPage() {
             <h2 className="text-2xl font-semibold text-green-800">
               Feedback Submitted Successfully
             </h2>
-            <p className="text-green-700">
-              Thank you for taking the time to share your feedback.
-            </p>
 
             {doc.closeNote && (
-              <div className="mt-4 text-sm text-muted-foreground whitespace-pre-line">
+              <p className="text-sm whitespace-pre-line">
                 {doc.closeNote}
-              </div>
+              </p>
             )}
           </CardContent>
         </Card>
@@ -209,48 +225,60 @@ export default function SubmitFeedbackByUserPage() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto p-6">
 
-      {/* HEADER */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-semibold text-orange-600">
-          Webinar Feedback Form
-        </h1>
-        <p className="text-muted-foreground">
-          Your feedback helps us improve
-        </p>
-      </div>
-      {/* PARTICIPANT FIELDS */}
+      {/* ===== WEBINAR INFO CARD ===== */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="p-6 space-y-3 text-center">
+          <h1 className="text-2xl font-bold text-orange-700">
+            {w.name}
+          </h1>
+
+          <p className="text-sm text-muted-foreground">
+            {w.startDate} – {w.startTime} || {w.endDate}   – {w.endTime} (IST)
+          </p>
+
+          <p className="font-medium">
+            <b className='text-muted-foreground'>{w.webinarType} – Participant Feedback Form</b>
+          </p>
+
+          <p className="text-sm text-muted-foreground">
+            Urological Society of India – Virtual Educational Activity
+          </p>
+
+          <p className="text-sm leading-relaxed">
+            Thank you for participating in the <b>{w.webinarType}</b>.
+            Your feedback is valuable in helping us improve future USI
+            educational initiatives.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* PARTICIPANT DETAILS */}
       {doc.participantFields.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Participant Details</CardTitle>
           </CardHeader>
-
           <CardContent className="space-y-4">
             {doc.participantFields.map((f) =>
               f.type === 'input' ? (
-                /* INPUT FIELD */
                 <Input
                   key={f.label}
                   placeholder={f.label}
-                  disabled={hasSubmitted}
                   onChange={(e) =>
-                    setParticipantAnswers((prev) => ({
-                      ...prev,
+                    setParticipantAnswers((p) => ({
+                      ...p,
                       [f.label]: e.target.value,
                     }))
                   }
                 />
               ) : (
-                /* CHECKBOX (SINGLE SELECT – ROW) */
                 <div key={f.label} className="space-y-2">
-                  <p className="text-sm font-semibold leading-tight tracking-tight">{f.label}</p>
-
+                  <p className="text-sm font-semibold">{f.label}</p>
                   <RadioGroup
                     className="flex flex-wrap gap-6"
-                    disabled={hasSubmitted}
                     onValueChange={(val) =>
-                      setParticipantAnswers((prev) => ({
-                        ...prev,
+                      setParticipantAnswers((p) => ({
+                        ...p,
                         [f.label]: val,
                       }))
                     }
@@ -277,33 +305,31 @@ export default function SubmitFeedbackByUserPage() {
         </Card>
       )}
 
-
       {/* FEEDBACK SECTIONS */}
       {doc.feedbacks.map((section) => (
-        <Card key={section.feedbackName}>
+        <Card key={section.feedbackLabelName}>
           <CardHeader>
-            <CardTitle className="font-bold leading-tight tracking-tight">{section.feedbackName}</CardTitle>
+            <CardTitle>{section.feedbackLabelName}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {section.options.map((q) => (
-              <div key={q} className="space-y-2">
-                <p className="text-sm font-semibold leading-tight tracking-tight">
-                  {q}
+            {section.feedbackItems.map((item) => (
+              <div key={item.feedbackName} className="space-y-2">
+                <p className="text-sm font-semibold">
+                  {item.feedbackName}
                 </p>
-
                 <RadioGroup
                   className="flex flex-wrap gap-6"
                   onValueChange={(val) =>
                     setFeedbackAnswers((prev) => ({
                       ...prev,
-                      [section.feedbackName]: {
-                        ...(prev[section.feedbackName] || {}),
-                        [q]: val,
+                      [section.feedbackLabelName]: {
+                        ...(prev[section.feedbackLabelName] || {}),
+                        [item.feedbackName]: val,
                       },
                     }))
                   }
                 >
-                  {(section.parameterType === 'scale'
+                  {(item.parameterType === 'scale'
                     ? SCALE_OPTIONS
                     : [
                       { label: 'Yes', value: 'Yes' },
@@ -316,9 +342,9 @@ export default function SubmitFeedbackByUserPage() {
                     >
                       <RadioGroupItem
                         value={opt.value}
-                        id={`${q}-${opt.value}`}
+                        id={`${item.feedbackName}-${opt.value}`}
                       />
-                      <label htmlFor={`${q}-${opt.value}`}>
+                      <label htmlFor={`${item.feedbackName}-${opt.value}`}>
                         {opt.label}
                       </label>
                     </div>
@@ -340,7 +366,6 @@ export default function SubmitFeedbackByUserPage() {
             <Textarea
               rows={4}
               placeholder="Type your response..."
-              className="resize-none"
               onChange={(e) =>
                 setOpenEndedAnswers((p) => ({
                   ...p,
@@ -348,7 +373,6 @@ export default function SubmitFeedbackByUserPage() {
                 }))
               }
             />
-
           </CardContent>
         </Card>
       ))}
@@ -361,6 +385,7 @@ export default function SubmitFeedbackByUserPage() {
         <CardContent>
           <Textarea
             rows={4}
+            placeholder='Type your response...'
             value={otherFeedback}
             onChange={(e) => setOtherFeedback(e.target.value)}
           />
@@ -373,13 +398,16 @@ export default function SubmitFeedbackByUserPage() {
         size="lg"
         className="w-full gap-2"
       >
-        {submitting ? 'Submitting...' : (
+        {submitting ? (
+          'Submitting...'
+        ) : (
           <>
             <Send className="h-4 w-4" />
             Submit Feedback
           </>
         )}
       </Button>
+
     </div>
   )
 }
