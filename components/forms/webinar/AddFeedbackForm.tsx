@@ -23,6 +23,7 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
+  Label,
 } from '@/lib/imports'
 import { apiRequest } from '@/lib/apiRequest'
 
@@ -217,15 +218,30 @@ export default function AddFeedbackForm({
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-6"
             >
-
               {/* ================= SECTION A ================= */}
               <div className="border p-4 rounded-xl space-y-4">
                 <h3 className="font-semibold">Participant Details</h3>
 
                 {participantArray.fields.map((f, i) => {
                   const type = watch(`participantFields.${i}.type`)
+                  const options = watch(`participantFields.${i}.options`) || []
+
+                  // 🔹 Dynamic label placeholders
+                  const inputIndex = participantArray.fields.filter(
+                    (_, idx) =>
+                      idx <= i &&
+                      watch(`participantFields.${idx}.type`) === 'input',
+                  ).length
+
+                  const checkboxIndex = participantArray.fields.filter(
+                    (_, idx) =>
+                      idx <= i &&
+                      watch(`participantFields.${idx}.type`) === 'checkbox',
+                  ).length
+
                   return (
                     <div key={f.id} className="border p-4 rounded-lg space-y-3">
+                      {/* ===== Label + Remove Field ===== */}
                       <div className="flex gap-2">
                         <FormField
                           control={control}
@@ -233,11 +249,19 @@ export default function AddFeedbackForm({
                           render={({ field }) => (
                             <FormItem className="w-full">
                               <FormControl>
-                                <Input {...field} placeholder="Field Label" />
+                                <Input
+                                  {...field}
+                                  placeholder={
+                                    type === 'checkbox'
+                                      ? `Checkbox Label ${checkboxIndex}`
+                                      : `Input Label ${inputIndex}`
+                                  }
+                                />
                               </FormControl>
                             </FormItem>
                           )}
                         />
+
                         <Button
                           type="button"
                           variant="destructive"
@@ -247,31 +271,61 @@ export default function AddFeedbackForm({
                         </Button>
                       </div>
 
+                      {/* ===== Checkbox Options ===== */}
                       {type === 'checkbox' && (
                         <div className="pl-6 space-y-2 border-l-2 border-dashed">
-                          {(watch(`participantFields.${i}.options`) || []).map(
-                            (_, oi: number) => (
+                          {options.map((opt: any, oi: number) => (
+                            <div key={oi} className="flex gap-2 items-center">
                               <Input
-                                key={oi}
                                 placeholder={`Option ${oi + 1}`}
+                                value={opt.label}
                                 onChange={(e) => {
-                                  const arr =
-                                    watch(
-                                      `participantFields.${i}.options`
-                                    ) || []
-                                  arr[oi].label = e.target.value
+                                  const updatedOptions = [...options]
+                                  updatedOptions[oi] = {
+                                    ...updatedOptions[oi],
+                                    label: e.target.value,
+                                  }
+
                                   setValue(
                                     `participantFields.${i}.options`,
-                                    arr
+                                    updatedOptions,
+                                    { shouldDirty: true },
                                   )
                                 }}
                               />
-                            )
-                          )}
+
+                              {/* ❌ Remove Option */}
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  const updatedOptions = options.filter(
+                                    (_: any, idx: number) => idx !== oi,
+                                  )
+                                  setValue(
+                                    `participantFields.${i}.options`,
+                                    updatedOptions,
+                                    { shouldDirty: true },
+                                  )
+                                }}
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ))}
+
                           <Button
+                            type="button"
                             size="sm"
                             variant="outline"
-                            onClick={() => addCheckboxOption(i)}
+                            onClick={() =>
+                              setValue(
+                                `participantFields.${i}.options`,
+                                [...options, { label: '' }],
+                                { shouldDirty: true },
+                              )
+                            }
                           >
                             + Add Option
                           </Button>
@@ -281,8 +335,10 @@ export default function AddFeedbackForm({
                   )
                 })}
 
+                {/* ===== Add Fields ===== */}
                 <div className="flex gap-2">
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={() =>
                       participantArray.append({ label: '', type: 'input' })
@@ -290,7 +346,9 @@ export default function AddFeedbackForm({
                   >
                     + Input
                   </Button>
+
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={() =>
                       participantArray.append({
@@ -309,86 +367,137 @@ export default function AddFeedbackForm({
               <div className="border p-4 rounded-xl space-y-4">
                 <h3 className="font-semibold">Section Label & Parameters</h3>
 
-                {feedbackArray.fields.map((section, si) => (
-                  <div key={section.id} className="border p-4 rounded-lg space-y-4">
-                    <FormField
-                      control={control}
-                      name={`feedbacks.${si}.feedbackLabelName`}
-                      render={({ field }) => (
-                        <Input {...field} placeholder="Section Label" />
-                      )}
-                    />
+                {feedbackArray.fields.map((section, si) => {
+                  const feedbackItems =
+                    watch(`feedbacks.${si}.feedbackItems`) || []
 
-                    {(watch(`feedbacks.${si}.feedbackItems`) || []).map(
-                      (_: any, qi: number) => {
+                  return (
+                    <div
+                      key={section.id}
+                      className="border p-4 rounded-lg space-y-4 relative"
+                    >
+                      {/* ===== Section Header ===== */}
+                      <div className="flex gap-2 items-center">
+                        <FormField
+                          control={control}
+                          name={`feedbacks.${si}.feedbackLabelName`}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              placeholder={`Section Label ${si + 1}`}
+                            />
+                          )}
+                        />
+
+                        {/* ❌ Remove Section */}
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          onClick={() => feedbackArray.remove(si)}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+
+                      {/* ===== Questions ===== */}
+                      {feedbackItems.map((_: any, qi: number) => {
                         const type =
                           watch(
-                            `feedbacks.${si}.feedbackItems.${qi}.parameterType`
+                            `feedbacks.${si}.feedbackItems.${qi}.parameterType`,
                           ) || 'scale'
 
                         const options =
                           watch(
-                            `feedbacks.${si}.feedbackItems.${qi}.options`
+                            `feedbacks.${si}.feedbackItems.${qi}.options`,
                           ) || []
 
                         return (
-                          <div key={qi} className="border p-3 rounded space-y-3">
-                            <Input
-                              placeholder="Question"
-                              onChange={(e) =>
-                                setValue(
+                          <div
+                            key={qi}
+                            className="border p-3 rounded space-y-3"
+                          >
+                            {/* Question + Remove */}
+                            <div className="flex gap-2 items-center">
+                              <Input
+                                className="flex-1"
+                                placeholder={`Parameter ${qi + 1}`}
+                                value={watch(
                                   `feedbacks.${si}.feedbackItems.${qi}.feedbackName`,
-                                  e.target.value
-                                )
-                              }
-                            />
+                                )}
+                                onChange={(e) =>
+                                  setValue(
+                                    `feedbacks.${si}.feedbackItems.${qi}.feedbackName`,
+                                    e.target.value,
+                                    { shouldDirty: true },
+                                  )
+                                }
+                              />
 
+                              {/* ❌ Remove Question */}
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  const updatedItems = feedbackItems.filter(
+                                    (_: any, idx: number) => idx !== qi,
+                                  )
+
+                                  setValue(
+                                    `feedbacks.${si}.feedbackItems`,
+                                    updatedItems,
+                                    { shouldDirty: true },
+                                  )
+                                }}
+                              >
+                                ✕
+                              </Button>
+                            </div>
+
+                            {/* Parameter Type */}
+                            <Label className='text-sm font-semibold'>Parameter Scale</Label>
                             <Select
                               value={type}
                               onValueChange={(val) =>
                                 onChangeParameterType(
                                   si,
                                   qi,
-                                  val as 'scale' | 'yes_no'
+                                  val as 'scale' | 'yes_no',
                                 )
                               }
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="w-full p-3">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="scale">
-                                  Scale (1–5)
+                                  Rating Based (1 to 5)
                                 </SelectItem>
                                 <SelectItem value="yes_no">
-                                  Yes / No
+                                  Selection Based (Yes / No)
                                 </SelectItem>
                               </SelectContent>
                             </Select>
-
-                            {options.map((opt: string, oi: number) => (
-                              <Input
-                                key={oi}
-                                value={opt}
-                                disabled
-                                className="bg-muted"
-                              />
-                            ))}
                           </div>
                         )
-                      }
-                    )}
+                      })}
 
-                    <Button
-                      variant="outline"
-                      onClick={() => addFeedbackItem(si)}
-                    >
-                      + Add Question
-                    </Button>
-                  </div>
-                ))}
+                      {/* ===== Add Parameter ===== */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => addFeedbackItem(si)}
+                      >
+                        + Add Parameter
+                      </Button>
+                    </div>
+                  )
+                })}
 
+                {/* ===== Add Feedback Section ===== */}
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() =>
                     feedbackArray.append({
@@ -420,6 +529,7 @@ export default function AddFeedbackForm({
                       )}
                     />
                     <Button
+                      type="button"
                       variant="destructive"
                       onClick={() => openEndedArray.remove(i)}
                     >
@@ -428,6 +538,7 @@ export default function AddFeedbackForm({
                   </div>
                 ))}
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() => openEndedArray.append({ label: '' })}
                 >
@@ -441,9 +552,8 @@ export default function AddFeedbackForm({
                 <FormField
                   control={control}
                   name="closeNote"
-                  render={({ field }) => (
-                    <Textarea rows={4} {...field} />
-                  )}
+                  render={({ field }) => <Textarea rows={4} {...field}
+                  placeholder='type closing message' />}
                 />
               </div>
             </form>
@@ -453,7 +563,7 @@ export default function AddFeedbackForm({
 
       <div className="sticky bottom-0 border-t px-6 py-4 flex justify-between">
         <SheetClose asChild>
-          <Button variant="outline" disabled={loading}>
+          <Button type="button" variant="outline" disabled={loading}>
             Close
           </Button>
         </SheetClose>
