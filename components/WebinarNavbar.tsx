@@ -16,10 +16,16 @@ import {
   FaCog,
   FaExternalLinkAlt,
   FaUsers,
+  FaRobot,
 } from 'react-icons/fa'
 
 /* ✅ MENU CONFIG */
 const menuItems = [
+{
+  name: 'AI Summary',
+  slug: 'summary',
+  icon: <FaRobot size={20} />,
+},
   {
     name: 'Registrations',
     slug: 'registrations',

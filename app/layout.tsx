@@ -28,7 +28,7 @@ export default function RootLayout({
       <body suppressHydrationWarning className="flex flex-col">
         
           {children}
-          <Toaster />
+          <Toaster richColors position="bottom-right" closeButton />
         
       </body>
     </html>

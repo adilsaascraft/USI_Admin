@@ -200,3 +200,54 @@
     font-family: var(--font-primary); /* Set primary font */
   }
 }
+
+
+/* Quill Indentation Support */
+.ql-indent-1 {
+  padding-left: 2rem;
+}
+.ql-indent-2 {
+  padding-left: 3rem;
+}
+.ql-indent-3 {
+  padding-left: 4rem;
+}
+
+
+/* ================= RICH TEXT (QUILL / HTML) FIX ================= */
+
+/* Restore ordered & unordered list styles (Tailwind resets them) */
+.prose ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 0.75rem 0 !important;
+}
+
+.prose ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 0.75rem 0 !important;
+}
+
+.prose li {
+  margin: 0.25rem 0 !important;
+}
+
+/* Fix Quill indentation classes */
+.ql-indent-1 {
+  padding-left: 2rem !important;
+}
+
+.ql-indent-2 {
+  padding-left: 3rem !important;
+}
+
+.ql-indent-3 {
+  padding-left: 4rem !important;
+}
+
+/* Ensure paragraphs from RTE have spacing */
+.prose p {
+  margin: 0.5rem 0 !important;
+}
+

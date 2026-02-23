@@ -5,7 +5,6 @@ import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SettingSchema, SettingValues } from "@/validations/settingSchema";
 import { toast } from "sonner";
-import { getIndianFormattedDate } from "@/lib/formatIndianDate";
 import { settingsList } from "@/lib/imports";
 
 import {
@@ -40,6 +39,7 @@ export default function SettingClient({ webinarId }: SettingClientProps) {
       quiz: false,
       meeting: false,
       question: false,
+      summary: false,
     },
   });
 
@@ -70,6 +70,7 @@ const fetchSettings = async () => {
         quiz: s.quiz ?? false,
         meeting: s.meeting ?? false,
         question: s.question ?? false,
+        summary: s.summary ?? false,
       })
     } else {
       // ✅ First-time load (no settings)
@@ -83,6 +84,7 @@ const fetchSettings = async () => {
         quiz: false,
         meeting: false,
         question: false,
+        summary: false,
       })
     }
   } catch (err) {

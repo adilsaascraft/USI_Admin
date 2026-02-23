@@ -253,7 +253,7 @@ export default function AddWebinarForm({
     <div className="flex flex-col min-h-full">
       <div className="p-3 border-b">
         <h2 className="text-xl font-semibold">
-          {webinarToEdit ? 'Edit Webinar' : 'Add Webinar'}
+          {webinarToEdit ? 'Edit Program' : 'Add Program'}
         </h2>
       </div>
 
@@ -270,12 +270,12 @@ export default function AddWebinarForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Webinar Name *</FormLabel>
+                  <FormLabel>Program Name *</FormLabel>
                   <FormControl>
                     <InputWithIcon
                       {...field}
                       icon={<FaCalendarAlt />}
-                      placeholder="type webinar name..."
+                      placeholder="type program name..."
                     />
                   </FormControl>
                   <FormMessage />
@@ -283,13 +283,13 @@ export default function AddWebinarForm({
               )}
             />
 
-            {/* Webinar IMAGE */}
+            {/* Program IMAGE */}
             <FormField
               control={form.control}
               name="image"
               render={() => (
                 <FormItem>
-                  <FormLabel>Webinar Image *</FormLabel>
+                  <FormLabel>Program Thumbnail *</FormLabel>
                   <Input
                     ref={fileInputRef}
                     type="file"
@@ -322,7 +322,7 @@ export default function AddWebinarForm({
               name="webinarType"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Webinar Type</FormLabel>
+                  <FormLabel>Program Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -473,7 +473,7 @@ export default function AddWebinarForm({
               name="streamLink"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel>Webinar Streaming Link *</FormLabel>
+                  <FormLabel>Program Streaming Link *</FormLabel>
                   <FormControl>
                     <InputWithIcon
                       {...field}

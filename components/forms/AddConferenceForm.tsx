@@ -226,9 +226,9 @@ export default function AddConferenceForm({
           : 'Conference created successfully!',
         { description: getIndianFormattedDate() }
       )
-
-      form.reset()
+      
       clearDraft(DRAFT_KEY)
+      form.reset()
       onSuccess(result.data)
       mutate(`${process.env.NEXT_PUBLIC_API_URL}/api/conferences`)
     } catch (err: any) {

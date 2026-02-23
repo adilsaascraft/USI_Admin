@@ -8,6 +8,7 @@ export const SettingSchema = z
     quiz: z.boolean().default(false),
     meeting: z.boolean().default(false),
     question: z.boolean().default(false),
+    summary: z.boolean().default(false),
   })
 
 export type SettingValues = z.infer<typeof SettingSchema>;

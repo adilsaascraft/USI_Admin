@@ -20,6 +20,7 @@ import {
   SelectItem,
 } from '@/components/ui/select'
 import { webinarType } from '@/lib/constants'
+import Pagination from '@/components/PaginationNew'
 
 const tabs = ['Live', 'Upcoming', 'Past', 'All'] as const
 
@@ -38,16 +39,49 @@ export default function WebinarPage() {
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('All')
   const [selectedType, setSelectedType] = useState('All')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [page, setPage] = useState(1)
 
   const itemsPerPage = 40
   const webinars = data?.success ? data.data : []
 
   // ---------- Filters ----------
-  const filteredByTab =
-    activeTab === 'All'
-      ? webinars
-      : webinars.filter((e) => e.dynamicStatus === activeTab)
+  const parseDate = (dateStr?: string) => {
+  if (!dateStr) return new Date(0)
+
+  const [day, month, year] = dateStr.split('/').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+const filteredByTab =
+  activeTab === 'All'
+    ? [...webinars].sort((a, b) => {
+        const statusPriority: Record<string, number> = {
+          Upcoming: 1,
+          Live: 2,
+          Past: 3,
+        }
+
+        const statusDiff =
+          (statusPriority[a.dynamicStatus] ?? 99) -
+          (statusPriority[b.dynamicStatus] ?? 99)
+
+        // First sort by status
+        if (statusDiff !== 0) return statusDiff
+
+        // Then sort by nearest date
+        const dateA = parseDate(a.startDate)
+        const dateB = parseDate(b.endDate)
+
+        return dateA.getTime() - dateB.getTime()
+      })
+    : webinars
+        .filter((e) => e.dynamicStatus === activeTab)
+        .sort((a, b) => {
+          const dateA = parseDate(a.startDate)
+          const dateB = parseDate(b.endDate)
+
+          return dateA.getTime() - dateB.getTime()
+        })
 
   const filteredByType =
     selectedType === 'All'
@@ -61,8 +95,8 @@ export default function WebinarPage() {
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
 
   const paginatedEvents = filteredEvents.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
   )
 
   // ---------- Handlers ----------
@@ -96,7 +130,7 @@ export default function WebinarPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-red-500">Failed to load webinars</p>
+        <p className="text-red-500">Failed to load programs</p>
       </div>
     )
   }
@@ -105,7 +139,7 @@ export default function WebinarPage() {
     <div className="p-4 bg-background text-foreground">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">USI Webinars</h1>
+        <h1 className="text-2xl font-bold">USI Programs</h1>
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -113,7 +147,7 @@ export default function WebinarPage() {
               className="bg-orange-600 hover:bg-orange-700 text-white"
               onClick={handleAddEvent}
             >
-              + Add Webinar
+              + Add Program
             </Button>
           </SheetTrigger>
 
@@ -133,7 +167,7 @@ export default function WebinarPage() {
             key={tab}
             onClick={() => {
               setActiveTab(tab)
-              setCurrentPage(1)
+              setPage(1)
             }}
             className={`pb-2 border-b-2 transition-colors ${
               tab === activeTab
@@ -156,7 +190,7 @@ export default function WebinarPage() {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
-              setCurrentPage(1)
+              setPage(1)
             }}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
           />
@@ -166,14 +200,14 @@ export default function WebinarPage() {
           value={selectedType}
           onValueChange={(value) => {
             setSelectedType(value)
-            setCurrentPage(1)
+            setPage(1)
           }}
         >
           <SelectTrigger className="w-[260px]">
             <SelectValue placeholder="Sort by Webinar Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All">All Webinar Types</SelectItem>
+            <SelectItem value="All">All Programs</SelectItem>
             {webinarType.map((type) => (
               <SelectItem key={type.value} value={type.value}>
                 {type.label}
@@ -198,29 +232,17 @@ export default function WebinarPage() {
         <div className="flex items-center justify-center min-h-[30vh] border rounded">
           <div className="text-center">
             <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
-            <p className="text-gray-600">No webinars match your criteria.</p>
+            <p className="text-gray-600">No program match your criteria.</p>
           </div>
         </div>
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6 gap-2">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded border ${
-                currentPage === i + 1
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white border-gray-300 hover:bg-gray-100'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onChange={setPage}
+      />
     </div>
   )
 }

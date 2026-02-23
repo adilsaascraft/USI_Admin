@@ -175,7 +175,7 @@ export default function CoursePageClient({
         <div className="flex items-center justify-center min-h-[30vh] border rounded">
           <div className="text-center">
             <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
-            <p className="text-gray-600">No webinars match your criteria.</p>
+            <p className="text-gray-600"></p>
           </div>
         </div>
       )}

@@ -68,6 +68,11 @@ export const settingsList = [
     title: "Allow Questions",
     desc: "Allow users to submit questions through the platform.",
   },
+  {
+    key: "summary",
+    title: "Al Summary",
+    desc: "Allow users to show AI summary of the program.",
+  },
 ] as const;
 
 
