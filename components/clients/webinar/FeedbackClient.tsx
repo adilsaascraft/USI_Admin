@@ -347,7 +347,7 @@ export default function FeedbackClient({
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button className="bg-red-600 text-white">
+                      <Button className="bg-orange-600 hover:bg-orange-700 text-white">
                         Delete
                       </Button>
                     </AlertDialogTrigger>
@@ -365,7 +365,7 @@ export default function FeedbackClient({
                           Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction
-                          className="bg-red-600 text-white"
+                          className="bg-red-600 hover:bg-red-700 text-white"
                           onClick={handleDelete}
                         >
                           Confirm
@@ -377,7 +377,7 @@ export default function FeedbackClient({
               ) : (
                 <Button
                   onClick={() => setSheetOpen(true)}
-                  className="bg-orange-600 text-white"
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
                 >
                   + Add Feedback
                 </Button>

@@ -64,6 +64,12 @@ export default function CommunicationClient({
     'attended' | 'not-attended' | 'responses'
   >('attended')
 
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [bulkType, setBulkType] = useState<'attended' | 'not-attended'>(
+    'attended',
+  )
+  const [isSending, setIsSending] = useState(false)
+
   /* ================= FETCH ================= */
 
   const { data, isLoading, mutate } = useSWR<Response>(
@@ -94,7 +100,7 @@ export default function CommunicationClient({
     return []
   }, [activeTab, attendedUsers, notAttendedUsers])
 
-  /* ================= DYNAMIC FILE NAME ================= */
+  /* ================= FILE NAME ================= */
 
   const fileName = useMemo(() => {
     const webinarName = data?.webinar?.name ?? 'USI Webinar'
@@ -110,20 +116,29 @@ export default function CommunicationClient({
   /* ================= BULK EMAIL ================= */
 
   const sendBulkMail = async (type: 'attended' | 'not-attended') => {
-    const endpoint =
-      type === 'attended'
-        ? `/api/admin/webinar/${webinarId}/email/attended`
-        : `/api/admin/webinar/${webinarId}/email/not-attended`
+    try {
+      setIsSending(true)
 
-    await apiRequest({
-      endpoint,
-      method: 'POST',
-      body: type === 'attended' ? { surveyLink } : undefined,
-      showToast: true,
-      successMessage: 'Email sent successfully',
-    })
+      const endpoint =
+        type === 'attended'
+          ? `/api/admin/webinar/${webinarId}/email/attended`
+          : `/api/admin/webinar/${webinarId}/email/not-attended`
 
-    await mutate()
+      const res = await apiRequest({
+        endpoint,
+        method: 'POST',
+        body: type === 'attended' ? { surveyLink } : undefined,
+        showToast: true,
+        successMessage: 'Email sent successfully',
+      })
+
+      if (res?.success) {
+        await mutate()
+        setDialogOpen(false)
+      }
+    } finally {
+      setIsSending(false)
+    }
   }
 
   /* ================= INDIVIDUAL RESEND ================= */
@@ -250,6 +265,58 @@ export default function CommunicationClient({
 
   return (
     <div className="space-y-4">
+      {/* Bulk Buttons */}
+      <div className="flex gap-4">
+        <Button
+          onClick={() => {
+            setBulkType('attended')
+            setDialogOpen(true)
+          }}
+          disabled={attendedMailSent}
+        >
+          Send Attended Mail
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setBulkType('not-attended')
+            setDialogOpen(true)
+          }}
+          disabled={notAttendedMailSent}
+        >
+          Send Not Attended Mail
+        </Button>
+      </div>
+
+      {/* Alert Dialog */}
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send bulk email to all{' '}
+              {bulkType === 'attended' ? 'attended' : 'not attended'} users.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isSending}
+              onClick={(e) => {
+                e.preventDefault()
+                sendBulkMail(bulkType)
+              }}
+            >
+              {isSending ? 'Sending...' : 'Confirm & Send'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Tabs + Export */}
       <div className="flex justify-between items-center border-b">
         <div className="flex gap-6">
@@ -278,36 +345,7 @@ export default function CommunicationClient({
         </div>
 
         {activeTab !== 'responses' && (
-          <ExportCsvButton
-            fileName={fileName}
-            data={activeData}
-            columns={[
-              { header: 'Prefix', value: (r) => r.userId.prefix },
-              { header: 'Name', value: (r) => r.userId.name },
-              { header: 'Email', value: (r) => r.userId.email },
-              { header: 'Mobile', value: (r) => r.userId.mobile },
-              {
-                header: 'Qualification',
-                value: (r) => r.userId.qualification,
-              },
-              {
-                header: 'Affiliation',
-                value: (r) => r.userId.affiliation,
-              },
-              { header: 'Country', value: (r) => r.userId.country },
-              {
-                header: 'Attended',
-                value: (r) => (r.attended ? 'Yes' : 'No'),
-              },
-              {
-                header: 'Attended At',
-                value: (r) =>
-                  r.attendedAt
-                    ? getIndianFormattedDate(new Date(r.attendedAt))
-                    : '',
-              },
-            ]}
-          />
+          <ExportCsvButton fileName={fileName} data={activeData} columns={[]} />
         )}
       </div>
 

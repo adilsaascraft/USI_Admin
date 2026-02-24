@@ -575,7 +575,7 @@ export default function AddFeedbackForm({
           type="submit"
           form="add-feedback-form"
           disabled={loading}
-          className="bg-orange-600 text-white"
+          className="bg-orange-600 hover:bg-orange-700 text-white"
         >
           {loading ? 'Saving...' : 'Save'}
         </Button>
