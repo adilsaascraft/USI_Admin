@@ -48,6 +48,7 @@ export default function WebinarRegistrationClient({
   webinarId: string
 }) {
   const [sendingReminder, setSendingReminder] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const { data, isLoading, error } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/admin/webinar/${webinarId}/registrations-simple`,
@@ -73,12 +74,17 @@ export default function WebinarRegistrationClient({
     try {
       setSendingReminder(true)
 
-      await apiRequest({
+      const res = await apiRequest({
         endpoint: `/api/admin/webinar/${webinarId}/send-join-webinar`,
         method: 'POST',
         showToast: true,
         successMessage: 'Reminder email sent successfully',
       })
+
+      // Only close if success
+      if (res?.success) {
+        setDialogOpen(false)
+      }
     } catch (error) {
       toast.error((error as Error).message)
     } finally {
@@ -162,7 +168,7 @@ export default function WebinarRegistrationClient({
         <h1 className="text-2xl font-bold">All Registrations</h1>
 
         <div className="flex gap-2">
-          {/* ✅ REUSABLE CSV EXPORT */}
+          {/* CSV EXPORT */}
           <ExportCsvButton
             fileName={fileName}
             data={regList}
@@ -187,7 +193,8 @@ export default function WebinarRegistrationClient({
             ]}
           />
 
-          <AlertDialog>
+          {/* ALERT DIALOG */}
+          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button
                 className="bg-orange-600 hover:bg-orange-700 text-white"
@@ -219,9 +226,12 @@ export default function WebinarRegistrationClient({
                 <AlertDialogAction
                   className="bg-orange-600 hover:bg-orange-700 text-white"
                   disabled={sendingReminder}
-                  onClick={sendReminderEmail}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    sendReminderEmail()
+                  }}
                 >
-                  {sendingReminder ? 'Sending…' : 'Confirm'}
+                  {sendingReminder ? 'Sending...' : 'Confirm'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

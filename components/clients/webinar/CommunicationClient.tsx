@@ -15,7 +15,6 @@ import { getIndianFormattedDate } from '@/lib/formatIndianDate'
 import { ExportCsvButton } from '@/components/export-csv-button'
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -60,9 +59,9 @@ export default function CommunicationClient({
 }: {
   webinarId: string
 }) {
-  const [activeTab, setActiveTab] = useState<
-    'attended' | 'not-attended' | 'responses'
-  >('attended')
+  const [activeTab, setActiveTab] = useState<'attended' | 'not-attended'>(
+    'attended',
+  )
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [bulkType, setBulkType] = useState<'attended' | 'not-attended'>(
@@ -94,19 +93,16 @@ export default function CommunicationClient({
 
   /* ================= ACTIVE DATA ================= */
 
-  const activeData = useMemo(() => {
-    if (activeTab === 'attended') return attendedUsers
-    if (activeTab === 'not-attended') return notAttendedUsers
-    return []
-  }, [activeTab, attendedUsers, notAttendedUsers])
+  const activeData =
+    activeTab === 'attended' ? attendedUsers : notAttendedUsers
 
   /* ================= FILE NAME ================= */
 
   const fileName = useMemo(() => {
     const webinarName = data?.webinar?.name ?? 'USI Webinar'
-    if (activeTab === 'attended') return `${webinarName} Attended.csv`
-    if (activeTab === 'not-attended') return `${webinarName} Not Attended.csv`
-    return `${webinarName}.csv`
+    return activeTab === 'attended'
+      ? `${webinarName} Attended.csv`
+      : `${webinarName} Not Attended.csv`
   }, [data, activeTab])
 
   /* ================= SURVEY LINK ================= */
@@ -219,13 +215,9 @@ export default function CommunicationClient({
       {
         header: 'Attended At',
         cell: ({ row }) =>
-          row.original.attendedAt ? (
-            <span>
-              {getIndianFormattedDate(new Date(row.original.attendedAt))}
-            </span>
-          ) : (
-            '—'
-          ),
+          row.original.attendedAt
+            ? getIndianFormattedDate(new Date(row.original.attendedAt))
+            : '—',
       },
       {
         header: 'Action',
@@ -268,13 +260,14 @@ export default function CommunicationClient({
       {/* Bulk Buttons */}
       <div className="flex gap-4">
         <Button
+        variant="secondary"
           onClick={() => {
             setBulkType('attended')
             setDialogOpen(true)
           }}
           disabled={attendedMailSent}
         >
-          Send Attended Mail
+          Send Feedback Form
         </Button>
 
         <Button
@@ -294,10 +287,23 @@ export default function CommunicationClient({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will send bulk email to all{' '}
-              {bulkType === 'attended' ? 'attended' : 'not attended'} users.
-            </AlertDialogDescription>
+           <AlertDialogDescription>
+  {bulkType === 'attended' ? (
+    <>
+      This will send a <span className="font-semibold text-orange-600">feedback form email</span> to all{' '}
+      <span className="font-semibold">attended users</span>.
+      <br />
+      They will receive a survey link to submit their feedback.
+    </>
+  ) : (
+    <>
+      This will send a <span className="font-semibold text-orange-600">thank you / informational email</span> to all{' '}
+      <span className="font-semibold">not attended users</span>.
+      <br />
+      No feedback form will be included.
+    </>
+  )}
+</AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
@@ -310,6 +316,7 @@ export default function CommunicationClient({
                 e.preventDefault()
                 sendBulkMail(bulkType)
               }}
+              className='bg-orange-600 hover:bg-orange-700 text-white'
             >
               {isSending ? 'Sending...' : 'Confirm & Send'}
             </AlertDialogAction>
@@ -317,7 +324,7 @@ export default function CommunicationClient({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Tabs + Export */}
+      {/* Tabs */}
       <div className="flex justify-between items-center border-b">
         <div className="flex gap-6">
           {[
@@ -327,7 +334,6 @@ export default function CommunicationClient({
               label: 'Not Attended',
               count: notAttendedUsers.length,
             },
-            { key: 'responses', label: 'Responses', count: 0 },
           ].map((t) => (
             <button
               key={t.key}
@@ -344,22 +350,11 @@ export default function CommunicationClient({
           ))}
         </div>
 
-        {activeTab !== 'responses' && (
-          <ExportCsvButton fileName={fileName} data={activeData} columns={[]} />
-        )}
+        <ExportCsvButton fileName={fileName} data={activeData} columns={[]} />
       </div>
 
-      {activeTab === 'attended' && (
-        <DataTable data={attendedUsers} columns={columns} />
-      )}
-
-      {activeTab === 'not-attended' && (
-        <DataTable data={notAttendedUsers} columns={columns} />
-      )}
-
-      {activeTab === 'responses' && (
-        <div className="text-muted-foreground">No responses available yet.</div>
-      )}
+      {/* Table */}
+      <DataTable data={activeData} columns={columns} />
     </div>
   )
 }

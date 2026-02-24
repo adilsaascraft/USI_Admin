@@ -1,5 +1,5 @@
 'use client'
-
+import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
@@ -75,6 +75,8 @@ const SCALE_OPTIONS = [
 export default function SubmitFeedbackByUserPage() {
   const params = useParams()
   const webinarId = params?.webinarId as string | undefined
+  const router = useRouter()
+const [countdown, setCountdown] = useState(10)
 
   const [doc, setDoc] = useState<FeedbackDoc | null>(null)
   const [participantAnswers, setParticipantAnswers] =
@@ -176,6 +178,30 @@ export default function SubmitFeedbackByUserPage() {
   }
 
 
+  useEffect(() => {
+  if (!hasSubmitted) return
+
+  setCountdown(10)
+
+  const interval = setInterval(() => {
+    setCountdown((prev) => {
+      if (prev <= 1) {
+        clearInterval(interval)
+        window.location.href = 'https://elearning.usi.org.in/mylearning'
+        return 0
+      }
+      return prev - 1
+    })
+  }, 1000)
+
+  return () => clearInterval(interval)
+}, [hasSubmitted])
+
+const handleManualRedirect = () => {
+  window.location.href = 'https://elearning.usi.org.in/mylearning'
+}
+
+
   /* ================= LOADING ================= */
 
   if (loading) {
@@ -198,27 +224,43 @@ export default function SubmitFeedbackByUserPage() {
   const w = doc.webinarId
 
   /* ================= SUCCESS ================= */
+if (hasSubmitted) {
+  return (
+    <div className="max-w-3xl mx-auto p-6">
+      <Card className="border-green-200 bg-green-50">
+        <CardContent className="p-8 space-y-6 text-center">
+          <CheckCircle2 className="h-14 w-14 text-green-600 mx-auto" />
 
-  if (hasSubmitted) {
-    return (
-      <div className="max-w-3xl mx-auto p-6">
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-8 space-y-4 text-center">
-            <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
-            <h2 className="text-2xl font-semibold text-green-800">
-              Feedback Submitted Successfully
-            </h2>
+          <h2 className="text-2xl font-semibold text-green-800">
+            Feedback Submitted Successfully
+          </h2>
 
-            {doc.closeNote && (
-              <p className="text-sm whitespace-pre-line">
-                {doc.closeNote}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+          {doc.closeNote && (
+            <p className="text-sm whitespace-pre-line">
+              {doc.closeNote}
+            </p>
+          )}
+
+          <p className="text-sm text-muted-foreground">
+            You will be redirected to your learning dashboard in{' '}
+            <span className="font-semibold text-orange-600">
+              {countdown}
+            </span>{' '}
+            seconds.
+          </p>
+
+          <Button
+            size="lg"
+            className="bg-orange-600 hover:bg-orange-700 text-white"
+            onClick={handleManualRedirect}
+          >
+            Go To My Learning
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 
   /* ================= UI ================= */
 
