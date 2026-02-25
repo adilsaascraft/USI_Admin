@@ -287,7 +287,7 @@ export default function Page() {
 
               {/* Question */}
               <div className="mt-4">
-                <span className="font-semibold">Question:</span>{' '}
+                <span className="text-bold font-medium">Question:</span>{' '}
                 {q.questionName}
               </div>
 
