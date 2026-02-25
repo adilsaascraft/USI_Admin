@@ -23,6 +23,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
+import {toast} from "sonner"
 
 /* ================= TYPES ================= */
 
@@ -111,31 +112,38 @@ export default function CommunicationClient({
 
   /* ================= BULK EMAIL ================= */
 
-  const sendBulkMail = async (type: 'attended' | 'not-attended') => {
-    try {
-      setIsSending(true)
+const sendBulkMail = async (type: 'attended' | 'not-attended') => {
+  try {
+    setIsSending(true)
 
-      const endpoint =
-        type === 'attended'
-          ? `/api/admin/webinar/${webinarId}/email/attended`
-          : `/api/admin/webinar/${webinarId}/email/not-attended`
+    const endpoint =
+      type === 'attended'
+        ? `/api/admin/webinar/${webinarId}/email/attended`
+        : `/api/admin/webinar/${webinarId}/email/not-attended`
 
-      const res = await apiRequest({
-        endpoint,
-        method: 'POST',
-        body: type === 'attended' ? { surveyLink } : undefined,
-        showToast: true,
-        successMessage: 'Email sent successfully',
-      })
+    const res = await apiRequest({
+      endpoint,
+      method: 'POST',
+      body: type === 'attended' ? { surveyLink } : undefined,
+      showToast: false, // ❗ disable internal success toast
+    })
 
-      if (res?.success) {
-        await mutate()
-        setDialogOpen(false)
-      }
-    } finally {
-      setIsSending(false)
+    if (!res?.success) {
+      throw new Error(res?.message || 'Failed to send email')
     }
+
+    // ✅ Success Toast
+    toast.success(res?.message || 'Email sent successfully')
+
+    await mutate()
+    setDialogOpen(false)
+  } catch (error: any) {
+    // ✅ Backend error message shown here
+    toast.error(error?.message || 'Something went wrong')
+  } finally {
+    setIsSending(false)
   }
+}
 
   /* ================= INDIVIDUAL RESEND ================= */
 
