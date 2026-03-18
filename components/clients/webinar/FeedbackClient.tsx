@@ -22,12 +22,7 @@ import { apiRequest } from '@/lib/apiRequest'
 import { fetcher } from '@/lib/fetcher'
 import EntitySkeleton from '@/components/EntitySkeleton'
 import AddFeedbackForm from '@/components/forms/webinar/AddFeedbackForm'
-import {
-  ChevronDown,
-  ChevronRight,
-  Download,
-  ArrowUpDown,
-} from 'lucide-react'
+import { ChevronDown, ChevronRight, Download, ArrowUpDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 /* ================= TYPES ================= */
@@ -64,8 +59,6 @@ type FeedbackDoc = {
   updatedAt: string
 }
 
-/* ================= TABLE ROW TYPE ================= */
-
 type FeedbackRow = {
   category: 'Participant' | 'Feedback' | 'Open Ended'
   section: string
@@ -75,14 +68,8 @@ type FeedbackRow = {
 
 /* ================= COMPONENT ================= */
 
-export default function FeedbackClient({
-  webinarId,
-}: {
-  webinarId: string
-}) {
-  const [activeTab, setActiveTab] = useState<
-    'feedback' | 'by-user'
-  >('feedback')
+export default function FeedbackClient({ webinarId }: { webinarId: string }) {
+  const [activeTab, setActiveTab] = useState<'feedback' | 'by-user'>('feedback')
   const [sheetOpen, setSheetOpen] = useState(false)
   const [expandedIds, setExpandedIds] = useState<string[]>([])
 
@@ -94,11 +81,10 @@ export default function FeedbackClient({
     mutate,
   } = useSWR(
     `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/feedback`,
-    fetcher
+    fetcher,
   )
 
-  const feedbackDoc: FeedbackDoc | null =
-    feedbackData?.data ?? null
+  const feedbackDoc: FeedbackDoc | null = feedbackData?.data ?? null
 
   /* ================= FLATTEN DATA FOR TABLE ================= */
 
@@ -107,7 +93,6 @@ export default function FeedbackClient({
 
     const rows: FeedbackRow[] = []
 
-    // Participant Fields
     feedbackDoc.participantFields.forEach((f) => {
       rows.push({
         category: 'Participant',
@@ -117,7 +102,6 @@ export default function FeedbackClient({
       })
     })
 
-    // Feedback Sections & Questions
     feedbackDoc.feedbacks.forEach((section) => {
       section.feedbackItems.forEach((item) => {
         rows.push({
@@ -129,7 +113,6 @@ export default function FeedbackClient({
       })
     })
 
-    // Open Ended Questions
     feedbackDoc.openEnded.forEach((q) => {
       rows.push({
         category: 'Open Ended',
@@ -145,33 +128,69 @@ export default function FeedbackClient({
   /* ================= FETCH FEEDBACK BY USER ================= */
 
   const { data: userFeedbackRes } = useSWR(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/send-feedback`,
-    fetcher
+    `${process.env.NEXT_PUBLIC_API_URL}/api/webinars/${webinarId}/public-feedback`,
+    fetcher,
   )
 
   const feedbackCount = userFeedbackRes?.total ?? 0
 
+  /* ================= FIXED TRANSFORM ================= */
+
   const userFeedbacks = useMemo(() => {
     if (!userFeedbackRes?.data) return []
 
-    return userFeedbackRes.data.map((entry: any) => ({
-      _id: entry._id,
-      user: {
-        name: entry.userId.name,
-        email: entry.userId.email,
-        mobile: entry.userId.mobile,
-        profilePicture: entry.userId.profilePicture,
-      },
-      answers: entry.sendFeedbacks.map((f: any) => ({
-        feedbackName: f.feedbackName,
-        selectedOption: f.selectedOption,
-      })),
-      otherFeedback: entry.sendOtherFeedback,
-      createdAt: entry.createdAt,
-    }))
+    return userFeedbackRes.data.map((entry: any) => {
+      const getField = (label: string) =>
+        entry.participantAnswers?.find((a: any) =>
+          a.label.toLowerCase().includes(label.toLowerCase()),
+        )?.answer || '-'
+
+      const name = getField('name')
+      const city = getField('city')
+      const designation = getField('designation')
+
+      const answers =
+        entry.sendFeedbacks?.flatMap((section: any) =>
+          section.answers.map((a: any) => ({
+            feedbackName: `${section.feedbackLabelName} - ${a.feedbackName}`,
+            selectedOption: a.answer,
+          })),
+        ) || []
+
+      const openEnded =
+        entry.openEndedAnswers?.map((o: any) => ({
+          feedbackName: o.label,
+          selectedOption: o.answer || '-',
+        })) || []
+
+      const allAnswers = [...answers, ...openEnded]
+
+      const ratings = answers
+        .map((a: any) => Number(a.selectedOption))
+        .filter((n: number) => !isNaN(n))
+
+      const avgRating =
+        ratings.length > 0
+          ? (ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length).toFixed(1)
+          : null
+
+      return {
+        _id: entry._id,
+        user: {
+          name,
+          email: city,
+          mobile: designation,
+          profilePicture: null,
+        },
+        answers: allAnswers,
+        avgRating,
+        otherFeedback: entry.sendOtherFeedback,
+        createdAt: entry.createdAt,
+      }
+    })
   }, [userFeedbackRes])
 
-  /* ================= DELETE ADMIN FEEDBACK ================= */
+  /* ================= DELETE ================= */
 
   const handleDelete = async () => {
     await apiRequest({
@@ -183,13 +202,11 @@ export default function FeedbackClient({
     await mutate()
   }
 
-  /* ================= EXPAND USER ROW ================= */
+  /* ================= EXPAND ================= */
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
@@ -199,11 +216,11 @@ export default function FeedbackClient({
     const rows = [
       [
         'Name',
-        'Email',
-        'Mobile',
+        'City',
+        'Designation',
         'Question',
         'Answer',
-        'Other Feedback',
+        'Avg Rating',
         'Submitted At',
       ].join(','),
     ]
@@ -213,15 +230,15 @@ export default function FeedbackClient({
         rows.push(
           [
             u.user.name,
-            u.user.email || '',
-            u.user.mobile || '',
+            u.user.email,
+            u.user.mobile,
             `"${a.feedbackName}"`,
             `"${a.selectedOption}"`,
-            `"${u.otherFeedback || ''}"`,
+            u.avgRating || '',
             new Date(u.createdAt).toLocaleString(),
-          ].join(',')
+          ].join(','),
         )
-      })
+      }),
     )
 
     const blob = new Blob([rows.join('\n')], {
@@ -242,26 +259,16 @@ export default function FeedbackClient({
       accessorKey: 'category',
       header: sortableHeader('Category'),
       cell: ({ row }) => (
-        <Badge variant="secondary">
-          {row.original.category}
-        </Badge>
+        <Badge variant="secondary">{row.original.category}</Badge>
       ),
     },
-    {
-      accessorKey: 'section',
-      header: 'Section',
-    },
-    {
-      accessorKey: 'label',
-      header: 'Label / Parameter / Question',
-    },
+    { accessorKey: 'section', header: 'Section' },
+    { accessorKey: 'label', header: 'Label / Parameter / Question' },
     {
       accessorKey: 'parameterType',
       header: 'Type',
       cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.original.parameterType}
-        </Badge>
+        <Badge variant="outline">{row.original.parameterType}</Badge>
       ),
     },
   ]
@@ -274,25 +281,51 @@ export default function FeedbackClient({
         const open = expandedIds.includes(row.original._id)
 
         return (
-          <div className="flex items-center gap-3">
-            <button onClick={() => toggleExpand(row.original._id)}>
-              {open ? <ChevronDown /> : <ChevronRight />}
-            </button>
+          <div className="w-full">
+            <div className="flex items-center gap-3">
+              <button onClick={() => toggleExpand(row.original._id)}>
+                {open ? <ChevronDown /> : <ChevronRight />}
+              </button>
 
-            <Image
-              src={u.profilePicture || '/avatar.png'}
-              alt={u.name}
-              width={40}
-              height={40}
-              className="rounded-full"
-            />
+              <Image
+                src={u.profilePicture || '/avatar.png'}
+                alt={u.name}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
 
-            <div>
-              <p className="font-medium">{u.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {u.email || u.mobile}
-              </p>
+              <div>
+                <p className="font-medium">{u.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {u.email} • {u.mobile}
+                </p>
+
+                {row.original.avgRating && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    ⭐ {row.original.avgRating}
+                  </p>
+                )}
+              </div>
             </div>
+
+            {open && (
+              <div className="mt-3 ml-10 border-l pl-4 space-y-2">
+                {row.original.answers.map((a: any, i: number) => (
+                  <div key={i} className="text-sm">
+                    <span className="font-medium">{a.feedbackName}:</span>{' '}
+                    {a.selectedOption}
+                  </div>
+                ))}
+
+                {row.original.otherFeedback &&
+                  row.original.otherFeedback !== 'Nil' && (
+                    <div className="mt-2 text-sm text-orange-600">
+                      <strong>Other:</strong> {row.original.otherFeedback}
+                    </div>
+                  )}
+              </div>
+            )}
           </div>
         )
       },
@@ -305,31 +338,33 @@ export default function FeedbackClient({
 
   return (
     <div className="space-y-4">
-      {/* ================= TABS ================= */}
+      {/* Tabs */}
       <div className="flex gap-6 border-b">
         <button
           onClick={() => setActiveTab('feedback')}
-          className={`pb-2 ${activeTab === 'feedback'
+          className={`pb-2 ${
+            activeTab === 'feedback'
               ? 'border-b-2 border-orange-600 text-orange-600'
               : 'text-gray-500'
-            }`}
+          }`}
         >
           Feedback
         </button>
 
         <button
           onClick={() => setActiveTab('by-user')}
-          className={`pb-2 flex items-center gap-2 ${activeTab === 'by-user'
+          className={`pb-2 flex items-center gap-2 ${
+            activeTab === 'by-user'
               ? 'border-b-2 border-orange-600 text-orange-600'
               : 'text-gray-500'
-            }`}
+          }`}
         >
           Feedback By User
           <Badge variant="secondary">{feedbackCount}</Badge>
         </button>
       </div>
 
-      {/* ================= FEEDBACK TAB ================= */}
+      {/* Feedback Tab */}
       {activeTab === 'feedback' && (
         <>
           <div className="flex justify-between items-center">
@@ -338,36 +373,28 @@ export default function FeedbackClient({
             <div className="flex gap-2">
               {feedbackDoc ? (
                 <>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSheetOpen(true)}
-                  >
+                  <Button variant="outline" onClick={() => setSheetOpen(true)}>
                     Edit
                   </Button>
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button className="bg-orange-600 hover:bg-orange-700 text-white">
+                      <Button className="bg-orange-600 text-white">
                         Delete
                       </Button>
                     </AlertDialogTrigger>
+
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Delete Feedback?
-                        </AlertDialogTitle>
+                        <AlertDialogTitle>Delete Feedback?</AlertDialogTitle>
                         <AlertDialogDescription>
                           This will permanently remove all feedback.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
+
                       <AlertDialogFooter>
-                        <AlertDialogCancel>
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                          onClick={handleDelete}
-                        >
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>
                           Confirm
                         </AlertDialogAction>
                       </AlertDialogFooter>
@@ -375,54 +402,25 @@ export default function FeedbackClient({
                   </AlertDialog>
                 </>
               ) : (
-                <Button
-                  onClick={() => setSheetOpen(true)}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
-                >
+                <Button onClick={() => setSheetOpen(true)}>
                   + Add Feedback
                 </Button>
               )}
             </div>
           </div>
 
-          {feedbackTableData.length ? (
-            <DataTable
-              data={feedbackTableData}
-              columns={feedbackColumns}
-            />
-          ) : (
-            <p className="text-muted-foreground">
-              No feedback configured yet.
-            </p>
-          )}
-
-          {/* ===== Close Note ===== */}
-          {feedbackDoc?.closeNote && (
-            <div className="border rounded-lg p-4 bg-muted">
-              <h4 className="font-semibold mb-2">Close Note</h4>
-              <p className="whitespace-pre-line text-sm">
-                {feedbackDoc.closeNote}
-              </p>
-            </div>
-          )}
+          <DataTable data={feedbackTableData} columns={feedbackColumns} />
         </>
       )}
 
-      {/* ================= FEEDBACK BY USER TAB ================= */}
+      {/* Feedback By User */}
       {activeTab === 'by-user' && (
         <>
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">
-              Submitted Feedback
-            </h2>
+            <h2 className="text-xl font-semibold">Submitted Feedback</h2>
 
-            <Button
-              variant="outline"
-              onClick={exportCSV}
-              className="gap-2"
-            >
-              <Download size={16} />
-              Export CSV
+            <Button variant="outline" onClick={exportCSV}>
+              <Download size={16} /> Export CSV
             </Button>
           </div>
 
@@ -430,15 +428,9 @@ export default function FeedbackClient({
         </>
       )}
 
-      {/* ================= SHEET ================= */}
+      {/* Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="w-[600px]">
-          <div className="p-4 border-b">
-            <h2 className="text-xl font-semibold">
-              Feedback Form
-            </h2>
-          </div>
-
           <AddFeedbackForm
             webinarId={webinarId}
             defaultValues={feedbackDoc ?? undefined}
@@ -447,7 +439,6 @@ export default function FeedbackClient({
               setSheetOpen(false)
             }}
           />
-
         </SheetContent>
       </Sheet>
     </div>
@@ -460,11 +451,7 @@ function sortableHeader(label: string) {
   return ({ column }: any) => (
     <Button
       variant="ghost"
-      onClick={() =>
-        column.toggleSorting(
-          column.getIsSorted() === 'asc'
-        )
-      }
+      onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
     >
       {label}
       <ArrowUpDown className="ml-2 h-4 w-4" />
